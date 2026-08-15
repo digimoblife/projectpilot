@@ -1,0 +1,140 @@
+from projectpilot.persistence.models.activity import ActivityEvent
+from projectpilot.persistence.models.ai import (
+    AIJob,
+    AIJobStatus,
+    AISuggestion,
+    AISuggestionStatus,
+)
+from projectpilot.persistence.models.client import Client, Stakeholder
+from projectpilot.persistence.models.discovery import (
+    Brief,
+    ClientAnswer,
+    DiscoveryCategory,
+    DiscoveryQuestion,
+    DiscoveryQuestionStatus,
+)
+from projectpilot.persistence.models.document import (
+    DocumentEvidence,
+    DocumentStatus,
+    DocumentType,
+    GeneratedDocument,
+)
+from projectpilot.persistence.models.issues_risks import (
+    Blocker,
+    BlockerStatus,
+    ClientDependency,
+    ClientDependencyStatus,
+    Issue,
+    IssueStatus,
+    Risk,
+    RiskStatus,
+)
+from projectpilot.persistence.models.lead import Lead, LeadStatus
+from projectpilot.persistence.models.meeting import (
+    ActionItem,
+    ActionItemStatus,
+    ConvertedEntityType,
+    Meeting,
+    MeetingParticipant,
+    MeetingStatus,
+    MeetingType,
+    ParticipantType,
+)
+from projectpilot.persistence.models.planning_tasks import (
+    Epic,
+    Feature,
+    Task,
+    TaskStatus,
+)
+from projectpilot.persistence.models.project import (
+    Project,
+    ProjectHealth,
+    ProjectLifecycleStage,
+)
+from projectpilot.persistence.models.report import (
+    Report,
+    ReportEvidence,
+    ReportStatus,
+    ReportType,
+)
+from projectpilot.persistence.models.requirements_scope import (
+    Decision,
+    DecisionStatus,
+    Requirement,
+    RequirementSourceType,
+    RequirementStatus,
+    ScopeChange,
+    ScopeChangeStatus,
+    ScopeItem,
+    ScopeType,
+)
+from projectpilot.persistence.models.timeline_team import (
+    Milestone,
+    MilestoneStatus,
+    ProjectMember,
+    TaskDependency,
+)
+from projectpilot.persistence.models.user import User, UserRole
+
+__all__ = [
+    "User",
+    "UserRole",
+    "Client",
+    "Stakeholder",
+    "Project",
+    "ProjectLifecycleStage",
+    "ProjectHealth",
+    "Lead",
+    "LeadStatus",
+    "Brief",
+    "DiscoveryQuestion",
+    "DiscoveryQuestionStatus",
+    "DiscoveryCategory",
+    "ClientAnswer",
+    "Requirement",
+    "RequirementStatus",
+    "RequirementSourceType",
+    "Decision",
+    "DecisionStatus",
+    "ScopeItem",
+    "ScopeType",
+    "ScopeChange",
+    "ScopeChangeStatus",
+    "Epic",
+    "Feature",
+    "Task",
+    "TaskStatus",
+    "ProjectMember",
+    "Milestone",
+    "MilestoneStatus",
+    "TaskDependency",
+    "Issue",
+    "IssueStatus",
+    "Risk",
+    "RiskStatus",
+    "Blocker",
+    "BlockerStatus",
+    "ClientDependency",
+    "ClientDependencyStatus",
+    "AIJob",
+    "AIJobStatus",
+    "AISuggestion",
+    "AISuggestionStatus",
+    "Meeting",
+    "MeetingType",
+    "MeetingStatus",
+    "MeetingParticipant",
+    "ParticipantType",
+    "ActionItem",
+    "ActionItemStatus",
+    "ConvertedEntityType",
+    "Report",
+    "ReportType",
+    "ReportStatus",
+    "ReportEvidence",
+    "GeneratedDocument",
+    "DocumentType",
+    "DocumentStatus",
+    "DocumentEvidence",
+    "ActivityEvent",
+]

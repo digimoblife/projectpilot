@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: projectpilot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-projectpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-projectpilot_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-projectpilot_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-projectpilot} -d ${POSTGRES_DB:-projectpilot_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: projectpilot_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-projectpilot}:${POSTGRES_PASSWORD:-projectpilot_secret}@postgres:5432/${POSTGRES_DB:-projectpilot_db}
+      DATABASE_SYNC_URL: postgresql://${POSTGRES_USER:-projectpilot}:${POSTGRES_PASSWORD:-projectpilot_secret}@postgres:5432/${POSTGRES_DB:-projectpilot_db}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      SECRET_KEY: ${SECRET_KEY:-development_secret_key_12345}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - "${API_PORT:-8000}:8000"
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: projectpilot_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api/v1}
+    ports:
+      - "${PORT:-3000}:3000"
+
+volumes:
+  postgres_data:
+    driver: local
