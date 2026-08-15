@@ -6,6 +6,7 @@ from projectpilot.api.routes import (
     control_center,
     discovery,
     documents,
+    handover,
     health,
     issues_risks,
     leads,
@@ -33,3 +34,4 @@ api_router.include_router(meetings.router)
 api_router.include_router(control_center.router)
 api_router.include_router(reports.router)
 api_router.include_router(documents.router)
+api_router.include_router(handover.router)

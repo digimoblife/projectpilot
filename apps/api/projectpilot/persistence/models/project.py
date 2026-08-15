@@ -58,7 +58,8 @@ class Project(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Relationships
     client: Mapped["Client"] = relationship("Client", back_populates="projects")
-    owner: Mapped["User"] = relationship("User")
+    owner: Mapped["User"] = relationship("User", foreign_keys=[owner_id])
+    handover: Mapped[Optional["Handover"]] = relationship("Handover", back_populates="project", uselist=False, cascade="all, delete-orphan")
     activities: Mapped[List["ActivityEvent"]] = relationship(
         "ActivityEvent", back_populates="project", cascade="all, delete-orphan", order_by="desc(ActivityEvent.created_at)"
     )

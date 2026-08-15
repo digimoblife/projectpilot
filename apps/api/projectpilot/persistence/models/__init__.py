@@ -19,6 +19,13 @@ from projectpilot.persistence.models.document import (
     DocumentType,
     GeneratedDocument,
 )
+from projectpilot.persistence.models.handover import (
+    Handover,
+    HandoverItem,
+    HandoverItemStatus,
+    HandoverItemType,
+    HandoverStatus,
+)
 from projectpilot.persistence.models.issues_risks import (
     Blocker,
     BlockerStatus,
@@ -136,5 +143,10 @@ __all__ = [
     "DocumentType",
     "DocumentStatus",
     "DocumentEvidence",
+    "Handover",
+    "HandoverStatus",
+    "HandoverItem",
+    "HandoverItemStatus",
+    "HandoverItemType",
     "ActivityEvent",
 ]
