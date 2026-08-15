@@ -15,6 +15,7 @@ from projectpilot.api.routes import (
     projects,
     reports,
     requirements_scope,
+    search,
     timeline_team,
 )
 
@@ -35,3 +36,4 @@ api_router.include_router(control_center.router)
 api_router.include_router(reports.router)
 api_router.include_router(documents.router)
 api_router.include_router(handover.router)
+api_router.include_router(search.router)
