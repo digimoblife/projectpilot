@@ -19,6 +19,11 @@ logging.basicConfig(
 
 logger = logging.getLogger("projectpilot.worker")
 
+# Prevent HTTP client INFO logs from exposing sensitive query parameters
+# such as Gemini API keys.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 POLL_INTERVAL_SECONDS = float(
     os.getenv("WORKER_POLL_INTERVAL_SECONDS", "2")
 )

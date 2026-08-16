@@ -33,3 +33,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 exc_info=True,
             )
             raise exc
+
+# Third-party HTTP clients may include credentials in request URLs.
+# Keep these loggers above INFO in production-facing logs.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
