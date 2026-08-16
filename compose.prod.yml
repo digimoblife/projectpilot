@@ -1,0 +1,122 @@
+services:
+  # =========================================================================
+  # 1. POSTGRESQL 16 DATABASE (PRIVATE ISOLATED NETWORK)
+  # =========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: projectpilot_prod_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-projectpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-projectpilot_prod}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - internal_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-projectpilot} -d ${POSTGRES_DB:-projectpilot_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # =========================================================================
+  # 2. FASTAPI BACKEND API
+  # =========================================================================
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: projectpilot_prod_api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-projectpilot}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-projectpilot_prod}
+      DATABASE_SYNC_URL: postgresql://${POSTGRES_USER:-projectpilot}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-projectpilot_prod}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set in production}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-${SECRET_KEY}}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY must be configured for AI features}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://projectpilot.id,http://localhost}
+      LOG_LEVEL: INFO
+    networks:
+      - internal_backend
+      - ingress_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # =========================================================================
+  # 3. BACKGROUND WORKER
+  # =========================================================================
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: projectpilot_prod_worker
+    restart: always
+    command: ["python", "-m", "projectpilot.worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-projectpilot}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-projectpilot_prod}
+      DATABASE_SYNC_URL: postgresql://${POSTGRES_USER:-projectpilot}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-projectpilot_prod}
+      SECRET_KEY: ${SECRET_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    networks:
+      - internal_backend
+
+  # =========================================================================
+  # 4. NEXT.JS FRONTEND WEB APP
+  # =========================================================================
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: projectpilot_prod_web
+    restart: always
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api/v1}
+    networks:
+      - ingress_network
+
+  # =========================================================================
+  # 5. NGINX REVERSE PROXY & GATEWAY (ONLY PUBLIC ENTRYPOINT)
+  # =========================================================================
+  proxy:
+    image: nginx:alpine
+    container_name: projectpilot_prod_proxy
+    restart: always
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - web
+      - api
+    networks:
+      - ingress_network
+
+networks:
+  internal_backend:
+    driver: bridge
+    internal: true # Truly isolated internal network (no external access to database)
+  ingress_network:
+    driver: bridge
+
+volumes:
+  postgres_prod_data:
+    driver: local
