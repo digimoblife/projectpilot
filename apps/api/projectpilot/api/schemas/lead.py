@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict
 from projectpilot.api.schemas.auth import UserResponse
 from projectpilot.api.schemas.client import ClientSimpleResponse
@@ -20,6 +20,7 @@ class LeadBase(BaseModel):
     opportunity_description: Optional[str] = None
     estimated_budget_note: Optional[str] = None
     brief_notes: Optional[str] = None
+    client_references: Optional[List[Dict[str, Any]]] = None
 
 
 class LeadCreate(LeadBase):
@@ -38,6 +39,7 @@ class LeadUpdate(BaseModel):
     opportunity_description: Optional[str] = None
     estimated_budget_note: Optional[str] = None
     brief_notes: Optional[str] = None
+    client_references: Optional[List[Dict[str, Any]]] = None
 
 
 class LeadStatusUpdate(BaseModel):

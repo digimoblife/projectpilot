@@ -77,6 +77,7 @@ async def create_lead(
         opportunity_description=lead_in.opportunity_description,
         estimated_budget_note=lead_in.estimated_budget_note,
         brief_notes=lead_in.brief_notes,
+        client_references=lead_in.client_references or [],
     )
     db.add(lead)
     await db.commit()

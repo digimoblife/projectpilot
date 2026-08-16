@@ -40,6 +40,14 @@ if settings.CORS_ORIGINS:
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
+from fastapi.responses import RedirectResponse
+
+
+@app.get("/docs", include_in_schema=False)
+async def docs_redirect():
+    return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
+
+
 @app.get("/", tags=["Root"])
 async def root():
     return {

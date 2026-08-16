@@ -1,7 +1,8 @@
 import enum
 import uuid
-from typing import Optional
-from sqlalchemy import Enum, ForeignKey, String, Text, Uuid
+from typing import Any, Dict, List, Optional
+from sqlalchemy import Enum, ForeignKey, JSON, String, Text, Uuid
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from projectpilot.persistence.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
@@ -49,6 +50,9 @@ class Lead(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     estimated_budget_note: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     loss_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     brief_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    client_references: Mapped[Optional[list]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), default=list, nullable=True
+    )
 
     # Relationships
     client: Mapped[Optional["Client"]] = relationship("Client")

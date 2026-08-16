@@ -10,19 +10,32 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  FileText,
   HelpCircle,
+  Image as ImageIcon,
+  Link2,
   Mail,
+  Paperclip,
   Phone,
   Plus,
   Search,
+  SlidersHorizontal,
   Sparkles,
   Tag,
+  Trash2,
   User,
   Users,
   X,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+
+export interface ClientReference {
+  id: string;
+  type: "TEXT" | "LINK" | "IMAGE";
+  title: string;
+  content: string;
+}
 
 interface Lead {
   id: string;
@@ -38,6 +51,7 @@ interface Lead {
   estimated_budget_note: string | null;
   loss_reason: string | null;
   brief_notes: string | null;
+  client_references: ClientReference[] | null;
   converted_project_id: string | null;
   created_at: string;
 }
@@ -73,6 +87,53 @@ export default function LeadsPage() {
   const [briefNotes, setBriefNotes] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Client References State
+  const [references, setReferences] = useState<ClientReference[]>([]);
+  const [newRefType, setNewRefType] = useState<"TEXT" | "LINK" | "IMAGE">("LINK");
+  const [newRefTitle, setNewRefTitle] = useState("");
+  const [newRefContent, setNewRefContent] = useState("");
+  const [newRefImagePreview, setNewRefImagePreview] = useState<string | null>(null);
+  const [isAddingRef, setIsAddingRef] = useState(false);
+
+  function handleAddReference() {
+    if (!newRefTitle.trim()) return;
+    const contentToSave = newRefType === "IMAGE" ? (newRefImagePreview || "") : newRefContent.trim();
+    if (!contentToSave) return;
+
+    const newRef: ClientReference = {
+      id: "ref-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6),
+      type: newRefType,
+      title: newRefTitle.trim(),
+      content: contentToSave,
+    };
+
+    setReferences([...references, newRef]);
+    setNewRefTitle("");
+    setNewRefContent("");
+    setNewRefImagePreview(null);
+    setIsAddingRef(false);
+  }
+
+  function handleRemoveReference(id: string) {
+    setReferences(references.filter((r) => r.id !== id));
+  }
+
+  function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert("Ukuran gambar maksimal 3MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewRefImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
 
   // Status & Convert Modal
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -122,6 +183,7 @@ export default function LeadsPage() {
           source: source,
           opportunity_description: description || null,
           brief_notes: briefNotes || null,
+          client_references: references.length > 0 ? references : [],
         }),
       });
 
@@ -212,6 +274,11 @@ export default function LeadsPage() {
     setPicPhone("");
     setDescription("");
     setBriefNotes("");
+    setReferences([]);
+    setNewRefTitle("");
+    setNewRefContent("");
+    setNewRefImagePreview(null);
+    setIsAddingRef(false);
     setCreateError(null);
   }
 
@@ -340,30 +407,43 @@ export default function LeadsPage() {
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-slate-900 text-base line-clamp-1">{lead.name}</h3>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-0.5">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                    <Link href={`/leads/${lead.id}`} className="block group">
+                      <h3 className="font-bold text-slate-900 group-hover:text-sky-600 text-base line-clamp-2 leading-snug transition-colors">
+                        {lead.name}
+                      </h3>
+                    </Link>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-1">
+                      <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="font-medium truncate">{lead.company_name}</span>
                     </div>
                   </div>
 
                   {lead.opportunity_description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                      {lead.opportunity_description}
-                    </p>
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">
+                        {lead.opportunity_description}
+                      </p>
+                    </div>
+                  )}
+
+                  {lead.client_references && lead.client_references.length > 0 && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-sky-700 bg-sky-50/80 px-2.5 py-1 rounded-md border border-sky-100">
+                      <Paperclip className="w-3 h-3 text-sky-500" />
+                      <span>{lead.client_references.length} Referensi Klien</span>
+                    </div>
                   )}
 
                   {/* PIC & Source */}
-                  <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+                  <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
                     {lead.client_pic_name && (
                       <div className="flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className="truncate">{lead.client_pic_name}</span>
                       </div>
                     )}
                     {lead.client_pic_email && (
                       <div className="flex items-center gap-2 text-slate-500">
-                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                        <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className="truncate">{lead.client_pic_email}</span>
                       </div>
                     )}
@@ -372,13 +452,13 @@ export default function LeadsPage() {
 
                 {/* Card Actions */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openStatusModal(lead)}
-                    className="text-xs text-slate-600 hover:text-slate-900 font-medium px-2 py-1 rounded hover:bg-slate-100 transition-colors"
+                  <Link
+                    href={`/leads/${lead.id}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs transition-colors"
                   >
-                    Kelola Status
-                  </button>
+                    <span>Detail & Alur</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
 
                   {isConverted && lead.converted_project_id ? (
                     <Link
@@ -392,10 +472,10 @@ export default function LeadsPage() {
                     <button
                       type="button"
                       onClick={() => openConvertModal(lead)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-lg transition-colors shadow-2xs"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 px-3 py-1.5 rounded-lg transition-colors shadow-2xs"
                     >
                       <Sparkles className="w-3 h-3" />
-                      <span>Konversi ke Proyek</span>
+                      <span>Konversi</span>
                     </button>
                   ) : null}
                 </div>
@@ -530,6 +610,209 @@ export default function LeadsPage() {
                   placeholder="Catatan diskusi atau kriteria khusus dari klien..."
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
                 />
+              </div>
+
+              {/* Client References Section */}
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <Paperclip className="w-3.5 h-3.5 text-sky-600" />
+                      Referensi dari Klien
+                    </span>
+                    <p className="text-[11px] text-slate-500">
+                      Tautan URL, catatan teks, atau unggah gambar mockup/screenshot.
+                    </p>
+                  </div>
+                  {!isAddingRef && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingRef(true)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Tambah</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Form Add New Reference */}
+                {isAddingRef && (
+                  <div className="p-3 bg-white rounded-lg border border-sky-200 shadow-2xs space-y-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewRefType("LINK");
+                          setNewRefImagePreview(null);
+                        }}
+                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                          newRefType === "LINK"
+                            ? "bg-sky-600 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        🔗 Tautan URL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewRefType("TEXT");
+                          setNewRefImagePreview(null);
+                        }}
+                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                          newRefType === "TEXT"
+                            ? "bg-sky-600 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        📝 Catatan Teks
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewRefType("IMAGE")}
+                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                          newRefType === "IMAGE"
+                            ? "bg-sky-600 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        🖼️ Upload Gambar
+                      </button>
+                    </div>
+
+                    <div>
+                      <input
+                        type="text"
+                        value={newRefTitle}
+                        onChange={(e) => setNewRefTitle(e.target.value)}
+                        placeholder="Judul Referensi (contoh: Mockup UI Figma / Screenshot Alur)"
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      />
+                    </div>
+
+                    {newRefType === "LINK" && (
+                      <input
+                        type="url"
+                        value={newRefContent}
+                        onChange={(e) => setNewRefContent(e.target.value)}
+                        placeholder="https://figma.com/... atau https://contoh-web.com"
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      />
+                    )}
+
+                    {newRefType === "TEXT" && (
+                      <textarea
+                        rows={2}
+                        value={newRefContent}
+                        onChange={(e) => setNewRefContent(e.target.value)}
+                        placeholder="Detail catatan atau spesifikasi acuan dari klien..."
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      />
+                    )}
+
+                    {newRefType === "IMAGE" && (
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageFileChange}
+                          className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+                        />
+                        {newRefImagePreview && (
+                          <div className="relative inline-block mt-1">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={newRefImagePreview}
+                              alt="Preview"
+                              className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-2xs"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingRef(false);
+                          setNewRefTitle("");
+                          setNewRefContent("");
+                          setNewRefImagePreview(null);
+                        }}
+                        className="text-xs text-slate-500 hover:text-slate-700 px-2.5 py-1"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddReference}
+                        disabled={
+                          !newRefTitle.trim() ||
+                          (newRefType === "IMAGE" ? !newRefImagePreview : !newRefContent.trim())
+                        }
+                        className="text-xs font-semibold bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white px-3 py-1 rounded-md transition-colors"
+                      >
+                        Simpan Referensi
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* List of Added References */}
+                {references.length > 0 ? (
+                  <div className="space-y-2">
+                    {references.map((ref) => (
+                      <div
+                        key={ref.id}
+                        className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs text-xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {ref.type === "IMAGE" ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={ref.content}
+                              alt={ref.title}
+                              className="w-8 h-8 object-cover rounded border border-slate-200 shrink-0"
+                            />
+                          ) : ref.type === "LINK" ? (
+                            <div className="w-8 h-8 rounded bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                              <Link2 className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <span className="font-semibold text-slate-800 block truncate">{ref.title}</span>
+                            {ref.type === "LINK" ? (
+                              <span className="text-[11px] text-sky-600 truncate block">{ref.content}</span>
+                            ) : ref.type === "TEXT" ? (
+                              <span className="text-[11px] text-slate-500 truncate block">{ref.content}</span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 block">Lampiran Gambar</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveReference(ref.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors shrink-0"
+                          title="Hapus referensi"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : !isAddingRef ? (
+                  <p className="text-[11px] text-slate-400 text-center py-1 italic">
+                    Belum ada referensi ditambahkan.
+                  </p>
+                ) : null}
               </div>
 
               <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
