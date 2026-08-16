@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from projectpilot.api.deps import get_current_user, get_db
+from projectpilot.api.deps import get_current_pm, get_current_user, get_db
 from projectpilot.api.schemas.auth import LoginRequest, TokenResponse, UserCreate, UserResponse
 from projectpilot.core.security import create_access_token, get_password_hash, verify_password
 from projectpilot.persistence.models.user import User
@@ -13,6 +13,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 async def register(
     user_in: UserCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
 ):
     # Check if email exists
     query = select(User).where(User.email == user_in.email)
