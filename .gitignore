@@ -65,3 +65,7 @@ out/
 *.log
 docker-data/
 postgres_data/
+
+# Project Hub frontend source libraries
+!apps/web/src/lib/
+!apps/web/src/lib/**
