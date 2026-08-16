@@ -12,6 +12,8 @@ interface FastApiErrorPayload {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "/api/v1";
 
+const TOKEN_STORAGE_KEY = "projecthub_access_token";
+
 function buildUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) {
     return path;
@@ -78,6 +80,22 @@ export async function apiClient<T>(
 
   headers.set("Accept", "application/json");
 
+  // Authentication is centralized here so every browser-side API call
+  // consistently carries the current production session.
+  //
+  // Explicit Authorization headers still take precedence. This keeps
+  // callers such as auth session restoration fully compatible.
+  if (
+    !headers.has("Authorization") &&
+    typeof window !== "undefined"
+  ) {
+    const storedToken = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+
+    if (storedToken) {
+      headers.set("Authorization", `Bearer ${storedToken}`);
+    }
+  }
+
   if (
     options.body != null &&
     !(options.body instanceof FormData) &&
@@ -120,6 +138,23 @@ export async function apiClient<T>(
     }
 
     if (!response.ok) {
+      /*
+       * If an authenticated browser session is rejected, invalidate the
+       * local session immediately. AuthProvider listens for this event
+       * and the AppShell will return the user to /login.
+       *
+       * Do not do this for the login endpoint itself: an incorrect
+       * password is not an expired application session.
+       */
+      if (
+        response.status === 401 &&
+        typeof window !== "undefined" &&
+        !buildUrl(path).endsWith("/auth/login")
+      ) {
+        window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+        window.dispatchEvent(new Event("projecthub:unauthorized"));
+      }
+
       const errorPayload =
         payload && typeof payload === "object"
           ? (payload as FastApiErrorPayload)

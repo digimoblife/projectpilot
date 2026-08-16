@@ -63,6 +63,25 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
+    function handleUnauthorized() {
+      clearSession();
+      setIsLoading(false);
+    }
+
+    window.addEventListener(
+      "projecthub:unauthorized",
+      handleUnauthorized,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "projecthub:unauthorized",
+        handleUnauthorized,
+      );
+    };
+  }, [clearSession]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function restoreSession() {

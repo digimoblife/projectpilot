@@ -169,7 +169,7 @@ export default function ProjectOverviewPage({
           </div>
           <div>
             <h4 className="text-base font-bold text-slate-900">{project.owner?.full_name || "Project Manager"}</h4>
-            <p className="text-xs text-slate-500">{project.owner?.email || "pm@projectpilot.id"}</p>
+            <p className="text-xs text-slate-500">{project.owner?.email || "Email owner belum tersedia"}</p>
           </div>
           <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-1">
             <p>

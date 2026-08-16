@@ -8,8 +8,8 @@ import { useAuth } from "@/lib/auth-context";
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState("pm@projectpilot.id");
-  const [password, setPassword] = useState("Password123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       const res = await login(email, password);
       if (res.success) {
-        router.push("/dashboard");
+        router.replace("/dashboard");
       } else {
         setError(res.error || "Login gagal.");
       }
@@ -39,7 +39,7 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md mb-3">
             <Compass className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Masuk ke ProjectPilot</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Masuk ke Project Hub</h1>
           <p className="text-sm text-slate-500 mt-1">PM Operating Hub — From Lead to Handover</p>
         </div>
 

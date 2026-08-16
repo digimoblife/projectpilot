@@ -15,6 +15,7 @@ import {
   Search,
   Sparkles,
   User,
+  LogOut,
   Users,
   X,
 } from "lucide-react";
@@ -52,7 +53,7 @@ const entityTypeColors: Record<string, string> = {
 
 export function Header() {
   const router = useRouter();
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -114,6 +115,11 @@ export function Header() {
     router.push(route);
   }
 
+  function handleLogout() {
+    logout();
+    router.replace("/login");
+  }
+
   return (
     <>
       <header className="sticky top-0 z-40 flex items-center justify-between h-16 px-4 md:px-8 bg-white/80 backdrop-blur-md border-b border-slate-200">
@@ -153,6 +159,16 @@ export function Header() {
               <p className="text-xs font-semibold text-slate-800">{user?.full_name || "Project Lead"}</p>
               <p className="text-[11px] text-slate-500">{user?.role || "PROJECT_MANAGER"}</p>
             </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+              aria-label="Keluar"
+              title="Keluar"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
