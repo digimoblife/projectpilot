@@ -251,37 +251,44 @@ export default function LeadDetailPage({
       .filter(Boolean);
 
     for (const block of blocks) {
-      if (block.startsWith("[Kontak")) {
+      if (block.toLowerCase().startsWith("[kontak") || block.toLowerCase().includes("via ")) {
         const headerEnd = block.indexOf("]");
-        const header = block.substring(1, headerEnd); // e.g. "Kontak 2026-08-16 via WhatsApp"
-        const content = block.substring(headerEnd + 1).trim();
+        const header = headerEnd !== -1 ? block.substring(1, headerEnd) : "Kontak Klien";
+        const content = headerEnd !== -1 ? block.substring(headerEnd + 1).trim() : block;
 
-        const match = header.match(/Kontak\s+(.*?)\s+via\s+(.*)/i);
+        const match = header.match(/Kontak\s*(.*?)\s*via\s*(.*)/i);
         data.contact = {
-          date: match ? match[1] : "",
-          media: match ? match[2] : "Komunikasi Langsung",
-          notes: content,
+          date: match && match[1] ? match[1].trim() : "",
+          media: match && match[2] ? match[2].trim() : "WhatsApp / Telepon",
+          notes: content || "Percakapan awal dengan klien telah dilakukan.",
         };
-      } else if (block.startsWith("[Jadwal Brief")) {
+      } else if (
+        block.toLowerCase().startsWith("[jadwal brief") ||
+        block.toLowerCase().startsWith("[brief") ||
+        block.toLowerCase().includes("lokasi/tautan:")
+      ) {
         const headerEnd = block.indexOf("]");
-        const header = block.substring(1, headerEnd); // e.g. "Jadwal Brief: 2026-08-20 pukul 10:00 WIB"
-        const content = block.substring(headerEnd + 1).trim();
+        const header = headerEnd !== -1 ? block.substring(1, headerEnd) : "Jadwal Brief";
+        const content = headerEnd !== -1 ? block.substring(headerEnd + 1).trim() : block;
 
-        const match = header.match(/Jadwal Brief:\s*(.*?)\s*pukul\s*(.*?)(?:\s*WIB)?$/i);
+        const match = header.match(/Jadwal Brief:\s*(.*?)(?:\s*pukul\s*(.*?)(?:\s*WIB)?)?$/i);
         const locationMatch = content.match(/Lokasi\/Tautan:\s*(.*?)(?:\n|$)/i);
         const agendaMatch = content.match(/Agenda:\s*([\s\S]*)$/i);
 
         data.brief = {
-          date: match ? match[1] : "",
-          time: match ? match[2] : "",
-          location: locationMatch ? locationMatch[1].trim() : content,
+          date: match && match[1] ? match[1].trim() : "",
+          time: match && match[2] ? match[2].trim() : "",
+          location: locationMatch ? locationMatch[1].trim() : content || "Online Meeting",
           agenda: agendaMatch ? agendaMatch[1].trim() : "",
         };
-      } else if (block.startsWith("[Hasil Kualifikasi")) {
+      } else if (
+        block.toLowerCase().startsWith("[hasil kualifikasi") ||
+        block.toLowerCase().startsWith("[kualifikasi")
+      ) {
         const headerEnd = block.indexOf("]");
-        const content = block.substring(headerEnd + 1).trim();
+        const content = headerEnd !== -1 ? block.substring(headerEnd + 1).trim() : block;
         data.qualify = {
-          summary: content,
+          summary: content || "Scope dan kebutuhan teknis telah disepakati.",
         };
       } else if (block.startsWith("[Catatan")) {
         const headerEnd = block.indexOf("]");
@@ -302,7 +309,7 @@ export default function LeadDetailPage({
     return data;
   }, [lead?.brief_notes]);
 
-  // Step 1: Log Initial Contact (NEW -> CONTACTED)
+  // Step 1: Log Initial Contact (NEW -> CONTACTED or Edit Contact Notes)
   async function handleSubmitContact(e: React.FormEvent) {
     e.preventDefault();
     if (!lead) return;
@@ -318,23 +325,35 @@ export default function LeadDetailPage({
       : contactEntry;
 
     try {
-      const statusRes = await apiClient<LeadDetail>(`/leads/${lead.id}/status`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ target_status: "CONTACTED" }),
-      });
+      if (lead.status === "NEW") {
+        const statusRes = await apiClient<LeadDetail>(`/leads/${lead.id}/status`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            target_status: "CONTACTED",
+            brief_notes: updatedBrief,
+          }),
+        });
 
-      if (!statusRes.data) {
-        setModalError(statusRes.error || "Gagal memperbarui status.");
-        setIsSubmitting(false);
-        return;
+        if (!statusRes.data) {
+          setModalError(statusRes.error || "Gagal memperbarui status.");
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // If already passed NEW, directly update brief_notes via PATCH
+        const updateRes = await apiClient<LeadDetail>(`/leads/${lead.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ brief_notes: updatedBrief }),
+        });
+
+        if (!updateRes.data) {
+          setModalError(updateRes.error || "Gagal menyimpan catatan.");
+          setIsSubmitting(false);
+          return;
+        }
       }
-
-      await apiClient<LeadDetail>(`/leads/${lead.id}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ brief_notes: updatedBrief }),
-      });
 
       setActiveModal(null);
       setContactNotes("");
@@ -346,7 +365,7 @@ export default function LeadDetailPage({
     }
   }
 
-  // Step 2: Schedule Discovery Brief (CONTACTED -> BRIEF_SCHEDULED)
+  // Step 2: Schedule Discovery Brief (CONTACTED -> BRIEF_SCHEDULED or Edit Brief Details)
   async function handleSubmitBriefSchedule(e: React.FormEvent) {
     e.preventDefault();
     if (!lead) return;
@@ -364,23 +383,35 @@ export default function LeadDetailPage({
       : scheduleEntry;
 
     try {
-      const statusRes = await apiClient<LeadDetail>(`/leads/${lead.id}/status`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ target_status: "BRIEF_SCHEDULED" }),
-      });
+      if (lead.status === "CONTACTED") {
+        const statusRes = await apiClient<LeadDetail>(`/leads/${lead.id}/status`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            target_status: "BRIEF_SCHEDULED",
+            brief_notes: updatedBrief,
+          }),
+        });
 
-      if (!statusRes.data) {
-        setModalError(statusRes.error || "Gagal memperbarui status.");
-        setIsSubmitting(false);
-        return;
+        if (!statusRes.data) {
+          setModalError(statusRes.error || "Gagal memperbarui status.");
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // If already passed CONTACTED, directly update brief_notes via PATCH
+        const updateRes = await apiClient<LeadDetail>(`/leads/${lead.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ brief_notes: updatedBrief }),
+        });
+
+        if (!updateRes.data) {
+          setModalError(updateRes.error || "Gagal menyimpan jadwal brief.");
+          setIsSubmitting(false);
+          return;
+        }
       }
-
-      await apiClient<LeadDetail>(`/leads/${lead.id}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ brief_notes: updatedBrief }),
-      });
 
       setActiveModal(null);
       setBriefAgenda("");
@@ -392,7 +423,7 @@ export default function LeadDetailPage({
     }
   }
 
-  // Step 3: Qualify Lead (BRIEF_SCHEDULED -> QUALIFIED)
+  // Step 3: Qualify Lead (BRIEF_SCHEDULED -> QUALIFIED or Edit Qualify Summary)
   async function handleSubmitQualify(e: React.FormEvent) {
     e.preventDefault();
     if (!lead) return;
@@ -408,23 +439,35 @@ export default function LeadDetailPage({
       : qualifyEntry;
 
     try {
-      const statusRes = await apiClient<LeadDetail>(`/leads/${lead.id}/status`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ target_status: "QUALIFIED" }),
-      });
+      if (lead.status === "BRIEF_SCHEDULED") {
+        const statusRes = await apiClient<LeadDetail>(`/leads/${lead.id}/status`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            target_status: "QUALIFIED",
+            brief_notes: updatedBrief,
+          }),
+        });
 
-      if (!statusRes.data) {
-        setModalError(statusRes.error || "Gagal memperbarui status.");
-        setIsSubmitting(false);
-        return;
+        if (!statusRes.data) {
+          setModalError(statusRes.error || "Gagal memperbarui status.");
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // If already passed BRIEF_SCHEDULED, directly update brief_notes via PATCH
+        const updateRes = await apiClient<LeadDetail>(`/leads/${lead.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ brief_notes: updatedBrief }),
+        });
+
+        if (!updateRes.data) {
+          setModalError(updateRes.error || "Gagal menyimpan kualifikasi scope.");
+          setIsSubmitting(false);
+          return;
+        }
       }
-
-      await apiClient<LeadDetail>(`/leads/${lead.id}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ brief_notes: updatedBrief }),
-      });
 
       setActiveModal(null);
       setQualifySummary("");
@@ -1114,23 +1157,39 @@ export default function LeadDetailPage({
 
                 {stageData.contact ? (
                   <div className="bg-white p-3.5 rounded-lg border border-slate-200/80 space-y-2.5 text-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border-b border-slate-100 pb-2">
-                      <div>
-                        <span className="text-slate-400 block text-[11px] font-medium">
-                          Tanggal Kontak
-                        </span>
-                        <span className="font-semibold text-slate-800">
-                          {stageData.contact.date || "-"}
-                        </span>
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                        <div>
+                          <span className="text-slate-400 block text-[11px] font-medium">
+                            Tanggal Kontak
+                          </span>
+                          <span className="font-semibold text-slate-800">
+                            {stageData.contact.date || "-"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px] font-medium">
+                            Media Komunikasi
+                          </span>
+                          <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 inline-block">
+                            {stageData.contact.media}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-slate-400 block text-[11px] font-medium">
-                          Media Komunikasi
-                        </span>
-                        <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 inline-block">
-                          {stageData.contact.media}
-                        </span>
-                      </div>
+                      {!isTerminal && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (stageData.contact?.date) setContactDate(stageData.contact.date);
+                            if (stageData.contact?.media) setContactMedia(stageData.contact.media);
+                            if (stageData.contact?.notes) setContactNotes(stageData.contact.notes);
+                            setActiveModal("CONTACT");
+                          }}
+                          className="text-[11px] font-semibold text-sky-600 hover:text-sky-700 ml-2"
+                        >
+                          Ubah
+                        </button>
+                      )}
                     </div>
                     <div>
                       <span className="text-slate-400 block text-[11px] font-medium mb-1">
@@ -1140,6 +1199,22 @@ export default function LeadDetailPage({
                         {stageData.contact.notes}
                       </p>
                     </div>
+                  </div>
+                ) : currentStepNum >= 2 ? (
+                  <div className="p-3 bg-white rounded-lg border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <p className="text-xs text-slate-600">
+                      Tahap kontak awal telah selesai. Catatan detail belum tersimpan.
+                    </p>
+                    {!isTerminal && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal("CONTACT")}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg transition-colors shrink-0"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>+ Isi Catatan Kontak</span>
+                      </button>
+                    )}
                   </div>
                 ) : currentStepNum === 1 ? (
                   <div className="p-3 bg-white rounded-lg border border-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1209,35 +1284,52 @@ export default function LeadDetailPage({
 
                 {stageData.brief ? (
                   <div className="bg-white p-3.5 rounded-lg border border-slate-200/80 space-y-2.5 text-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border-b border-slate-100 pb-2">
-                      <div>
-                        <span className="text-slate-400 block text-[11px] font-medium">
-                          Waktu Meeting
-                        </span>
-                        <span className="font-semibold text-slate-800">
-                          {stageData.brief.date} {stageData.brief.time && `pukul ${stageData.brief.time} WIB`}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block text-[11px] font-medium">
-                          Lokasi / Tautan Meeting
-                        </span>
-                        {stageData.brief.location.startsWith("http") ? (
-                          <a
-                            href={stageData.brief.location}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-medium text-sky-600 hover:underline inline-flex items-center gap-1"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            <span className="truncate">{stageData.brief.location}</span>
-                          </a>
-                        ) : (
-                          <span className="font-semibold text-slate-800">
-                            {stageData.brief.location}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                        <div>
+                          <span className="text-slate-400 block text-[11px] font-medium">
+                            Waktu Meeting
                           </span>
-                        )}
+                          <span className="font-semibold text-slate-800">
+                            {stageData.brief.date} {stageData.brief.time && `pukul ${stageData.brief.time} WIB`}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px] font-medium">
+                            Lokasi / Tautan Meeting
+                          </span>
+                          {stageData.brief.location.startsWith("http") ? (
+                            <a
+                              href={stageData.brief.location}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-medium text-sky-600 hover:underline inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span className="truncate">{stageData.brief.location}</span>
+                            </a>
+                          ) : (
+                            <span className="font-semibold text-slate-800">
+                              {stageData.brief.location}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {!isTerminal && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (stageData.brief?.date) setBriefDate(stageData.brief.date);
+                            if (stageData.brief?.time) setBriefTime(stageData.brief.time);
+                            if (stageData.brief?.location) setBriefLocation(stageData.brief.location);
+                            if (stageData.brief?.agenda) setBriefAgenda(stageData.brief.agenda);
+                            setActiveModal("BRIEF");
+                          }}
+                          className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 ml-2"
+                        >
+                          Ubah
+                        </button>
+                      )}
                     </div>
 
                     {stageData.brief.agenda && (
@@ -1249,6 +1341,22 @@ export default function LeadDetailPage({
                           {stageData.brief.agenda}
                         </p>
                       </div>
+                    )}
+                  </div>
+                ) : currentStepNum >= 3 ? (
+                  <div className="p-3 bg-white rounded-lg border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <p className="text-xs text-slate-600">
+                      Discovery brief telah tercatat. Rincian jadwal atau agenda belum tersimpan.
+                    </p>
+                    {!isTerminal && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal("BRIEF")}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg transition-colors shrink-0"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>+ Isi Rincian Brief</span>
+                      </button>
                     )}
                   </div>
                 ) : currentStepNum === 2 ? (
@@ -1319,12 +1427,42 @@ export default function LeadDetailPage({
 
                 {stageData.qualify ? (
                   <div className="bg-white p-3.5 rounded-lg border border-slate-200/80 space-y-1.5 text-xs">
-                    <span className="text-slate-400 block text-[11px] font-medium">
-                      Ringkasan Kesiapan & Scope Teknis yang Disepakati
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 block text-[11px] font-medium">
+                        Ringkasan Kesiapan & Scope Teknis yang Disepakati
+                      </span>
+                      {!isTerminal && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (stageData.qualify?.summary) setQualifySummary(stageData.qualify.summary);
+                            setActiveModal("QUALIFY");
+                          }}
+                          className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700"
+                        >
+                          Ubah
+                        </button>
+                      )}
+                    </div>
                     <p className="text-slate-700 whitespace-pre-line leading-relaxed bg-slate-50 p-2.5 rounded border border-slate-100">
                       {stageData.qualify.summary}
                     </p>
+                  </div>
+                ) : currentStepNum >= 4 ? (
+                  <div className="p-3 bg-white rounded-lg border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <p className="text-xs text-slate-600">
+                      Kualifikasi scope telah selesai. Rincian kesepakatan scope belum tersimpan.
+                    </p>
+                    {!isTerminal && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal("QUALIFY")}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg transition-colors shrink-0"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>+ Isi Kualifikasi Scope</span>
+                      </button>
+                    )}
                   </div>
                 ) : currentStepNum === 3 ? (
                   <div className="p-3 bg-white rounded-lg border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

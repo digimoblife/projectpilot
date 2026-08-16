@@ -210,6 +210,65 @@ Include sections:
 Evidence:
 {evidence}
 """,
+    "DOC_PRD": """
+Generate a comprehensive Product Requirement Document (PRD) in Markdown format based on the project brief, client discovery answers, and approved requirements below.
+Language: Professional, structured Bahasa Indonesia.
+Include sections:
+# Product Requirement Document (PRD): {project_name}
+## 1. Latar Belakang & Tujuan Bisnis
+## 2. Target Pengguna (User Persona) & Problem Statement
+## 3. Batasan Ruang Lingkup & Asumsi (Scope Baseline)
+## 4. Modul Utama & Spesifikasi Fitur
+## 5. Kebutuhan Non-Fungsional (Performa, Keamanan, Aksesibilitas)
+## 6. Metrik Keberhasilan (KPI & Acceptance Standard)
+
+Evidence:
+{evidence}
+""",
+    "EPIC_FEATURE_GEN": """
+Analyze the following project brief, requirements, and discovery evidence.
+Extract high-level modules (Epics) and specific sub-features (Features) in Bahasa Indonesia.
+Return a structured JSON object with the key "epics":
+[
+  {{
+    "key": "EPIC-01",
+    "title": "Judul Modul / Epic (contoh: Modul Company Profile & Portofolio)",
+    "description": "Deskripsi cakupan modul ini",
+    "features": [
+      {{
+        "key": "FEAT-01",
+        "title": "Judul Sub-Fitur (contoh: Halaman Showcase Portofolio Interaktif)",
+        "description": "Deskripsi fungsional sub-fitur ini",
+        "requirement_key": "REQ-001 (opsional, jika terkait requirement tertentu)"
+      }}
+    ]
+  }}
+]
+
+Evidence:
+{evidence}
+""",
+    "TASK_BREAKDOWN_GEN": """
+Analyze the following Epics, Features, and Requirements evidence for the project.
+Break down each module into concrete, actionable technical tasks for software engineers, UI/UX designers, and QA testers.
+IMPORTANT: Do NOT estimate hours; set estimated_hours strictly to 0 for all tasks (PM will input manually).
+Return a structured JSON object with the key "tasks":
+[
+  {{
+    "key": "TASK-01",
+    "epic_key": "EPIC-01",
+    "feature_key": "FEAT-01 (opsional)",
+    "title": "Judul Task Teknis (contoh: Slicing UI Form Kontak & Validasi Input)",
+    "description": "Deskripsi teknis pengerjaan task",
+    "priority": "HIGH / MEDIUM / LOW / CRITICAL",
+    "estimated_hours": 0,
+    "suggested_role": "FRONTEND / BACKEND / UI_UX / QA / DEVOPS"
+  }}
+]
+
+Evidence:
+{evidence}
+""",
 }
 
 

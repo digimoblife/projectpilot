@@ -53,8 +53,8 @@ const stageOptions = [
   { value: "DISCOVERY", label: "Discovery" },
   { value: "REQUIREMENT_DEFINITION", label: "Requirements Definition" },
   { value: "PLANNING", label: "Planning" },
-  { value: "AWAITING_CLIENT_APPROVAL", label: "Awaiting Client Approval" },
-  { value: "ACTIVE_DELIVERY", label: "Active Delivery" },
+  { value: "AWAITING_CLIENT_APPROVAL", label: "In Progress" },
+  { value: "ACTIVE_DELIVERY", label: "Client Review" },
   { value: "HANDOVER", label: "Handover" },
   { value: "COMPLETED", label: "Completed" },
   { value: "ON_HOLD", label: "On Hold" },
@@ -190,7 +190,9 @@ export default function ProjectOverviewPage({
               <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">Tahapan Aktif</span>
               <Compass className="w-4 h-4 text-sky-600" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900 mt-2">{project.lifecycle_stage}</h4>
+            <h4 className="text-lg font-bold text-slate-900 mt-2">
+              {stageOptions.find((s) => s.value === project.lifecycle_stage)?.label || project.lifecycle_stage}
+            </h4>
             <p className="text-xs text-slate-500 mt-0.5">
               Transisi tahapan dikontrol ketat sesuai Workflow State Machine.
             </p>
@@ -262,8 +264,11 @@ export default function ProjectOverviewPage({
             </div>
 
             <p className="text-xs text-slate-500">
-              Tahap saat ini: <span className="font-bold text-slate-800">{project.lifecycle_stage}</span>.
-              Sistem akan memvalidasi apakah transisi tujuan diizinkan oleh State Machine.
+              Tahap saat ini:{" "}
+              <span className="font-bold text-slate-800">
+                {stageOptions.find((s) => s.value === project.lifecycle_stage)?.label || project.lifecycle_stage}
+              </span>
+              . Sistem akan memvalidasi apakah transisi tujuan diizinkan oleh State Machine.
             </p>
 
             {transitionError && (
@@ -283,7 +288,7 @@ export default function ProjectOverviewPage({
                 >
                   {stageOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
-                      {opt.label} ({opt.value})
+                      {opt.label}
                     </option>
                   ))}
                 </select>

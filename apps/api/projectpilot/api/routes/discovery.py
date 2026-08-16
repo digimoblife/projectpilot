@@ -185,6 +185,7 @@ async def get_discovery_question(
     return question
 
 
+@router.patch("/discovery-questions/{question_id}", response_model=DiscoveryQuestionResponse)
 @router.put("/discovery-questions/{question_id}", response_model=DiscoveryQuestionResponse)
 async def update_discovery_question(
     project_id: uuid.UUID,
@@ -213,6 +214,26 @@ async def update_discovery_question(
     await db.commit()
     await db.refresh(question)
     return question
+
+
+@router.delete("/discovery-questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_discovery_question(
+    project_id: uuid.UUID,
+    question_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(DiscoveryQuestion).where(
+        DiscoveryQuestion.id == question_id,
+        DiscoveryQuestion.project_id == project_id,
+    )
+    result = await db.execute(query)
+    question = result.scalar_one_or_none()
+    if not question:
+        raise HTTPException(status_code=404, detail="Discovery question not found.")
+
+    await db.delete(question)
+    await db.commit()
 
 
 @router.post("/discovery-questions/{question_id}/status", response_model=DiscoveryQuestionResponse)

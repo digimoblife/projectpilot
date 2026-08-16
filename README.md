@@ -55,11 +55,11 @@ projectpilot/
 | **Phase 2** | **Lead Management**: Presales Pipeline, Contact Management, Atomic Lead-to-Project Conversion | ✅ Selesai |
 | **Phase 3** | **Discovery Foundation**: Client Briefs, Discovery Questionnaires, Categories, Structured Answer Gathering | ✅ Selesai |
 | **Phase 4** | **Requirements & Scope**: Requirements Specification, Acceptance Criteria, Scope Baseline, Decision Records (ADR) | ✅ Selesai |
-| **Phase 5** | **Planning & Tasks**: Planning Hierarchy (Epics & Features), Task Data Model, Shared Kanban Workflow & Transitions | ✅ Selesai |
-| **Phase 6** | **Timeline & Team**: Timeline & Milestones, Team Capacity Allocation, Task Dependencies Graph | ✅ Selesai |
+| **Phase 5** | **Planning & Tasks**: Planning Hierarchy (Epics & Features), Task Data Model, 5-Column Kanban Workflow & Auto-Calculation | ✅ Selesai |
+| **Phase 6** | **Timeline & Team**: Milestones Lifecycle, Team Workload Dashboard, Inline Quick-Add Roster, Task Dependencies Graph | ✅ Selesai |
 | **Phase 7** | **Risks & Blockers**: Issues Tracker, 5x5 Risk Matrix, Blocker Escalation Engine, Client Dependencies with SLAs | ✅ Selesai |
 | **Phase 8** | **AI Core Infrastructure**: Prompt Registry, Token Usage Tracking, Schema Validator, Robust JSON Sanitizer | ✅ Selesai |
-| **Phase 9** | **AI Discovery Intelligence**: AI Brief Analysis, Question Generation, Requirement Extraction & Contradiction Detection | ✅ Selesai |
+| **Phase 9** | **AI Discovery Intelligence**: AI Brief Analysis, Question Generation, Requirement Extraction & PRD Copilot | ✅ Selesai |
 | **Phase 10** | **Meeting Management & AI**: Meeting Logs, AI Action Items Extraction, Atomic Task & Issue Conversion | ✅ Selesai |
 | **Phase 11** | **PM Control Center**: Deterministic Project Health Rules Engine v1.0.0, Portfolio Morning Briefing & Diagnostics | ✅ Selesai |
 | **Phase 12** | **Evidence-Grounded Reporting**: Weekly & Monthly Reports, Client-Safe Sanitization, Status History Snapshots | ✅ Selesai |
@@ -69,6 +69,28 @@ projectpilot/
 | **Phase 16** | **Mobile UX & Accessibility Hardening**: Touch Target Audits (>=44px), Mobile Task Switchers, ARIA Dialog Focus Traps | ✅ Selesai |
 | **Phase 17** | **Production Hardening & Deployment**: Production Compose, NGINX Gateway, Automated Backup/Restore, Production Runbook | ✅ Selesai |
 | **Phase 18** | **Final Verification Gate & System Acceptance**: End-to-End Acceptance Suite, Isolation Integrity, Release Certification | ✅ Selesai |
+
+---
+
+## ✨ Key Feature Highlights & Operational Workflows
+
+### 1. 🔍 Discovery & AI PRD Assistant
+* **Brief Analysis**: Analisis kebutuhan awal klien berbasis bukti faktual (*evidence-grounded*).
+* **PRD Generator**: Menghasilkan dokumen PRD (*Product Requirement Document*) terstruktur dengan fitur peninjauan dan penyuntingan langsung.
+
+### 2. 📋 Planning, Epics & Features
+* **WBS Decomposition**: Pembagian sistem menjadi modul-modul fungsional (*Epics*) dan fitur teknis detail (*Features*).
+* **AI Task Auto-Breakdown**: AI Copilot untuk memecah fitur menjadi tiket pengerjaan teknis developer.
+
+### 3. 📊 5-Column Kanban Board & Smart Task Management
+* **Kanban Alur Terstruktur**: 5 kolom kanonik (`Backlog`, `In Progress`, `In Review`, `Blocked`, `Done`) yang bersih dan responsif.
+* **Auto-Calculate Estimasi Hari**: Menghitung durasi hari kerja secara instan dari rentang **Tanggal Mulai (*Start Date*)** dan **Tenggat Selesai (*Due Date*)**.
+* **Inline Quick-Add Member**: Mendaftarkan anggota tim baru langsung dari dalam modal task tanpa perlu berpindah halaman (*Zero Friction*).
+
+### 4. ⏱️ Timeline, Dependencies & Team Allocation
+* **Milestones Tracking**: Pengelolaan target pencapaian proyek dengan status interaktif (`Direncanakan`, `Tercapai`, `Terlewat`, `Dibatalkan`).
+* **Task Dependencies Graph**: Menghubungkan tugas prasyarat (*Predecessor*) dan penerus (*Successor*) dengan validasi DAG bebas siklus (*cycle-free*).
+* **Real-time Team Workload Dashboard**: Kartu personil tim dengan metrik kapasitas harian mingguan, progress bar tugas, daftar tiket aktif (maks. 5 + auto-scroll), dan peringatan blocker otomatis.
 
 ---
 

@@ -36,6 +36,11 @@ router = APIRouter(tags=["Documentation Generation"])
     response_model=DocumentResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@router.post(
+    "/projects/{project_id}/documents/generate",
+    response_model=DocumentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def generate_document_draft(
     project_id: uuid.UUID,
     req: DocumentGenerateRequest,

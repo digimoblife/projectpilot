@@ -30,7 +30,7 @@ class AIJobResponse(BaseModel):
 # --- AI Suggestion Schemas ---
 class AISuggestionReviewRequest(BaseModel):
     action: AISuggestionStatus  # ACCEPTED, EDITED, REJECTED
-    edited_data: Optional[Dict[str, Any]] = None
+    edited_data: Optional[Any] = None
     review_notes: Optional[str] = None
 
 
@@ -42,8 +42,8 @@ class AISuggestionResponse(BaseModel):
     job_id: Optional[uuid.UUID] = None
     capability: str
     title: str
-    suggested_data: Dict[str, Any]
-    evidence_sources: Optional[Dict[str, Any]] = None
+    suggested_data: Any
+    evidence_sources: Optional[Any] = None
     status: AISuggestionStatus
     reviewed_by_id: Optional[uuid.UUID] = None
     reviewed_at: Optional[datetime] = None

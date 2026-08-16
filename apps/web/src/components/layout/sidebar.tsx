@@ -30,14 +30,15 @@ export function Sidebar() {
       aria-label="Navigasi Sidebar Desktop"
       className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50 bg-white border-r border-slate-200"
     >
-      <div className="flex items-center gap-3 px-6 h-16 border-b border-slate-200">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-sky-600 text-white shadow-xs">
-          <Compass className="w-5 h-5" />
-        </div>
-        <div>
-          <span className="font-bold text-slate-900 tracking-tight text-base block">ProjectPilot</span>
-          <span className="text-[10px] text-slate-500 font-semibold block -mt-0.5 uppercase tracking-wider">PM Operating Hub</span>
-        </div>
+      <div className="flex items-center px-4 h-16 border-b border-slate-200">
+        <Link href="/dashboard" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="Project Hub"
+            className="h-9 w-auto object-contain max-w-[200px]"
+          />
+        </Link>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Menu Utama">

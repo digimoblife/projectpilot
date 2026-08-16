@@ -205,6 +205,25 @@ async def update_milestone_status(
     return milestone
 
 
+@router.delete("/projects/{project_id}/milestones/{milestone_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_milestone(
+    project_id: uuid.UUID,
+    milestone_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(Milestone).where(
+        Milestone.id == milestone_id, Milestone.project_id == project_id
+    )
+    res = await db.execute(query)
+    milestone = res.scalar_one_or_none()
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found.")
+
+    await db.delete(milestone)
+    await db.commit()
+
+
 # =========================================================================
 # 3. TASK DEPENDENCIES ENDPOINTS (WITH CYCLE VALIDATION)
 # =========================================================================

@@ -39,12 +39,12 @@ const stageLabels: Record<string, { label: string; color: string }> = {
   DISCOVERY: { label: "Discovery", color: "bg-purple-50 text-purple-700 border-purple-200" },
   REQUIREMENT_DEFINITION: { label: "Requirements", color: "bg-blue-50 text-blue-700 border-blue-200" },
   PLANNING: { label: "Planning", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  AWAITING_CLIENT_APPROVAL: { label: "Menunggu Approval", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  ACTIVE_DELIVERY: { label: "Active Delivery", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  AWAITING_CLIENT_APPROVAL: { label: "In Progress", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  ACTIVE_DELIVERY: { label: "Client Review", color: "bg-amber-50 text-amber-700 border-amber-200" },
   HANDOVER: { label: "Handover", color: "bg-teal-50 text-teal-700 border-teal-200" },
-  COMPLETED: { label: "Selesai", color: "bg-slate-100 text-slate-700 border-slate-200" },
+  COMPLETED: { label: "Completed", color: "bg-slate-100 text-slate-700 border-slate-200" },
   ON_HOLD: { label: "On Hold", color: "bg-orange-50 text-orange-700 border-orange-200" },
-  CANCELLED: { label: "Dibatalkan", color: "bg-rose-50 text-rose-700 border-rose-200" },
+  CANCELLED: { label: "Cancelled", color: "bg-rose-50 text-rose-700 border-rose-200" },
 };
 
 const healthLabels: Record<string, { label: string; dot: string; text: string }> = {

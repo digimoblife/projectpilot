@@ -45,6 +45,7 @@ class LeadUpdate(BaseModel):
 class LeadStatusUpdate(BaseModel):
     target_status: LeadStatus
     loss_reason: Optional[str] = None
+    brief_notes: Optional[str] = None
 
 
 class LeadConvertRequest(BaseModel):

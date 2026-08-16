@@ -3,7 +3,9 @@ from projectpilot.persistence.models.planning_tasks import TaskStatus
 
 ALLOWED_TASK_TRANSITIONS: Dict[TaskStatus, Set[TaskStatus]] = {
     TaskStatus.BACKLOG: {
+        TaskStatus.IN_PROGRESS,
         TaskStatus.READY,
+        TaskStatus.BLOCKED,
         TaskStatus.CANCELLED,
     },
     TaskStatus.READY: {
@@ -14,35 +16,44 @@ ALLOWED_TASK_TRANSITIONS: Dict[TaskStatus, Set[TaskStatus]] = {
     },
     TaskStatus.IN_PROGRESS: {
         TaskStatus.IN_REVIEW,
+        TaskStatus.DONE,
         TaskStatus.QA,
         TaskStatus.BLOCKED,
+        TaskStatus.BACKLOG,
         TaskStatus.READY,
         TaskStatus.CANCELLED,
     },
     TaskStatus.IN_REVIEW: {
+        TaskStatus.DONE,
         TaskStatus.QA,
         TaskStatus.IN_PROGRESS,
         TaskStatus.BLOCKED,
+        TaskStatus.BACKLOG,
         TaskStatus.CANCELLED,
     },
     TaskStatus.QA: {
         TaskStatus.DONE,
         TaskStatus.IN_PROGRESS,
+        TaskStatus.IN_REVIEW,
         TaskStatus.BLOCKED,
         TaskStatus.CANCELLED,
     },
     TaskStatus.BLOCKED: {
         TaskStatus.IN_PROGRESS,
-        TaskStatus.READY,
+        TaskStatus.IN_REVIEW,
         TaskStatus.BACKLOG,
+        TaskStatus.READY,
+        TaskStatus.DONE,
         TaskStatus.CANCELLED,
     },
     TaskStatus.DONE: {
         TaskStatus.IN_PROGRESS,
+        TaskStatus.BACKLOG,
     },
     TaskStatus.CANCELLED: {
         TaskStatus.BACKLOG,
         TaskStatus.READY,
+        TaskStatus.IN_PROGRESS,
     },
 }
 

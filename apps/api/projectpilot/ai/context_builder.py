@@ -72,8 +72,53 @@ async def build_requirements_context(project_id: uuid.UUID, db: AsyncSession) ->
     scope_items = s_res.scalars().all()
     scope_lines = [f"- [{s.scope_type.value}] {s.title}: {s.description or ''}" for s in scope_items]
 
+    # Also include existing requirements
+    req_res = await db.execute(select(Requirement).where(Requirement.project_id == project_id))
+    reqs = req_res.scalars().all()
+    req_lines = [f"- [{r.key}] {r.title} ({r.category.value}) - Status: {r.status.value}" for r in reqs]
+
     return f"""{discovery_context}
 
 === BASELINE SCOPE ITEMS ===
 {chr(10).join(scope_lines) if scope_lines else "Belum ada baseline scope."}
+
+=== CURRENT REQUIREMENTS ===
+{chr(10).join(req_lines) if req_lines else "Belum ada requirement terdaftar."}
 """.strip()
+
+
+async def build_planning_context(project_id: uuid.UUID, db: AsyncSession) -> str:
+    """Assembles all requirements, discovery findings, and brief for epic/feature generation."""
+    req_context = await build_requirements_context(project_id, db)
+    return req_context
+
+
+async def build_tasks_context(project_id: uuid.UUID, db: AsyncSession) -> str:
+    """Assembles Epics, Features, and Requirements for breaking down into concrete Kanban tasks."""
+    from projectpilot.persistence.models.planning_tasks import Epic, Feature
+
+    # 1. Epics & Features
+    e_res = await db.execute(select(Epic).where(Epic.project_id == project_id).order_by(Epic.key.asc()))
+    epics = e_res.scalars().all()
+
+    f_res = await db.execute(select(Feature).where(Feature.project_id == project_id).order_by(Feature.key.asc()))
+    features = f_res.scalars().all()
+
+    epic_lines: List[str] = []
+    for e in epics:
+        epic_feats = [f for f in features if f.epic_id == e.id]
+        feat_desc = "\n".join([f"    * [{f.key}] {f.title}: {f.description or ''}" for f in epic_feats])
+        epic_lines.append(f"- [{e.key}] {e.title}\n  Deskripsi: {e.description or ''}\n  Fitur-Fitur:\n{feat_desc if feat_desc else '    (Belum ada sub-fitur)'}")
+
+    # 2. Requirements
+    req_res = await db.execute(select(Requirement).where(Requirement.project_id == project_id))
+    reqs = req_res.scalars().all()
+    req_lines = [f"- [{r.key}] {r.title} ({r.category.value})" for r in reqs]
+
+    return f"""=== EPICS & FEATURES HIERARCHY ===
+{chr(10).join(epic_lines) if epic_lines else "Belum ada Epics terdaftar."}
+
+=== ASSOCIATED REQUIREMENTS ===
+{chr(10).join(req_lines) if req_lines else "Belum ada requirement."}
+""".strip()
+

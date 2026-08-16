@@ -36,9 +36,12 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex flex-col justify-center items-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md mb-3">
-            <Compass className="w-6 h-6" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="Project Hub"
+            className="h-12 w-auto object-contain mb-3"
+          />
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Masuk ke Project Hub</h1>
           <p className="text-sm text-slate-500 mt-1">PM Operating Hub — From Lead to Handover</p>
         </div>

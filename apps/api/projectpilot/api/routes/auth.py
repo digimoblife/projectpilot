@@ -13,7 +13,6 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 async def register(
     user_in: UserCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_pm),
 ):
     # Check if email exists
     query = select(User).where(User.email == user_in.email)

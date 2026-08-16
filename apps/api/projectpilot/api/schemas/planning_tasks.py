@@ -74,10 +74,11 @@ class TaskBase(BaseModel):
     scope_item_id: Optional[uuid.UUID] = None
     parent_task_id: Optional[uuid.UUID] = None
     priority: Optional[str] = "MEDIUM"
+    start_date: Optional[date] = None
+    due_date: Optional[date] = None
     estimated_hours: Optional[float] = None
     actual_hours: Optional[float] = None
     assignee_name: Optional[str] = None
-    due_date: Optional[date] = None
     order_index: Optional[int] = 0
 
 
@@ -94,10 +95,11 @@ class TaskUpdate(BaseModel):
     scope_item_id: Optional[uuid.UUID] = None
     parent_task_id: Optional[uuid.UUID] = None
     priority: Optional[str] = None
+    start_date: Optional[date] = None
+    due_date: Optional[date] = None
     estimated_hours: Optional[float] = None
     actual_hours: Optional[float] = None
     assignee_name: Optional[str] = None
-    due_date: Optional[date] = None
     order_index: Optional[int] = None
 
 

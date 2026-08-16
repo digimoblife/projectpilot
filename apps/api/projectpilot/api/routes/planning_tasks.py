@@ -86,6 +86,23 @@ async def update_epic(
     return epic
 
 
+@router.delete("/epics/{epic_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_epic(
+    project_id: uuid.UUID,
+    epic_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(Epic).where(Epic.id == epic_id, Epic.project_id == project_id)
+    res = await db.execute(query)
+    epic = res.scalar_one_or_none()
+    if not epic:
+        raise HTTPException(status_code=404, detail="Epic not found.")
+
+    await db.delete(epic)
+    await db.commit()
+
+
 # =========================================================================
 # 2. FEATURES ENDPOINTS
 # =========================================================================
@@ -147,6 +164,23 @@ async def update_feature(
     await db.commit()
     await db.refresh(feature)
     return feature
+
+
+@router.delete("/features/{feature_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_feature(
+    project_id: uuid.UUID,
+    feature_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(Feature).where(Feature.id == feature_id, Feature.project_id == project_id)
+    res = await db.execute(query)
+    feature = res.scalar_one_or_none()
+    if not feature:
+        raise HTTPException(status_code=404, detail="Feature not found.")
+
+    await db.delete(feature)
+    await db.commit()
 
 
 # =========================================================================

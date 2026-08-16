@@ -71,8 +71,8 @@ const lifecycleStages = [
   { key: "DISCOVERY", label: "Discovery" },
   { key: "REQUIREMENT_DEFINITION", label: "Requirements" },
   { key: "PLANNING", label: "Planning" },
-  { key: "AWAITING_CLIENT_APPROVAL", label: "Approval" },
-  { key: "ACTIVE_DELIVERY", label: "Active Delivery" },
+  { key: "AWAITING_CLIENT_APPROVAL", label: "In Progress" },
+  { key: "ACTIVE_DELIVERY", label: "Client Review" },
   { key: "HANDOVER", label: "Handover" },
   { key: "COMPLETED", label: "Completed" },
 ];

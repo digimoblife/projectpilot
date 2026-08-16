@@ -118,6 +118,7 @@ async def get_lead(
     return lead
 
 
+@router.patch("/{lead_id}", response_model=LeadResponse)
 @router.put("/{lead_id}", response_model=LeadResponse)
 async def update_lead(
     lead_id: uuid.UUID,
@@ -138,12 +139,6 @@ async def update_lead(
     lead = result.scalar_one_or_none()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found.")
-
-    if lead.status in [LeadStatus.CONVERTED, LeadStatus.NOT_QUALIFIED, LeadStatus.LOST]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot edit lead in terminal status '{lead.status.value}'.",
-        )
 
     update_data = lead_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -184,6 +179,8 @@ async def update_lead_status(
     lead.status = status_in.target_status
     if status_in.target_status == LeadStatus.LOST and status_in.loss_reason:
         lead.loss_reason = status_in.loss_reason
+    if status_in.brief_notes is not None:
+        lead.brief_notes = status_in.brief_notes
 
     await db.commit()
     await db.refresh(lead)
