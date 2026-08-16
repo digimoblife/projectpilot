@@ -22,6 +22,7 @@ async def claim_next_pending_job(db: AsyncSession, worker_id: str) -> Optional[A
         select(AIJob)
         .where(AIJob.status == AIJobStatus.PENDING)
         .order_by(AIJob.created_at.asc())
+        .with_for_update(skip_locked=True)
         .limit(1)
     )
     result = await db.execute(query)

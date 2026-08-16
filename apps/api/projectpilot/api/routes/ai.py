@@ -47,7 +47,7 @@ router = APIRouter(prefix="/projects/{project_id}/ai", tags=["AI Core & Discover
 async def enqueue_ai_job(
     project_id: uuid.UUID,
     job_in: AIJobCreate,
-    auto_execute: bool = True,
+    auto_execute: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_pm),
 ):
