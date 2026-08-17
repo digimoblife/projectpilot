@@ -243,60 +243,64 @@ export default function ProjectScopePage({
 
   return (
     <div className="space-y-6">
-      {/* Sub-Tab Navigation Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2">
+      {/* Sub-Tab Navigation & Action Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        {/* Segmented Sub-Tab Control */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab("baseline")}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "baseline"
-                ? "bg-indigo-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>1. Baseline In-Scope vs Out-of-Scope ({scopeItems.length})</span>
+            <span>Scope Baseline ({scopeItems.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("changes")}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "changes"
-                ? "bg-indigo-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <GitPullRequest className="w-3.5 h-3.5" />
-            <span>2. Scope Change Requests / CR ({scopeChanges.length})</span>
+            <span>Scope Change Requests ({scopeChanges.length})</span>
           </button>
         </div>
 
-        {activeTab === "baseline" ? (
-          <button
-            type="button"
-            onClick={() => {
-              resetItemForm();
-              setIsCreateItemModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg shadow-xs transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Item Scope</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              resetCrForm();
-              setIsCreateCrModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg shadow-xs transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Ajukan Change Request</span>
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {activeTab === "baseline" ? (
+            <button
+              type="button"
+              onClick={() => {
+                resetItemForm();
+                setIsCreateItemModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Item Scope</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                resetCrForm();
+                setIsCreateCrModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Ajukan Change Request</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TAB 1: SCOPE BASELINE BOARD */}

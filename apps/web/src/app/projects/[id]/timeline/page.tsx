@@ -355,90 +355,94 @@ export default function ProjectTimelinePage({
 
   return (
     <div className="space-y-6">
-      {/* Sub-Tab Navigation Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2">
+      {/* Sub-Tab Navigation & Action Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        {/* Segmented Sub-Tab Control */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab("timeline")}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "timeline"
-                ? "bg-cyan-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>1. Timeline & Milestone ({milestones.length})</span>
+            <span>Timeline & Milestone ({milestones.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("dependencies")}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "dependencies"
-                ? "bg-cyan-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <GitMerge className="w-3.5 h-3.5" />
-            <span>2. Task Dependencies ({dependencies.length})</span>
+            <span>Task Dependencies ({dependencies.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("team")}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "team"
-                ? "bg-cyan-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>3. Alokasi Tim & Workload ({members.length})</span>
+            <span>Alokasi Tim & Workload ({members.length})</span>
           </button>
         </div>
 
-        {activeTab === "timeline" && (
-          <button
-            type="button"
-            onClick={() => {
-              resetMlsForm();
-              setIsCreateMlsOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Milestone</span>
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {activeTab === "timeline" && (
+            <button
+              type="button"
+              onClick={() => {
+                resetMlsForm();
+                setIsCreateMlsOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Milestone</span>
+            </button>
+          )}
 
-        {activeTab === "dependencies" && (
-          <button
-            type="button"
-            onClick={() => {
-              setPredTaskId(tasks[0]?.id || "");
-              setSuccTaskId(tasks[1]?.id || "");
-              setDepError(null);
-              setIsCreateDepOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tautkan Dependensi</span>
-          </button>
-        )}
+          {activeTab === "dependencies" && (
+            <button
+              type="button"
+              onClick={() => {
+                setPredTaskId(tasks[0]?.id || "");
+                setSuccTaskId(tasks[1]?.id || "");
+                setDepError(null);
+                setIsCreateDepOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tautkan Dependensi</span>
+            </button>
+          )}
 
-        {activeTab === "team" && (
-          <button
-            type="button"
-            onClick={() => {
-              resetMemberForm();
-              setIsAddMemberOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Anggota Tim</span>
-          </button>
-        )}
+          {activeTab === "team" && (
+            <button
+              type="button"
+              onClick={() => {
+                resetMemberForm();
+                setIsAddMemberOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Anggota Tim</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TAB 1: TIMELINE & MILESTONES */}

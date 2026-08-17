@@ -310,116 +310,120 @@ export default function ProjectIssuesRisksPage({
 
   return (
     <div className="space-y-6">
-      {/* Sub-Tab Navigation Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+      {/* Sub-Tab Navigation & Action Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        {/* Segmented Sub-Tab Control */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab("issues")}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "issues"
-                ? "bg-rose-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Bug className="w-3.5 h-3.5" />
-            <span>1. Log Issue ({issues.length})</span>
+            <span>Log Issue ({issues.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("risks")}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "risks"
-                ? "bg-rose-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
-            <span>2. Matriks Risiko ({risks.length})</span>
+            <span>Matriks Risiko ({risks.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("blockers")}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "blockers"
-                ? "bg-rose-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
-            <span>3. Active Blockers ({blockers.length})</span>
+            <span>Active Blockers ({blockers.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("client_deps")}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "client_deps"
-                ? "bg-rose-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Hourglass className="w-3.5 h-3.5" />
-            <span>4. Kebutuhan Klien / Waiting Matrix ({clientDeps.length})</span>
+            <span>Waiting Matrix ({clientDeps.length})</span>
           </button>
         </div>
 
-        {activeTab === "issues" && (
-          <button
-            type="button"
-            onClick={() => {
-              setIssueKey(`ISS-${issues.length + 1}`.padStart(7, "0"));
-              setIssueTitle("");
-              setIssueDesc("");
-              setIssueSeverity("MEDIUM");
-              setModalError(null);
-              setIsIssueModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Lapor Issue</span>
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {activeTab === "issues" && (
+            <button
+              type="button"
+              onClick={() => {
+                setIssueKey(`ISS-${issues.length + 1}`.padStart(7, "0"));
+                setIssueTitle("");
+                setIssueDesc("");
+                setIssueSeverity("MEDIUM");
+                setModalError(null);
+                setIsIssueModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Lapor Issue</span>
+            </button>
+          )}
 
-        {activeTab === "risks" && (
-          <button
-            type="button"
-            onClick={() => {
-              setRiskKey(`RSK-${risks.length + 1}`.padStart(7, "0"));
-              setRiskTitle("");
-              setRiskDesc("");
-              setRiskProb("MEDIUM");
-              setRiskImpact("MEDIUM");
-              setRiskMitigation("");
-              setModalError(null);
-              setIsRiskModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Identifikasi Risiko</span>
-          </button>
-        )}
+          {activeTab === "risks" && (
+            <button
+              type="button"
+              onClick={() => {
+                setRiskKey(`RSK-${risks.length + 1}`.padStart(7, "0"));
+                setRiskTitle("");
+                setRiskDesc("");
+                setRiskProb("MEDIUM");
+                setRiskImpact("MEDIUM");
+                setRiskMitigation("");
+                setModalError(null);
+                setIsRiskModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Identifikasi Risiko</span>
+            </button>
+          )}
 
-        {activeTab === "client_deps" && (
-          <button
-            type="button"
-            onClick={() => {
-              setCdpKey(`CDP-${clientDeps.length + 1}`.padStart(7, "0"));
-              setCdpTitle("");
-              setCdpType("CREDENTIALS");
-              setCdpReqDate(new Date().toISOString().split("T")[0]);
-              setCdpExpDate(new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
-              setCdpImpact("");
-              setModalError(null);
-              setIsClientDepModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Ajukan Dependensi Klien</span>
-          </button>
-        )}
+          {activeTab === "client_deps" && (
+            <button
+              type="button"
+              onClick={() => {
+                setCdpKey(`CDP-${clientDeps.length + 1}`.padStart(7, "0"));
+                setCdpTitle("");
+                setCdpType("CREDENTIALS");
+                setCdpReqDate(new Date().toISOString().split("T")[0]);
+                setCdpExpDate(new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
+                setCdpImpact("");
+                setModalError(null);
+                setIsClientDepModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Ajukan Dependensi Klien</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TAB 1: ISSUES LOG */}
