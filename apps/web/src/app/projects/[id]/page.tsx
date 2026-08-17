@@ -5,6 +5,8 @@ import {
   AlertCircle,
   Building2,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Compass,
   FileEdit,
@@ -71,6 +73,10 @@ export default function ProjectOverviewPage({
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Pagination for Activity Events (10 items per page)
+  const [activityPage, setActivityPage] = useState(1);
+  const ACTIVITIES_PER_PAGE = 10;
+
   // Transition state
   const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false);
   const [targetStage, setTargetStage] = useState("");
@@ -134,6 +140,12 @@ export default function ProjectOverviewPage({
       </div>
     );
   }
+
+  const allActivities = project.activities || [];
+  const totalActivities = allActivities.length;
+  const totalPages = Math.ceil(totalActivities / ACTIVITIES_PER_PAGE) || 1;
+  const startIndex = (activityPage - 1) * ACTIVITIES_PER_PAGE;
+  const currentActivities = allActivities.slice(startIndex, startIndex + ACTIVITIES_PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -209,41 +221,93 @@ export default function ProjectOverviewPage({
         </div>
       </div>
 
-      {/* Activity Timeline Feed */}
+      {/* Activity Timeline Feed with 10-item Pagination */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-slate-400" />
             <h3 className="text-sm font-bold text-slate-900">Jejak Aktivitas & Audit Log (Activity Events)</h3>
           </div>
-          <span className="text-xs text-slate-400">{project.activities?.length || 0} Event Tercatat</span>
+          <span className="text-xs text-slate-500 font-medium">
+            Total {totalActivities} Event
+          </span>
         </div>
 
-        {(!project.activities || project.activities.length === 0) ? (
+        {totalActivities === 0 ? (
           <p className="text-xs text-slate-500 py-4 text-center">Belum ada aktivitas tercatat pada proyek ini.</p>
         ) : (
-          <div className="space-y-3">
-            {project.activities.map((act) => (
-              <div key={act.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100">
-                <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
-                  PM
-                </div>
-                <div className="flex-1 space-y-0.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-slate-900">{act.event_type}</span>
-                    <span className="text-[10px] text-slate-400">
-                      {new Date(act.created_at).toLocaleString("id-ID")}
-                    </span>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {currentActivities.map((act) => (
+                <div key={act.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100/60 transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                    PM
                   </div>
-                  <p className="text-xs text-slate-600">{act.description}</p>
-                  {act.event_metadata?.reason && (
-                    <p className="text-[11px] text-slate-500 italic mt-1 bg-white p-2 rounded border border-slate-200">
-                      Alasan: &quot;{act.event_metadata.reason}&quot;
-                    </p>
-                  )}
+                  <div className="flex-1 space-y-0.5 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-slate-900">{act.event_type}</span>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(act.created_at).toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600">{act.description}</p>
+                    {act.event_metadata?.reason && (
+                      <p className="text-[11px] text-slate-500 italic mt-1 bg-white p-2 rounded border border-slate-200">
+                        Alasan: &quot;{act.event_metadata.reason}&quot;
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap text-xs">
+                <span className="text-slate-500 text-[11px]">
+                  Menampilkan <strong>{startIndex + 1}</strong> - <strong>{Math.min(startIndex + ACTIVITIES_PER_PAGE, totalActivities)}</strong> dari <strong>{totalActivities}</strong> aktivitas
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={activityPage === 1}
+                    onClick={() => setActivityPage((prev) => Math.max(prev - 1, 1))}
+                    className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="Halaman Sebelumnya"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => setActivityPage(pageNum)}
+                        className={`w-7 h-7 rounded-lg text-xs font-semibold transition-colors ${
+                          activityPage === pageNum
+                            ? "bg-sky-600 text-white shadow-2xs"
+                            : "text-slate-600 hover:bg-slate-100 border border-transparent"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={activityPage === totalPages}
+                    onClick={() => setActivityPage((prev) => Math.min(prev + 1, totalPages))}
+                    className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="Halaman Selanjutnya"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

@@ -160,23 +160,81 @@ export default function ProjectWorkspaceLayout({
   const currentHealth = project ? healthColors[project.health] || healthColors.HEALTHY : healthColors.HEALTHY;
   const currentStageIndex = project ? lifecycleStages.findIndex((s) => s.key === project.lifecycle_stage) : 0;
 
-  const navTabs = [
-    { name: "Overview", href: `/projects/${id}`, icon: LayoutList },
-    { name: "Discovery", href: `/projects/${id}/discovery`, icon: Compass },
-    { name: "Requirements", href: `/projects/${id}/requirements`, icon: FileText },
-    { name: "Scope Baseline", href: `/projects/${id}/scope`, icon: Layers },
-    { name: "Planning & Epics", href: `/projects/${id}/planning`, icon: FolderKanban },
-    { name: "Kanban & Tasks", href: `/projects/${id}/tasks`, icon: Sliders },
-    { name: "Timeline & Team", href: `/projects/${id}/timeline`, icon: Milestone },
-    { name: "Issues & Risks", href: `/projects/${id}/issues`, icon: ShieldAlert },
-    { name: "Meetings", href: `/projects/${id}/meetings`, icon: Users },
-    { name: "Reports", href: `/projects/${id}/reports`, icon: FileCheck2 },
-    { name: "Dokumen Final", href: `/projects/${id}/documents`, icon: Files },
-    { name: "Handover", href: `/projects/${id}/handover`, icon: ShieldCheck },
+  // =========================================================================
+  // 6 MAIN WORKFLOW PILLARS (Clean, No-Scroll Navigation)
+  // =========================================================================
+  const navigationPillars = [
+    {
+      id: "overview",
+      name: "Overview",
+      href: `/projects/${id}`,
+      icon: LayoutList,
+      exactMatchOnly: true,
+      subRoutes: [],
+    },
+    {
+      id: "scope",
+      name: "Scope & Specs",
+      href: `/projects/${id}/discovery`,
+      icon: Compass,
+      subRoutes: [
+        { name: "Discovery & PRD", href: `/projects/${id}/discovery`, icon: Compass },
+        { name: "Requirements & ADR", href: `/projects/${id}/requirements`, icon: FileText },
+        { name: "Scope Baseline", href: `/projects/${id}/scope`, icon: Layers },
+      ],
+    },
+    {
+      id: "planning",
+      name: "Planning & Team",
+      href: `/projects/${id}/timeline`,
+      icon: Milestone,
+      subRoutes: [
+        { name: "Alokasi Tim & Workload", href: `/projects/${id}/timeline`, icon: Users },
+        { name: "Epics & Features", href: `/projects/${id}/planning`, icon: FolderKanban },
+      ],
+    },
+    {
+      id: "execution",
+      name: "Execution",
+      href: `/projects/${id}/tasks`,
+      icon: Sliders,
+      subRoutes: [
+        { name: "Kanban & Tasks", href: `/projects/${id}/tasks`, icon: Sliders },
+        { name: "Issues & Risks", href: `/projects/${id}/issues`, icon: ShieldAlert },
+      ],
+    },
+    {
+      id: "governance",
+      name: "Governance",
+      href: `/projects/${id}/meetings`,
+      icon: Users,
+      subRoutes: [
+        { name: "Notulensi Rapat", href: `/projects/${id}/meetings`, icon: MessageSquare },
+        { name: "Laporan & Status", href: `/projects/${id}/reports`, icon: FileCheck2 },
+      ],
+    },
+    {
+      id: "delivery",
+      name: "Delivery & Closing",
+      href: `/projects/${id}/documents`,
+      icon: ShieldCheck,
+      subRoutes: [
+        { name: "Dokumen Final", href: `/projects/${id}/documents`, icon: Files },
+        { name: "Handover Checklist", href: `/projects/${id}/handover`, icon: ShieldCheck },
+      ],
+    },
   ];
 
+  // Determine active pillar based on current URL pathname
+  const activePillar = navigationPillars.find((pillar) => {
+    if (pillar.id === "overview") {
+      return pathname === `/projects/${id}`;
+    }
+    return pillar.subRoutes.some((sub) => pathname.startsWith(sub.href));
+  }) || navigationPillars[0];
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Back Link & Project Top Bar */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -272,31 +330,67 @@ export default function ProjectWorkspaceLayout({
         </div>
       </div>
 
-      {/* 12-Tab Subnavigation */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-1.5 overflow-x-auto">
-        <div className="flex items-center gap-1 min-w-max">
-          {navTabs.map((tab) => {
-            const isExactMatch = pathname === tab.href;
-            const isSubMatch = tab.name !== "Overview" && pathname.startsWith(tab.href);
-            const isActive = isExactMatch || isSubMatch;
-            const Icon = tab.icon;
+      {/* ======================================================================= */}
+      {/* 2-TIER CLEAN NAVIGATION CONTAINER                                       */}
+      {/* ======================================================================= */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+        {/* Tier 1: Main Category Pillars (Fits perfectly on 1 row, zero scroll) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 border-b border-slate-100 bg-slate-50/50 p-1.5 gap-1">
+          {navigationPillars.map((pillar) => {
+            const isPillarActive = activePillar.id === pillar.id;
+            const Icon = pillar.icon;
 
             return (
               <Link
-                key={tab.name}
-                href={tab.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-sky-50 text-sky-700 font-semibold shadow-2xs"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                key={pillar.id}
+                href={pillar.href}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  isPillarActive
+                    ? "bg-white text-sky-700 shadow-xs border border-slate-200/80 font-bold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-sky-600" : "text-slate-400"}`} />
-                <span>{tab.name}</span>
+                <Icon className={`w-4 h-4 ${isPillarActive ? "text-sky-600" : "text-slate-400"}`} />
+                <span className="truncate">{pillar.name}</span>
               </Link>
             );
           })}
         </div>
+
+        {/* Tier 2: Contextual Sub-Tabs (Rendered when category has sub-modules) */}
+        {activePillar.subRoutes.length > 0 && (
+          <div className="px-4 py-2.5 bg-white flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+              Sub-Modul:
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {activePillar.subRoutes.map((sub, sIdx) => {
+                const isSubActive = pathname.startsWith(sub.href);
+                const SubIcon = sub.icon;
+
+                return (
+                  <Link
+                    key={sub.name}
+                    href={sub.href}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      isSubActive
+                        ? "bg-sky-50 text-sky-700 font-semibold border border-sky-200/80 shadow-2xs"
+                        : "text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60"
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ${
+                      isSubActive ? "bg-sky-600 text-white" : "bg-slate-200 text-slate-600"
+                    }`}>
+                      {sIdx + 1}
+                    </span>
+                    <SubIcon className={`w-3.5 h-3.5 ${isSubActive ? "text-sky-600" : "text-slate-400"}`} />
+                    <span>{sub.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Workspace Tab Content */}
