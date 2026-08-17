@@ -420,7 +420,10 @@ export default function LeadsPage() {
 
                   {lead.opportunity_description && (
                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                      <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">
+                      <p
+                        className="text-xs text-slate-600 leading-relaxed whitespace-pre-line line-clamp-3"
+                        title={lead.opportunity_description}
+                      >
                         {lead.opportunity_description}
                       </p>
                     </div>
@@ -579,7 +582,7 @@ export default function LeadsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Sumber Peluang</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Sumber</label>
                   <input
                     type="text"
                     value={source}

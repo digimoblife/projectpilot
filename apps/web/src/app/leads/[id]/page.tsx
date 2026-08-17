@@ -1704,7 +1704,7 @@ export default function LeadDetailPage({
             </h3>
 
             <div className="flex justify-between py-1 border-b border-slate-50">
-              <span className="text-slate-400">Sumber Peluang:</span>
+              <span className="text-slate-400">Sumber:</span>
               <span className="font-semibold text-slate-800">
                 {lead.source || "-"}
               </span>
