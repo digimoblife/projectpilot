@@ -8,6 +8,7 @@ from projectpilot.persistence.base import Base, TimestampMixin, UUIDPrimaryKeyMi
 
 
 class DocumentType(str, enum.Enum):
+    PRD = "PRD"
     FSD = "FSD"
     USER_GUIDE = "USER_GUIDE"
     ADMIN_GUIDE = "ADMIN_GUIDE"

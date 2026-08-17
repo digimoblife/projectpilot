@@ -165,9 +165,9 @@ export default function ProjectPlanningPage({
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
-      // 1. Check if PRD / FSD already exists in project documents
+      // 1. Check if PRD already exists in project documents
       const docsRes = await apiClient<GeneratedDoc[]>(`/projects/${projectId}/documents`, { headers });
-      const existingPRD = docsRes.data?.find((d) => d.document_type === "FSD" || d.document_type === "PRD");
+      const existingPRD = docsRes.data?.find((d) => d.document_type === "PRD") || docsRes.data?.find((d) => d.document_type === "FSD");
 
       if (existingPRD) {
         setPrdDoc(existingPRD);
@@ -178,7 +178,7 @@ export default function ProjectPlanningPage({
         const genRes = await apiClient<GeneratedDoc>(`/projects/${projectId}/documents/generate-draft`, {
           method: "POST",
           headers,
-          body: JSON.stringify({ document_type: "FSD" }),
+          body: JSON.stringify({ document_type: "PRD" }),
         });
 
         if (genRes.data) {
@@ -206,7 +206,7 @@ export default function ProjectPlanningPage({
       const genRes = await apiClient<GeneratedDoc>(`/projects/${projectId}/documents/generate-draft`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ document_type: "FSD" }),
+        body: JSON.stringify({ document_type: "PRD" }),
       });
 
       if (genRes.data) {
@@ -811,7 +811,7 @@ export default function ProjectPlanningPage({
                 <div className="flex-1 min-w-0 w-full space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      Dokumen Resmi Proyek (PRD / FSD)
+                      Dokumen Spesifikasi Produk (PRD)
                     </span>
                     {prdDoc && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">
