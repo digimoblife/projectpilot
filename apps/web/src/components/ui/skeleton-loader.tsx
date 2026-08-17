@@ -53,9 +53,9 @@ export function SkeletonTable({ rows = 4, cols = 5 }: { rows?: number; cols?: nu
 
 export function SkeletonMetricsGrid({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 space-y-2 shadow-2xs">
+        <div key={i} className="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 space-y-2 shadow-2xs">
           <div className="h-3 bg-slate-200 rounded w-20" />
           <div className="h-6 bg-slate-300 rounded w-12" />
         </div>

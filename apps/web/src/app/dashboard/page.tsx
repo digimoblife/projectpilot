@@ -6,17 +6,23 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
+  Briefcase,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Clock,
   ExternalLink,
+  FolderKanban,
   Layers,
+  ListTodo,
   RefreshCw,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Tag,
   TrendingUp,
+  UserCheck,
+  Users,
   X,
   Zap,
 } from "lucide-react";
@@ -24,6 +30,26 @@ import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { SkeletonMetricsGrid } from "@/components/ui/skeleton-loader";
 import { EmptyState } from "@/components/ui/empty-state";
+
+interface LeadSummaryItem {
+  id: string;
+  name: string;
+  company_name: string;
+  status: string;
+  client_pic_name?: string | null;
+}
+
+interface MyWorkTaskItem {
+  id: string;
+  project_id: string;
+  project_code: string;
+  project_name: string;
+  key: string;
+  title: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+}
 
 interface AttentionItem {
   id: string;
@@ -123,6 +149,8 @@ export default function DashboardPage() {
   const { token, user } = useAuth();
 
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
+  const [leads, setLeads] = useState<LeadSummaryItem[]>([]);
+  const [myWorkTasks, setMyWorkTasks] = useState<MyWorkTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedEvidenceId, setExpandedEvidenceId] = useState<string | null>(null);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("ALL");
@@ -141,9 +169,20 @@ export default function DashboardPage() {
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
-      const res = await apiClient<DashboardOverview>("/dashboard/overview", { headers });
-      if (res.data) {
-        setOverview(res.data);
+      const [overviewRes, leadsRes, myWorkRes] = await Promise.allSettled([
+        apiClient<DashboardOverview>("/dashboard/overview", { headers }),
+        apiClient<LeadSummaryItem[]>("/leads", { headers }),
+        apiClient<MyWorkTaskItem[]>("/my-work", { headers }),
+      ]);
+
+      if (overviewRes.status === "fulfilled" && overviewRes.value.data) {
+        setOverview(overviewRes.value.data);
+      }
+      if (leadsRes.status === "fulfilled" && leadsRes.value.data) {
+        setLeads(leadsRes.value.data);
+      }
+      if (myWorkRes.status === "fulfilled" && myWorkRes.value.data) {
+        setMyWorkTasks(myWorkRes.value.data);
       }
     } catch {
       // Handled
@@ -176,6 +215,18 @@ export default function DashboardPage() {
     if (selectedCategoryFilter === "ALL") return true;
     return item.category === selectedCategoryFilter;
   }) || [];
+
+  // Leads Pra-Delivery Metrics
+  const activeLeads = leads.filter((l) => l.status !== "CONVERTED" && l.status !== "LOST");
+  const newLeadsCount = leads.filter((l) => l.status === "NEW").length;
+  const inDiscussionLeadsCount = leads.filter((l) => l.status === "CONTACTED" || l.status === "BRIEF_SCHEDULED").length;
+  const qualifiedLeadsCount = leads.filter((l) => l.status === "QUALIFIED").length;
+
+  // Personal My Work Metrics
+  const activeMyTasks = myWorkTasks.filter((t) => t.status !== "DONE");
+  const inProgressMyTasks = myWorkTasks.filter((t) => t.status === "IN_PROGRESS").length;
+  const readyMyTasks = myWorkTasks.filter((t) => t.status === "READY" || t.status === "BACKLOG").length;
+  const reviewOrQaMyTasks = myWorkTasks.filter((t) => t.status === "IN_REVIEW" || t.status === "QA").length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -210,78 +261,171 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 4 Attention Required KPI Counters */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 4 Attention Required KPI Counters (2x2 on Mobile, 4 in row on Desktop) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div
           onClick={() => setSelectedCategoryFilter("OVERDUE_TASK")}
-          className={`p-4 bg-white rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
             selectedCategoryFilter === "OVERDUE_TASK" ? "border-rose-500 ring-2 ring-rose-500/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-rose-700">Tugas Terlambat</span>
-            <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200">
-              <Clock className="w-4 h-4" />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 shrink-0">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">
+          <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 sm:mt-2">
             {overview?.overdue_tasks_count || 0}
           </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Melewati estimasi due date</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 leading-tight line-clamp-1">Melewati estimasi due date</p>
         </div>
 
         <div
           onClick={() => setSelectedCategoryFilter("ACTIVE_BLOCKER")}
-          className={`p-4 bg-white rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
             selectedCategoryFilter === "ACTIVE_BLOCKER" ? "border-amber-500 ring-2 ring-amber-500/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-amber-700">Blocker Aktif</span>
-            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
-              <AlertTriangle className="w-4 h-4" />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
+              <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">
+          <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 sm:mt-2">
             {overview?.active_blockers_count || 0}
           </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Menahan deliverable tim</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 leading-tight line-clamp-1">Menahan deliverable tim</p>
         </div>
 
         <div
           onClick={() => setSelectedCategoryFilter("CLIENT_DEPENDENCY")}
-          className={`p-4 bg-white rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
             selectedCategoryFilter === "CLIENT_DEPENDENCY" ? "border-sky-500 ring-2 ring-sky-500/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-sky-700">Menunggu Klien</span>
-            <div className="p-1.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-200">
-              <ShieldAlert className="w-4 h-4" />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-200 shrink-0">
+              <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">
+          <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 sm:mt-2">
             {overview?.pending_dependencies_count || 0}
           </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Akses, data, atau approval</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 leading-tight line-clamp-1">Akses, data, approval</p>
         </div>
 
         <div
           onClick={() => setSelectedCategoryFilter("HIGH_ISSUE")}
-          className={`p-4 bg-white rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
             selectedCategoryFilter === "HIGH_ISSUE" ? "border-purple-500 ring-2 ring-purple-500/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-purple-700">Isu Prioritas Tinggi</span>
-            <div className="p-1.5 rounded-lg bg-purple-50 text-purple-600 border border-purple-200">
-              <AlertCircle className="w-4 h-4" />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-purple-50 text-purple-600 border border-purple-200 shrink-0">
+              <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">
+          <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 sm:mt-2">
             {overview?.unresolved_high_issues_count || 0}
           </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Severity High / Critical terbuka</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 leading-tight line-clamp-1">Severity High / Critical</p>
+        </div>
+      </div>
+
+      {/* 2 Comprehensive Situational Awareness Widgets: Leads & My Work */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Widget 1: Pipeline Leads (Pra-Delivery) */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-sky-50 text-sky-600 border border-sky-200/80">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Pipeline Leads & Peluang (Pra-Delivery)</h3>
+                <p className="text-xs text-slate-500">
+                  {activeLeads.length} peluang aktif sedang dalam proses penjajakan
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/leads"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50/60 hover:bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200/60 transition-colors shadow-2xs shrink-0"
+            >
+              <span>Lihat Leads</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5 text-center">
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                Lead Baru
+              </span>
+              <span className="text-xl font-black text-slate-900">{newLeadsCount}</span>
+            </div>
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                Brief / Kontak
+              </span>
+              <span className="text-xl font-black text-slate-900">{inDiscussionLeadsCount}</span>
+            </div>
+            <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200/70">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                Siap Dikonversi
+              </span>
+              <span className="text-xl font-black text-emerald-700">{qualifiedLeadsCount}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Widget 2: Tugas Personal Saya (My Work Quick Glance) */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/80">
+                <ListTodo className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Tugas Personal Saya (My Work)</h3>
+                <p className="text-xs text-slate-500">
+                  {user?.full_name ? `${user.full_name} • ` : ""}{activeMyTasks.length} tugas personal belum selesai
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/my-work"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50/60 hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200/60 transition-colors shadow-2xs shrink-0"
+            >
+              <span>Ruang Tugas</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5 text-center">
+            <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
+                Sedang Dikerjakan
+              </span>
+              <span className="text-xl font-black text-amber-800">{inProgressMyTasks}</span>
+            </div>
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                Ready / Backlog
+              </span>
+              <span className="text-xl font-black text-slate-900">{readyMyTasks}</span>
+            </div>
+            <div className="p-3 bg-purple-50/60 rounded-xl border border-purple-200/70">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block mb-1">
+                Review & QA
+              </span>
+              <span className="text-xl font-black text-purple-800">{reviewOrQaMyTasks}</span>
+            </div>
+          </div>
         </div>
       </div>
 
