@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Clock,
   Copy,
+  Download,
   Edit3,
   ExternalLink,
   Eye,
@@ -248,6 +249,36 @@ export default function ProjectReportsPage({
     }
   }
 
+  function handleDownloadReport(reportToDownload?: Report) {
+    const r = reportToDownload || selectedReport;
+    if (!r) return;
+
+    const typeConfig = reportTypeConfigs[r.report_type] || { label: r.report_type };
+    const statusConfig = reportStatusConfigs[r.status] || { label: r.status };
+
+    const content = `# ${r.title}
+**Kode Laporan:** ${r.report_key} (v${r.version})
+**Jenis:** ${typeConfig.label}
+**Status:** ${statusConfig.label}
+**Periode Pelaporan:** ${new Date(r.reporting_period_start).toLocaleDateString("id-ID")} s/d ${new Date(r.reporting_period_end).toLocaleDateString("id-ID")}
+
+${r.summary ? `## Ringkasan Eksekutif\n${r.summary}\n\n` : ""}## Isi Laporan
+${r.content}
+
+${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshots)\n${r.evidences.map((ev) => `- **${ev.evidence_type}**: ${ev.evidence_snapshot?.key || ev.evidence_snapshot?.title || "Item"}`).join("\n")}\n` : ""}
+---
+*Digenerate melalui ProjectPilot Governance Hub pada ${new Date().toLocaleString("id-ID")}*
+`;
+
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${r.report_key}_${r.title.replace(/[^a-zA-Z0-9_-]/g, "_")}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   function setPresetPeriod(preset: "THIS_WEEK" | "LAST_WEEK" | "THIS_MONTH") {
     const today = new Date();
     if (preset === "THIS_WEEK") {
@@ -453,6 +484,16 @@ export default function ProjectReportsPage({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadReport(selectedReport)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors"
+                    title="Download Dokumen Laporan (.md)"
+                  >
+                    <Download className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Download (.md)</span>
+                  </button>
+
                   {selectedReport.status !== "FINAL" && (
                     <>
                       {isEditing ? (
@@ -524,14 +565,24 @@ export default function ProjectReportsPage({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900 block">Isi Dokumen Laporan:</span>
-                    <button
-                      type="button"
-                      onClick={() => navigator.clipboard.writeText(selectedReport.content)}
-                      className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-900"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Salin Markdown</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadReport(selectedReport)}
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-emerald-700 font-medium transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download .md</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(selectedReport.content)}
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-900"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin Markdown</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed font-sans whitespace-pre-wrap">

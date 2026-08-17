@@ -114,48 +114,44 @@ const categoryBadgeConfig: Record<
   },
 };
 
-const initialDefaultNotifications: NotificationItem[] = [
-  {
-    id: "notif-1",
-    category: "BLOCKER",
-    title: "Blocker Integrasi API Payment Gateway",
-    description: "Sandbox Midtrans belum diberikan oleh PIC Klien (PT Retail Jaya).",
-    project_code: "NUSA-2026",
-    time_ago: "15 mnt lalu",
-    target_url: "/projects",
-    is_read: false,
-  },
-  {
-    id: "notif-2",
-    category: "OVERDUE",
-    title: "Task 'Desain ERD Database PostgreSQL' Melewati Target",
-    description: "Target penyelesaian tanggal kemarin. Harap cek kendala dengan backend engineer.",
-    project_code: "NUSA-2026",
-    time_ago: "1 jam lalu",
-    target_url: "/projects",
-    is_read: false,
-  },
-  {
-    id: "notif-3",
-    category: "LEAD",
-    title: "Lead Baru: Omnichannel CRM & POS Integration",
-    description: "Lead baru dibuat, siap untuk dijadwalkan Discovery Brief.",
-    project_code: "LEAD",
-    time_ago: "3 jam lalu",
-    target_url: "/leads",
-    is_read: false,
-  },
-  {
-    id: "notif-4",
-    category: "CLIENT",
-    title: "Dokumen Kuesioner Discovery Brief Diterima",
-    description: "PIC Anita Wijaya telah melampirkan referensi spesifikasi teknis scanner barcode.",
-    project_code: "PRESALES",
-    time_ago: "5 jam lalu",
-    target_url: "/leads",
-    is_read: true,
-  },
-];
+const READ_NOTIFS_STORAGE_KEY = "projecthub_read_notification_ids";
+
+interface AttentionItemApi {
+  id: string;
+  project_id: string;
+  project_name: string;
+  project_code: string;
+  category: string;
+  title: string;
+  severity: string;
+  due_date?: string | null;
+  target_url?: string;
+}
+
+interface DashboardOverviewApi {
+  attention_items: AttentionItemApi[];
+}
+
+function getReadNotificationIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(READ_NOTIFS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadNotificationIds(ids: Set<string>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(READ_NOTIFS_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // ignore
+  }
+}
 
 export function Header() {
   const router = useRouter();
@@ -169,7 +165,7 @@ export function Header() {
 
   // Notification popover state
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialDefaultNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationFilter, setNotificationFilter] = useState<"ALL" | "UNREAD">("ALL");
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -177,6 +173,59 @@ export function Header() {
   const notifButtonRef = useRef<HTMLButtonElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  // Fetch real operational notifications
+  useEffect(() => {
+    if (!token) {
+      setNotifications([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadNotifications() {
+      try {
+        const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+        const res = await apiClient<DashboardOverviewApi>("/dashboard/overview", { headers });
+        if (!isMounted) return;
+
+        const readIds = getReadNotificationIds();
+        const items: NotificationItem[] = [];
+
+        if (res.data?.attention_items) {
+          for (const item of res.data.attention_items) {
+            let cat: NotificationItem["category"] = "SYSTEM";
+            if (item.category === "ACTIVE_BLOCKER") cat = "BLOCKER";
+            else if (item.category === "OVERDUE_TASK") cat = "OVERDUE";
+            else if (item.category === "CLIENT_DEPENDENCY") cat = "CLIENT";
+            else if (item.category === "HIGH_ISSUE") cat = "BLOCKER";
+
+            const notifId = `att-${item.id}`;
+            items.push({
+              id: notifId,
+              category: cat,
+              title: item.title,
+              description: `${item.project_name} • Tingkat: ${item.severity}`,
+              project_code: item.project_code,
+              time_ago: item.due_date ? `Tenggat: ${item.due_date}` : "Operasional",
+              target_url: item.target_url || `/projects/${item.project_id}`,
+              is_read: readIds.has(notifId),
+            });
+          }
+        }
+
+        setNotifications(items);
+      } catch {
+        // Handled silently
+      }
+    }
+
+    loadNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   // Keyboard shortcut Cmd+K
   useEffect(() => {
@@ -257,10 +306,16 @@ export function Header() {
   }
 
   function handleMarkAllAsRead() {
+    const readIds = getReadNotificationIds();
+    notifications.forEach((n) => readIds.add(n.id));
+    saveReadNotificationIds(readIds);
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
   }
 
   function handleNotificationClick(notif: NotificationItem) {
+    const readIds = getReadNotificationIds();
+    readIds.add(notif.id);
+    saveReadNotificationIds(readIds);
     setNotifications((prev) =>
       prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
     );

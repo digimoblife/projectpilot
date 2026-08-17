@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Copy,
+  Download,
   Edit3,
   ExternalLink,
   FileText,
@@ -239,6 +241,69 @@ export default function ProjectMeetingsPage({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handleDownloadMinutes(meetingToDownload?: Meeting) {
+    const m = meetingToDownload || selectedMeeting;
+    if (!m) return;
+
+    const typeConfig = meetingTypeConfigs[m.meeting_type] || { label: m.meeting_type };
+    const statusConfig = meetingStatusConfigs[m.status] || { label: m.status };
+    const occurredDate = new Date(m.occurred_at).toLocaleString("id-ID");
+
+    const participantsList =
+      m.participants && m.participants.length > 0
+        ? m.participants
+            .map((p) => `- ${p.display_name_snapshot} (${p.role_snapshot || p.participant_type})`)
+            .join("\n")
+        : "- Tidak ada data kehadiran peserta tercatat.";
+
+    const actionItemsList =
+      m.action_items && m.action_items.length > 0
+        ? m.action_items
+            .map((a, idx) => {
+              const owner = a.owner_name ? ` (PIC: ${a.owner_name})` : "";
+              const due = a.due_date ? ` [Tenggat: ${new Date(a.due_date).toLocaleDateString("id-ID")}]` : "";
+              const status = ` - Status: ${a.status}`;
+              return `${idx + 1}. **${a.title}**${owner}${due}${status}${a.description ? `\n   ${a.description}` : ""}`;
+            })
+            .join("\n")
+        : "- Tidak ada action item khusus.";
+
+    const content = `# Notulensi Rapat: ${m.title}
+
+**Kode Rapat:** ${m.meeting_key}
+**Jenis Rapat:** ${typeConfig.label}
+**Waktu Pelaksanaan:** ${occurredDate}
+**Status:** ${statusConfig.label}
+
+---
+
+${m.summary ? `## 🌟 Ringkasan Eksekutif (AI Summary)\n${m.summary}\n\n---\n\n` : ""}## 👥 Daftar Kehadiran Peserta
+${participantsList}
+
+---
+
+## 📝 Catatan Diskusi & Notula
+${m.notes || "Tidak ada catatan tertulis."}
+
+---
+
+## ✅ Tindak Lanjut & Action Items
+${actionItemsList}
+
+${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
+---
+*Dokumen resmi notulensi ProjectPilot Governance • Dicetak/diunduh pada ${new Date().toLocaleString("id-ID")}*
+`;
+
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${m.meeting_key}_${m.title.replace(/[^a-zA-Z0-9_-]/g, "_")}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   async function handleConvertActionItem(e: React.FormEvent) {
@@ -498,6 +563,16 @@ export default function ProjectMeetingsPage({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    onClick={() => handleDownloadMinutes(selectedMeeting)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors"
+                    title="Download Notulensi Rapat (.md)"
+                  >
+                    <Download className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Download (.md)</span>
+                  </button>
+
+                  <button
+                    type="button"
                     disabled={isAILoading}
                     onClick={() => handleAIMeetingAnalysis(selectedMeeting)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50"
@@ -550,7 +625,27 @@ export default function ProjectMeetingsPage({
 
               {/* Meeting Notes */}
               <div className="space-y-1.5">
-                <span className="text-xs font-bold text-slate-900 block">Catatan Diskusi / Notula:</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 block">Catatan Diskusi / Notula:</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadMinutes(selectedMeeting)}
+                      className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-purple-700 font-medium transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download .md</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(selectedMeeting.notes || "")}
+                      className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-900"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Salin Catatan</span>
+                    </button>
+                  </div>
+                </div>
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
                   {selectedMeeting.notes || "Tidak ada catatan tertulis."}
                 </div>
