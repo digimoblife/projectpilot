@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { SkeletonCardGrid } from "@/components/ui/skeleton-loader";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export interface ClientReference {
   id: string;
@@ -124,7 +126,7 @@ export default function LeadsPage() {
     if (!file) return;
 
     if (file.size > 3 * 1024 * 1024) {
-      alert("Ukuran gambar maksimal 3MB.");
+      setCreateError("Ukuran gambar maksimal 3MB.");
       return;
     }
 
@@ -312,17 +314,17 @@ export default function LeadsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Lead & Prospek</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Manajemen Lead & Prospek</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Kelola peluang proyek pra-delivery dari kontak awal, brief, kualifikasi, hingga konversi ke proyek.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-lg transition-colors shadow-xs"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Lead Baru</span>
@@ -342,7 +344,7 @@ export default function LeadsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
           {["ALL", "NEW", "CONTACTED", "BRIEF_SCHEDULED", "QUALIFIED", "CONVERTED", "LOST"].map((st) => {
             const isSelected = selectedStatus === st;
             const label = st === "ALL" ? "Semua" : statusConfigs[st]?.label || st;
@@ -351,7 +353,7 @@ export default function LeadsPage() {
                 key={st}
                 type="button"
                 onClick={() => setSelectedStatus(st)}
-                className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                   isSelected
                     ? "bg-slate-900 text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
@@ -366,17 +368,15 @@ export default function LeadsPage() {
 
       {/* Leads Grid */}
       {isLoading ? (
-        <div className="p-12 text-center text-sm text-slate-500">Memuat data lead...</div>
+        <SkeletonCardGrid count={6} />
       ) : filteredLeads.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
-            <Users className="w-6 h-6" />
-          </div>
-          <h3 className="text-sm font-semibold text-slate-900">Belum ada data Lead</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-            Klik tombol &quot;Tambah Lead Baru&quot; di atas untuk mencatat peluang proyek yang masuk.
-          </p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="Belum ada data Lead"
+          description="Klik tombol Tambah Lead Baru di atas untuk mencatat peluang proyek yang masuk."
+          actionLabel="+ Tambah Lead Baru"
+          onAction={() => setIsCreateModalOpen(true)}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredLeads.map((lead) => {
@@ -450,32 +450,44 @@ export default function LeadsPage() {
                         <span className="truncate">{lead.client_pic_email}</span>
                       </div>
                     )}
+                    {lead.client_pic_phone && (
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{lead.client_pic_phone}</span>
+                      </div>
+                    )}
+                    {lead.source && (
+                      <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+                        <Tag className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">Sumber: {lead.source}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Card Actions */}
+                {/* Actions Bottom Bar */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <Link
-                    href={`/leads/${lead.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => openStatusModal(lead)}
+                    className="text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 px-2.5 py-1 rounded-lg transition-colors"
                   >
-                    <span>Detail & Alur</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                  </Link>
+                    Ubah Status
+                  </button>
 
                   {isConverted && lead.converted_project_id ? (
                     <Link
                       href={`/projects/${lead.converted_project_id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-lg border border-teal-200 transition-colors"
                     >
-                      <span>Lihat Proyek</span>
-                      <ArrowRight className="w-3 h-3" />
+                      <span>Buka Proyek</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   ) : canConvert ? (
                     <button
                       type="button"
                       onClick={() => openConvertModal(lead)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 px-3 py-1.5 rounded-lg transition-colors shadow-2xs"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors shadow-2xs"
                     >
                       <Sparkles className="w-3 h-3" />
                       <span>Konversi</span>
@@ -490,11 +502,12 @@ export default function LeadsPage() {
 
       {/* Create Lead Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-4 my-8">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">Tambah Lead Baru</h3>
+                <h3 className="font-bold text-slate-900 text-base sm:text-lg">Tambah Lead Baru</h3>
                 <p className="text-xs text-slate-500">Catat peluang proyek baru dari klien potensial.</p>
               </div>
               <button
@@ -509,14 +522,14 @@ export default function LeadsPage() {
               </button>
             </div>
 
-            {createError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
-                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                <span>{createError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreateLead} className="space-y-3.5">
+            <form onSubmit={handleCreateLead} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 flex-1">
+                {createError && (
+                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{createError}</span>
+                  </div>
+                )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Peluang / Proyek *</label>
@@ -818,21 +831,24 @@ export default function LeadsPage() {
                 ) : null}
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+              </div>
+
+              {/* Modal Sticky Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setIsCreateModalOpen(false);
                     resetCreateForm();
                   }}
-                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-medium text-sm rounded-lg shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 transition-colors flex items-center gap-1.5"
                 >
                   {isSubmitting ? "Menyimpan..." : "Simpan Lead"}
                 </button>

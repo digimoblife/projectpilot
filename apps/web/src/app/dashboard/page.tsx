@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { SkeletonMetricsGrid } from "@/components/ui/skeleton-loader";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface AttentionItem {
   id: string;
@@ -85,25 +87,25 @@ interface AIPMBriefing {
 
 const healthStatusConfigs = {
   HEALTHY: {
-    label: "Healthy",
+    label: "Sehat",
     bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
     dot: "bg-emerald-500",
     description: "Semua deliverable, dependensi, dan timeline berjalan sesuai rencana.",
   },
   WATCH: {
-    label: "Watch",
+    label: "Perhatian",
     bg: "bg-amber-50 text-amber-700 border-amber-200",
     dot: "bg-amber-500",
     description: "Perlu perhatian ringan untuk mencegah eskalasi blocker.",
   },
   AT_RISK: {
-    label: "At Risk",
+    label: "Beresiko",
     bg: "bg-orange-50 text-orange-700 border-orange-200",
     dot: "bg-orange-500",
     description: "Terdapat keterlambatan tugas atau isu berprioritas tinggi.",
   },
   CRITICAL: {
-    label: "Critical",
+    label: "Kritis",
     bg: "bg-rose-50 text-rose-700 border-rose-200",
     dot: "bg-rose-500",
     description: "Terdapat blocker aktif atau akumulasi overdue yang mengancam rilis.",
@@ -180,13 +182,7 @@ export default function DashboardPage() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">PM Control Center</h1>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-              Rules Engine {overview?.rules_version || "v1.0.0"}
-            </span>
-          </div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">PM Control Center</h1>
           <p className="text-xs text-slate-500 mt-1">
             Pusat kendali operasional harian, deteksi dini risiko delivery, dan kesehatan portfolio proyek.
           </p>
@@ -313,13 +309,16 @@ export default function DashboardPage() {
           </div>
 
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-slate-400 my-auto">
-              Memuat attention items...
+            <div className="p-8 text-center text-xs text-slate-400 my-auto animate-pulse space-y-2">
+              <div className="h-4 bg-slate-200 rounded w-1/2 mx-auto" />
+              <div className="h-4 bg-slate-100 rounded w-3/4 mx-auto" />
+              <div className="h-4 bg-slate-100 rounded w-2/3 mx-auto" />
             </div>
           ) : filteredAttentionItems.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-400 space-y-2 my-auto">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-              <p>Tidak ada attention item mendesak pada filter ini.</p>
+            <div className="p-8 text-center text-xs text-slate-500 space-y-2 my-auto bg-slate-50/50 rounded-xl border border-slate-100">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+              <p className="font-semibold text-slate-800">Semua Terkendali</p>
+              <p className="text-slate-500 text-[11px]">Tidak ada attention item mendesak pada filter ini.</p>
             </div>
           ) : (
             <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1 flex-1">
@@ -495,8 +494,8 @@ export default function DashboardPage() {
 
       {/* AI DAILY PM MORNING BRIEFING MODAL */}
       {isAIBriefingOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4 animate-fadeIn">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-purple-100 text-purple-700">

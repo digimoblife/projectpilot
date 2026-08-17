@@ -277,15 +277,17 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 flex items-center justify-between h-16 px-4 md:px-8 bg-white/80 backdrop-blur-md border-b border-slate-200">
         {/* Search Trigger */}
-        <div className="flex items-center gap-3 flex-1 max-w-md">
+        <div className="flex items-center gap-3 flex-1 max-w-md mr-2 sm:mr-0">
           <button
             type="button"
             onClick={() => setIsSearchOpen(true)}
-            className="flex items-center justify-between w-full pl-3 pr-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl hover:border-slate-300 transition-colors text-slate-400 group text-left"
+            className="flex items-center justify-between w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl hover:border-slate-300 transition-colors text-slate-400 group text-left shadow-2xs"
+            aria-label="Cari di seluruh sistem (Cmd+K)"
           >
-            <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
-              <span>Cari proyek, requirement, task, atau dokumen...</span>
+            <div className="flex items-center gap-2 truncate">
+              <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 shrink-0" />
+              <span className="hidden sm:inline truncate">Cari proyek, requirement, task, atau dokumen...</span>
+              <span className="sm:hidden text-slate-500 font-medium">Cari...</span>
             </div>
             <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-white border border-slate-200 rounded text-slate-500 shadow-2xs">
               ⌘K
@@ -294,7 +296,7 @@ export function Header() {
         </div>
 
         {/* Right Nav */}
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-1.5 sm:gap-2 relative">
           {/* Notification Button */}
           <button
             ref={notifButtonRef}
@@ -317,7 +319,7 @@ export function Header() {
           </button>
 
           {/* User Profile Info */}
-          <div className="flex items-center gap-3 pl-3 ml-1 border-l border-slate-200">
+          <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 ml-0.5 sm:ml-1 border-l border-slate-200">
             <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-semibold text-xs border border-sky-200">
               {user?.full_name?.slice(0, 2).toUpperCase() || "PM"}
             </div>
@@ -343,7 +345,7 @@ export function Header() {
           {isNotificationsOpen && (
             <div
               ref={notifDropdownRef}
-              className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden flex flex-col animate-fadeIn"
+              className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-12 w-[calc(100vw-1rem)] sm:w-96 max-w-sm bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden flex flex-col animate-fadeIn"
             >
               {/* Header */}
               <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">

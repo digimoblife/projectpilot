@@ -71,8 +71,8 @@ const lifecycleStages = [
   { key: "DISCOVERY", label: "Discovery" },
   { key: "REQUIREMENT_DEFINITION", label: "Requirements" },
   { key: "PLANNING", label: "Planning" },
-  { key: "AWAITING_CLIENT_APPROVAL", label: "In Progress" },
-  { key: "ACTIVE_DELIVERY", label: "Client Review" },
+  { key: "AWAITING_CLIENT_APPROVAL", label: "Menunggu Persetujuan" },
+  { key: "ACTIVE_DELIVERY", label: "Delivery Aktif" },
   { key: "HANDOVER", label: "Handover" },
   { key: "COMPLETED", label: "Completed" },
 ];
@@ -144,17 +144,25 @@ export default function ProjectWorkspaceLayout({
         ]);
       }
     } catch {
-      // Handled
+      setQaMessages((prev) => [
+        ...prev,
+        {
+          question: q,
+          answer: "Maaf, terjadi kendala saat menghubungkan ke asisten AI. Silakan periksa koneksi dan coba ajukan pertanyaan kembali.",
+          citations: [],
+          timestamp: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
     } finally {
       setIsAsking(false);
     }
   }
 
-  const healthColors: Record<string, { bg: string; text: string; dot: string }> = {
-    HEALTHY: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", dot: "bg-emerald-500" },
-    WATCH: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", dot: "bg-amber-500" },
-    AT_RISK: { bg: "bg-orange-50 border-orange-200", text: "text-orange-700", dot: "bg-orange-500" },
-    CRITICAL: { bg: "bg-rose-50 border-rose-200", text: "text-rose-700", dot: "bg-rose-500" },
+  const healthColors: Record<string, { bg: string; text: string; dot: string; label: string }> = {
+    HEALTHY: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", dot: "bg-emerald-500", label: "Sehat" },
+    WATCH: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", dot: "bg-amber-500", label: "Perhatian" },
+    AT_RISK: { bg: "bg-orange-50 border-orange-200", text: "text-orange-700", dot: "bg-orange-500", label: "Beresiko" },
+    CRITICAL: { bg: "bg-rose-50 border-rose-200", text: "text-rose-700", dot: "bg-rose-500", label: "Kritis" },
   };
 
   const currentHealth = project ? healthColors[project.health] || healthColors.HEALTHY : healthColors.HEALTHY;
@@ -262,7 +270,7 @@ export default function ProjectWorkspaceLayout({
                   className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${currentHealth.bg} ${currentHealth.text}`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${currentHealth.dot}`} />
-                  <span>{project?.health || "HEALTHY"}</span>
+                  <span>{currentHealth.label}</span>
                 </div>
               </div>
 
@@ -295,7 +303,26 @@ export default function ProjectWorkspaceLayout({
 
           {/* Project Lifecycle Progress Bar */}
           <div className="pt-2 border-t border-slate-100">
-            <div className="grid grid-cols-7 gap-1">
+            {/* Mobile View: Compact Stage Indicator */}
+            <div className="sm:hidden space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Tahap {currentStageIndex + 1} dari {lifecycleStages.length}
+                </span>
+                <span className="font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200/60 text-[10px]">
+                  {lifecycleStages[currentStageIndex]?.label || "Discovery"}
+                </span>
+              </div>
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-sky-600 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentStageIndex + 1) / lifecycleStages.length) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Desktop View: Full 7-Column Grid */}
+            <div className="hidden sm:grid grid-cols-7 gap-1">
               {lifecycleStages.map((stage, idx) => {
                 const isPast = currentStageIndex > idx;
                 const isCurrent = currentStageIndex === idx;
@@ -334,8 +361,8 @@ export default function ProjectWorkspaceLayout({
       {/* 2-TIER CLEAN NAVIGATION CONTAINER                                       */}
       {/* ======================================================================= */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-        {/* Tier 1: Main Category Pillars (Fits perfectly on 1 row, zero scroll) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 border-b border-slate-100 bg-slate-50/50 p-1.5 gap-1">
+        {/* Tier 1: Main Category Pillars (Scrollable on mobile, grid on desktop) */}
+        <div className="flex items-center overflow-x-auto lg:grid lg:grid-cols-6 border-b border-slate-100 bg-slate-50/50 p-1.5 gap-1 scrollbar-none">
           {navigationPillars.map((pillar) => {
             const isPillarActive = activePillar.id === pillar.id;
             const Icon = pillar.icon;
@@ -344,14 +371,14 @@ export default function ProjectWorkspaceLayout({
               <Link
                 key={pillar.id}
                 href={pillar.href}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 lg:shrink whitespace-nowrap ${
                   isPillarActive
                     ? "bg-white text-sky-700 shadow-xs border border-slate-200/80 font-bold"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isPillarActive ? "text-sky-600" : "text-slate-400"}`} />
-                <span className="truncate">{pillar.name}</span>
+                <Icon className={`w-4 h-4 shrink-0 ${isPillarActive ? "text-sky-600" : "text-slate-400"}`} />
+                <span>{pillar.name}</span>
               </Link>
             );
           })}
@@ -359,11 +386,11 @@ export default function ProjectWorkspaceLayout({
 
         {/* Tier 2: Contextual Sub-Tabs (Rendered when category has sub-modules) */}
         {activePillar.subRoutes.length > 0 && (
-          <div className="px-4 py-2.5 bg-white flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+          <div className="px-3 sm:px-4 py-2 bg-white flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-0.5">
               Sub-Modul:
             </span>
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 shrink-0">
               {activePillar.subRoutes.map((sub, sIdx) => {
                 const isSubActive = pathname.startsWith(sub.href);
                 const SubIcon = sub.icon;
@@ -372,18 +399,18 @@ export default function ProjectWorkspaceLayout({
                   <Link
                     key={sub.name}
                     href={sub.href}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 whitespace-nowrap ${
                       isSubActive
                         ? "bg-sky-50 text-sky-700 font-semibold border border-sky-200/80 shadow-2xs"
                         : "text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60"
                     }`}
                   >
-                    <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ${
+                    <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 ${
                       isSubActive ? "bg-sky-600 text-white" : "bg-slate-200 text-slate-600"
                     }`}>
                       {sIdx + 1}
                     </span>
-                    <SubIcon className={`w-3.5 h-3.5 ${isSubActive ? "text-sky-600" : "text-slate-400"}`} />
+                    <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? "text-sky-600" : "text-slate-400"}`} />
                     <span>{sub.name}</span>
                   </Link>
                 );

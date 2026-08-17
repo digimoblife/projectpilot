@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { SkeletonTable } from "@/components/ui/skeleton-loader";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface PortfolioReportItem {
   id: string;
@@ -93,12 +95,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Repositori Laporan Portfolio</h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Audit & Governance
-            </span>
-          </div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Repositori Laporan Portfolio</h1>
           <p className="text-xs text-slate-500 mt-1">
             Arsip terpusat seluruh laporan mingguan dan bulanan internal & klien berbasis bukti pengiriman faktual.
           </p>
@@ -116,15 +113,15 @@ export default function ReportsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200">
-        <div className="flex items-center gap-2 w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 shrink-0" />
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+        <div className="relative flex-1 w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari judul laporan, proyek, atau kode REP..."
-            className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent focus:outline-hidden"
+            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
           />
         </div>
 
@@ -132,7 +129,7 @@ export default function ReportsPage() {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
           >
             <option value="ALL">Semua Jenis Laporan</option>
             {Object.keys(reportTypeConfigs).map((k) => (
@@ -145,7 +142,7 @@ export default function ReportsPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
           >
             <option value="ALL">Semua Status</option>
             {Object.keys(reportStatusConfigs).map((k) => (
@@ -159,19 +156,15 @@ export default function ReportsPage() {
 
       {/* Reports Table / Card Grid */}
       {isLoading ? (
-        <div className="p-16 text-center bg-white rounded-2xl border border-slate-200 text-xs text-slate-400">
-          Memuat seluruh arsip laporan...
-        </div>
+        <SkeletonTable rows={5} cols={6} />
       ) : filteredReports.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center space-y-2">
-          <FileText className="w-8 h-8 text-slate-300 mx-auto" />
-          <h3 className="text-sm font-bold text-slate-900">Belum Ada Laporan</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Laporan mingguan atau bulanan yang digenerate di workspace masing-masing proyek akan terarsip otomatis di sini.
-          </p>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="Belum Ada Laporan"
+          description="Laporan mingguan atau bulanan yang digenerate di workspace masing-masing proyek akan terarsip otomatis di sini."
+        />
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700">
               <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">

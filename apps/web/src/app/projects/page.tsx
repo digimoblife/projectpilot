@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { SkeletonCardGrid } from "@/components/ui/skeleton-loader";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Client {
   id: string;
@@ -39,8 +41,8 @@ const stageLabels: Record<string, { label: string; color: string }> = {
   DISCOVERY: { label: "Discovery", color: "bg-purple-50 text-purple-700 border-purple-200" },
   REQUIREMENT_DEFINITION: { label: "Requirements", color: "bg-blue-50 text-blue-700 border-blue-200" },
   PLANNING: { label: "Planning", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  AWAITING_CLIENT_APPROVAL: { label: "In Progress", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  ACTIVE_DELIVERY: { label: "Client Review", color: "bg-amber-50 text-amber-700 border-amber-200" },
+  AWAITING_CLIENT_APPROVAL: { label: "Menunggu Persetujuan", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  ACTIVE_DELIVERY: { label: "Delivery Aktif", color: "bg-amber-50 text-amber-700 border-amber-200" },
   HANDOVER: { label: "Handover", color: "bg-teal-50 text-teal-700 border-teal-200" },
   COMPLETED: { label: "Completed", color: "bg-slate-100 text-slate-700 border-slate-200" },
   ON_HOLD: { label: "On Hold", color: "bg-orange-50 text-orange-700 border-orange-200" },
@@ -192,17 +194,17 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Daftar Proyek</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Daftar Proyek</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Workspace operasional terpadu dari discovery, requirements, delivery, hingga handover.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-lg transition-colors shadow-xs"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Buat Proyek Baru</span>
@@ -222,7 +224,7 @@ export default function ProjectsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
           {["ALL", "DISCOVERY", "REQUIREMENT_DEFINITION", "PLANNING", "ACTIVE_DELIVERY", "HANDOVER", "COMPLETED"].map((stage) => {
             const isSelected = selectedStage === stage;
             const label = stage === "ALL" ? "Semua Tahap" : stageLabels[stage]?.label || stage;
@@ -231,7 +233,7 @@ export default function ProjectsPage() {
                 key={stage}
                 type="button"
                 onClick={() => setSelectedStage(stage)}
-                className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                   isSelected
                     ? "bg-slate-900 text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
@@ -246,17 +248,15 @@ export default function ProjectsPage() {
 
       {/* Project Cards Grid */}
       {isLoading ? (
-        <div className="p-12 text-center text-sm text-slate-500">Memuat daftar proyek...</div>
+        <SkeletonCardGrid count={6} />
       ) : filteredProjects.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
-            <FolderKanban className="w-6 h-6" />
-          </div>
-          <h3 className="text-sm font-semibold text-slate-900">Belum ada proyek yang sesuai</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-            Klik tombol &quot;Buat Proyek Baru&quot; di atas untuk memulai siklus hidup proyek pertama Anda.
-          </p>
-        </div>
+        <EmptyState
+          icon={FolderKanban}
+          title="Belum ada proyek yang sesuai"
+          description="Klik tombol Buat Proyek Baru di atas untuk memulai siklus hidup proyek pertama Anda."
+          actionLabel="+ Buat Proyek Baru"
+          onAction={() => setIsCreateModalOpen(true)}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredProjects.map((project) => {
@@ -331,11 +331,12 @@ export default function ProjectsPage() {
 
       {/* Create Project Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-5 my-8">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">Buat Proyek Baru</h3>
+                <h3 className="font-bold text-slate-900 text-base sm:text-lg">Buat Proyek Baru</h3>
                 <p className="text-xs text-slate-500">
                   Proyek akan dimulai otomatis pada tahapan awal <span className="font-semibold text-purple-700">Discovery</span>.
                 </p>
@@ -352,139 +353,142 @@ export default function ProjectsPage() {
               </button>
             </div>
 
-            {formError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
-                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
+            <form onSubmit={handleCreateProject} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
+                {formError && (
+                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
 
-            <form onSubmit={handleCreateProject} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kode Proyek *</label>
-                  <input
-                    type="text"
-                    required
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="PRJ-001"
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Kode Proyek *</label>
+                    <input
+                      type="text"
+                      required
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.toUpperCase())}
+                      placeholder="PRJ-001"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Proyek *</label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Contoh: Mobile Banking 2.0"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
+                    />
+                  </div>
                 </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Proyek *</label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Contoh: Mobile Banking 2.0"
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Deskripsi & Tujuan</label>
+                  <textarea
+                    rows={2}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Ringkasan objektif bisnis dan ruang lingkup awal..."
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Deskripsi & Tujuan</label>
-                <textarea
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ringkasan objektif bisnis dan ruang lingkup awal..."
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
-                />
-              </div>
-
-              {/* Client Selection */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-800">Klien Proyek *</label>
-                  <button
-                    type="button"
-                    onClick={() => setIsNewClient(!isNewClient)}
-                    className="text-xs text-sky-600 hover:text-sky-700 font-medium"
-                  >
-                    {isNewClient ? "Pilih Klien Yang Ada" : "+ Tambah Klien Baru"}
-                  </button>
-                </div>
-
-                {isNewClient ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div>
-                      <input
-                        type="text"
-                        required
-                        value={newClientName}
-                        onChange={(e) => setNewClientName(e.target.value)}
-                        placeholder="Nama Brand Klien (e.g. Maju Bank)"
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        required
-                        value={newClientCompany}
-                        onChange={(e) => setNewClientCompany(e.target.value)}
-                        placeholder="Nama PT Resmi (e.g. PT Maju Bersama)"
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
+                {/* Client Selection */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-800">Klien Proyek *</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsNewClient(!isNewClient)}
+                      className="text-xs text-sky-600 hover:text-sky-700 font-medium"
+                    >
+                      {isNewClient ? "Pilih Klien Yang Ada" : "+ Tambah Klien Baru"}
+                    </button>
                   </div>
-                ) : (
-                  <select
-                    value={clientId}
-                    onChange={(e) => setClientId(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                  >
-                    {clients.length === 0 && <option value="">Belum ada klien, pilih + Tambah Klien</option>}
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.company_name})
-                      </option>
-                    ))}
-                  </select>
-                )}
+
+                  {isNewClient ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <input
+                          type="text"
+                          required
+                          value={newClientName}
+                          onChange={(e) => setNewClientName(e.target.value)}
+                          placeholder="Nama Brand Klien (e.g. Maju Bank)"
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          required
+                          value={newClientCompany}
+                          onChange={(e) => setNewClientCompany(e.target.value)}
+                          placeholder="Nama PT Resmi (e.g. PT Maju Bersama)"
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <select
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                    >
+                      {clients.length === 0 && <option value="">Belum ada klien, pilih + Tambah Klien</option>}
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.company_name})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Mulai</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Target Selesai</label>
+                    <input
+                      type="date"
+                      value={targetDate}
+                      onChange={(e) => setTargetDate(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-800"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Dates */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Mulai</label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Target Selesai</label>
-                  <input
-                    type="date"
-                    value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+              {/* Modal Sticky Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setIsCreateModalOpen(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-medium text-sm rounded-lg shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 flex items-center gap-1.5 transition-colors"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>{isSubmitting ? "Menyimpan..." : "Buat Proyek"}</span>

@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { SkeletonTable } from "@/components/ui/skeleton-loader";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface PortfolioDocumentItem {
   id: string;
@@ -97,12 +99,7 @@ export default function DocumentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Repositori Dokumentasi Proyek</h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-              Knowledge Repository
-            </span>
-          </div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Repositori Dokumentasi Proyek</h1>
           <p className="text-xs text-slate-500 mt-1">
             Arsip dokumen FSD, User Guide, Admin Guide, dan Technical Architecture Runbook dari seluruh proyek.
           </p>
@@ -120,15 +117,15 @@ export default function DocumentsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200">
-        <div className="flex items-center gap-2 w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 shrink-0" />
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+        <div className="relative flex-1 w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari judul dokumen, proyek, atau kode DOC..."
-            className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent focus:outline-hidden"
+            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
           />
         </div>
 
@@ -136,7 +133,7 @@ export default function DocumentsPage() {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
           >
             <option value="ALL">Semua Jenis Dokumen</option>
             {Object.keys(docTypeConfigs).map((k) => (
@@ -149,7 +146,7 @@ export default function DocumentsPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
           >
             <option value="ALL">Semua Status</option>
             {Object.keys(docStatusConfigs).map((k) => (
@@ -163,19 +160,15 @@ export default function DocumentsPage() {
 
       {/* Documents Table */}
       {isLoading ? (
-        <div className="p-16 text-center bg-white rounded-2xl border border-slate-200 text-xs text-slate-400">
-          Memuat seluruh arsip dokumentasi...
-        </div>
+        <SkeletonTable rows={5} cols={6} />
       ) : filteredDocs.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center space-y-2">
-          <Files className="w-8 h-8 text-slate-300 mx-auto" />
-          <h3 className="text-sm font-bold text-slate-900">Belum Ada Dokumen Terdaftar</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Dokumen spesifikasi atau manual pengguna yang digenerate di workspace masing-masing proyek akan terarsip otomatis di sini.
-          </p>
-        </div>
+        <EmptyState
+          icon={Files}
+          title="Belum Ada Dokumen Terdaftar"
+          description="Dokumen spesifikasi atau manual pengguna yang digenerate di workspace masing-masing proyek akan terarsip otomatis di sini."
+        />
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700">
               <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">

@@ -266,12 +266,7 @@ export default function ProjectDocumentsPage({
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-900">Dokumentasi Final Proyek</h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-              AI Documentation Engine
-            </span>
-          </div>
+          <h2 className="text-base font-bold text-slate-900">Dokumentasi Final Proyek</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Generator draft FSD, User Guide, Admin Guide, dan Technical Architecture Runbook berbasis bukti deliverable proyek.
           </p>

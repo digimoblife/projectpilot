@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { SkeletonTable } from "@/components/ui/skeleton-loader";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface MyWorkTask {
   id: string;
@@ -95,9 +97,9 @@ export default function MyWorkPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Tugas Saya (My Work)</h1>
-        <p className="text-sm text-slate-500 mt-1">
+      <div className="border-b border-slate-200 pb-4">
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Tugas Saya (My Work)</h1>
+        <p className="text-xs text-slate-500 mt-1">
           Pusat agregasi personal seluruh tugas pengiriman lintas proyek yang ditugaskan kepada Anda.
         </p>
       </div>
@@ -135,7 +137,7 @@ export default function MyWorkPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
           {["ALL", "IN_PROGRESS", "READY", "BLOCKED", "QA", "DONE"].map((st) => {
             const isSelected = selectedStatus === st;
             const label = st === "ALL" ? "Semua Status" : statusConfigs[st]?.label || st;
@@ -144,7 +146,7 @@ export default function MyWorkPage() {
                 key={st}
                 type="button"
                 onClick={() => setSelectedStatus(st)}
-                className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                   isSelected
                     ? "bg-slate-900 text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -159,15 +161,13 @@ export default function MyWorkPage() {
 
       {/* Cross-Project Tasks List */}
       {isLoading ? (
-        <div className="p-12 text-center text-xs text-slate-500">Memuat tugas personal...</div>
+        <SkeletonTable rows={5} cols={4} />
       ) : filteredTasks.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <FolderKanban className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-          <h3 className="text-sm font-semibold text-slate-900">Tidak ada tugas aktif</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-            Semua tugas yang ditugaskan kepada Anda akan muncul otomatis pada dashboard ini.
-          </p>
-        </div>
+        <EmptyState
+          icon={FolderKanban}
+          title="Tidak ada tugas aktif"
+          description="Semua tugas yang ditugaskan kepada Anda akan muncul otomatis pada dashboard ini."
+        />
       ) : (
         <div className="space-y-3">
           {filteredTasks.map((task) => {
