@@ -489,7 +489,7 @@ export default function ProjectTasksPage({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-start sm:justify-end">
           {/* View Mode Switcher */}
           <div className="bg-slate-100 p-1 rounded-xl flex items-center text-xs">
             <button
@@ -518,10 +518,10 @@ export default function ProjectTasksPage({
             type="button"
             disabled={isAILoading}
             onClick={handleAIBreakdownTasks}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50 shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-            <span>{isAILoading ? "AI Menyiapkan Task..." : "AI Auto Breakdown"}</span>
+            <span>{isAILoading ? "Menyiapkan..." : "AI Breakdown"}</span>
           </button>
 
           <button
@@ -530,7 +530,7 @@ export default function ProjectTasksPage({
               resetTaskModalForm();
               setIsTaskModalOpen(true);
             }}
-            className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Tambah Task</span>
@@ -540,15 +540,16 @@ export default function ProjectTasksPage({
 
       {/* VIEW 1: KANBAN BOARD */}
       {viewMode === "kanban" && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3.5 overflow-x-auto pb-4 items-start min-w-[950px] md:min-w-0">
-          {columns.map((col) => {
-            const colTasks = filteredTasks.filter((t) => t.status === col.key);
+        <div className="w-full max-w-full overflow-x-auto pb-4">
+          <div className="flex md:grid md:grid-cols-5 gap-3.5 items-start min-w-[1100px] md:min-w-0">
+            {columns.map((col) => {
+              const colTasks = filteredTasks.filter((t) => t.status === col.key);
 
-            return (
-              <div
-                key={col.key}
-                className="bg-slate-100/70 rounded-xl p-2.5 border border-slate-200/80 flex flex-col min-h-[450px]"
-              >
+              return (
+                <div
+                  key={col.key}
+                  className="w-[260px] md:w-auto shrink-0 md:shrink bg-slate-100/70 rounded-xl p-2.5 border border-slate-200/80 flex flex-col min-h-[450px]"
+                >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
                   <div className="flex items-center gap-1.5">
@@ -663,6 +664,7 @@ export default function ProjectTasksPage({
               </div>
             );
           })}
+          </div>
         </div>
       )}
 

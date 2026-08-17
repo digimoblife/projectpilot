@@ -343,12 +343,7 @@ export default function ProjectMeetingsPage({
       {/* Top Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-900">Manajemen Rapat & Notulen</h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-              AI Meeting Copilot
-            </span>
-          </div>
+          <h2 className="text-base font-bold text-slate-900">Manajemen Rapat & Notulen</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Dokumentasikan jalannya diskusi, daftar hadir peserta, transkrip, dan tindak lanjut (Action Items).
           </p>
@@ -360,7 +355,7 @@ export default function ProjectMeetingsPage({
             resetCreateForm();
             setIsCreateModalOpen(true);
           }}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Catat Notulen Rapat Baru</span>

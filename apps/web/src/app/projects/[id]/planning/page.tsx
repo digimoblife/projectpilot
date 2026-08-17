@@ -556,17 +556,9 @@ export default function ProjectPlanningPage({
   return (
     <div className="space-y-6">
       {/* Header with AI & Manual Actions */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              Tahap 3: Perencanaan & Arsitektur
-            </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-              Scope Baseline
-            </span>
-          </div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight mt-1">
+          <h1 className="text-lg font-bold text-slate-900 tracking-tight">
             Perencanaan Hirarki (Epics & Features)
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -574,56 +566,50 @@ export default function ProjectPlanningPage({
           </p>
         </div>
 
-        {/* Action Buttons: Tier 1 (AI) & Tier 2 (Manual) */}
-        <div className="flex flex-col items-start lg:items-end gap-2.5">
-          {/* Row 1: AI Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={handleOpenPRD}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-lg border border-emerald-200 shadow-2xs transition-colors"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-              <span>AI Generate / Buka PRD</span>
-            </button>
+        {/* Action Buttons: Unified Responsive Row */}
+        <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto justify-start lg:justify-end">
+          <button
+            type="button"
+            onClick={handleOpenPRD}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors shrink-0"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+            <span>AI Buka PRD</span>
+          </button>
 
-            <button
-              type="button"
-              disabled={isAILoading}
-              onClick={handleAIExtractEpics}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold rounded-lg border border-purple-200 shadow-2xs transition-colors disabled:opacity-50"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              <span>{isAILoading ? "AI Memetakan..." : "AI Ekstraksi Epics & Features"}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={isAILoading}
+            onClick={handleAIExtractEpics}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors disabled:opacity-50 shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>{isAILoading ? "Memetakan..." : "AI Ekstraksi Epics"}</span>
+          </button>
 
-          {/* Row 2: Manual Creation Actions (Located below AI buttons) */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                resetEpicForm();
-                setIsCreateEpicOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 shadow-2xs transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5 text-slate-600" />
-              <span>Tambah Epic</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => {
+              resetEpicForm();
+              setIsCreateEpicOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 text-slate-600" />
+            <span>Tambah Epic</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                resetFeatForm();
-                setIsCreateFeatureOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Feature</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              resetFeatForm();
+              setIsCreateFeatureOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Tambah Feature</span>
+          </button>
         </div>
       </div>
 

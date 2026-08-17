@@ -454,42 +454,44 @@ export default function ProjectDiscoveryPage({
     <div className="space-y-6">
       {/* Sub-Tab Navigation & Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        {/* Segmented Sub-Tab Control */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setActiveTab("brief")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "brief"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Project Brief</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("questions")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "questions"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Discovery Q&A ({questions.length})</span>
-          </button>
+        {/* Segmented Sub-Tab Control (Constrained horizontal scroll on mobile) */}
+        <div className="w-full sm:w-auto overflow-x-auto scrollbar-none max-w-full pb-1 sm:pb-0">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-max">
+            <button
+              type="button"
+              onClick={() => setActiveTab("brief")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "brief"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Project Brief</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("questions")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "questions"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Discovery Q&A ({questions.length})</span>
+            </button>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-start sm:justify-end">
           {activeTab === "brief" && (
             <button
               type="button"
               disabled={isAILoading}
               onClick={handleAIBriefAnalysis}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50 shrink-0"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-600" />
               <span>{isAILoading ? "Menganalisis..." : "AI Analisa Brief"}</span>
@@ -502,7 +504,7 @@ export default function ProjectDiscoveryPage({
                 type="button"
                 disabled={isAILoading}
                 onClick={handleAIGenerateQuestions}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50 shrink-0"
               >
                 <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                 <span>{isAILoading ? "Menghasilkan..." : "AI Rekomendasi Pertanyaan"}</span>
@@ -514,7 +516,7 @@ export default function ProjectDiscoveryPage({
                   resetCreateQuestionForm();
                   setIsCreateModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Tambah Pertanyaan</span>

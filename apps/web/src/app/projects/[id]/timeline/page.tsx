@@ -357,48 +357,50 @@ export default function ProjectTimelinePage({
     <div className="space-y-6">
       {/* Sub-Tab Navigation & Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        {/* Segmented Sub-Tab Control */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setActiveTab("timeline")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "timeline"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Timeline & Milestone ({milestones.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("dependencies")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "dependencies"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <GitMerge className="w-3.5 h-3.5" />
-            <span>Task Dependencies ({dependencies.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("team")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "team"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Alokasi Tim & Workload ({members.length})</span>
-          </button>
+        {/* Segmented Sub-Tab Control (Constrained horizontal scroll on mobile) */}
+        <div className="w-full sm:w-auto overflow-x-auto scrollbar-none max-w-full pb-1 sm:pb-0">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-max">
+            <button
+              type="button"
+              onClick={() => setActiveTab("timeline")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "timeline"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Timeline & Milestone ({milestones.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("dependencies")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "dependencies"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <GitMerge className="w-3.5 h-3.5" />
+              <span>Task Dependencies ({dependencies.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("team")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "team"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Alokasi Tim & Workload ({members.length})</span>
+            </button>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-start sm:justify-end">
           {activeTab === "timeline" && (
             <button
               type="button"
@@ -406,7 +408,7 @@ export default function ProjectTimelinePage({
                 resetMlsForm();
                 setIsCreateMlsOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Tambah Milestone</span>
@@ -422,7 +424,7 @@ export default function ProjectTimelinePage({
                 setDepError(null);
                 setIsCreateDepOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Tautkan Dependensi</span>
@@ -436,7 +438,7 @@ export default function ProjectTimelinePage({
                 resetMemberForm();
                 setIsAddMemberOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Tambah Anggota Tim</span>

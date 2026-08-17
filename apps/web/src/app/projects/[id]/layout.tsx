@@ -242,7 +242,7 @@ export default function ProjectWorkspaceLayout({
   }) || navigationPillars[0];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-full min-w-0 overflow-x-clip">
       {/* Back Link & Project Top Bar */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -421,7 +421,7 @@ export default function ProjectWorkspaceLayout({
       </div>
 
       {/* Main Workspace Tab Content */}
-      <div>{children}</div>
+      <div className="min-w-0 max-w-full">{children}</div>
 
       {/* GROUNDED PROJECT Q&A SLIDE-OVER DRAWER */}
       {isQADrawerOpen && (

@@ -312,60 +312,62 @@ export default function ProjectIssuesRisksPage({
     <div className="space-y-6">
       {/* Sub-Tab Navigation & Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        {/* Segmented Sub-Tab Control */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setActiveTab("issues")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "issues"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Bug className="w-3.5 h-3.5" />
-            <span>Log Issue ({issues.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("risks")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "risks"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Matriks Risiko ({risks.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("blockers")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "blockers"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Active Blockers ({blockers.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("client_deps")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "client_deps"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Hourglass className="w-3.5 h-3.5" />
-            <span>Waiting Matrix ({clientDeps.length})</span>
-          </button>
+        {/* Segmented Sub-Tab Control (Constrained horizontal scroll on mobile) */}
+        <div className="w-full sm:w-auto overflow-x-auto scrollbar-none max-w-full pb-1 sm:pb-0">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-max">
+            <button
+              type="button"
+              onClick={() => setActiveTab("issues")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "issues"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Bug className="w-3.5 h-3.5" />
+              <span>Log Issue ({issues.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("risks")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "risks"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Matriks Risiko ({risks.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("blockers")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "blockers"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>Active Blockers ({blockers.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("client_deps")}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === "client_deps"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Hourglass className="w-3.5 h-3.5" />
+              <span>Waiting Matrix ({clientDeps.length})</span>
+            </button>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-start sm:justify-end">
           {activeTab === "issues" && (
             <button
               type="button"
