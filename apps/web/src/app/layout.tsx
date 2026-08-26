@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: "Project Hub — AI-Assisted Project Management Hub",
+  title: "Project Hub - AI-Assisted Project Management Hub",
   description: "From Lead to Handover. Operational Hub for Project Managers.",
   icons: {
     icon: "/favicon.png",
