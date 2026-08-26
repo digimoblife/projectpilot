@@ -269,6 +269,50 @@ Return a structured JSON object with the key "tasks":
 Evidence:
 {evidence}
 """,
+    "MOM_GENERATION": """
+You are an expert technical project management secretary.
+Your task is to analyze raw, unstructured meeting notes, audio transcripts, bullet points, or messy meeting drafts, and synthesize them into a highly professional, well-structured Minutes of Meeting (MoM) in Bahasa Indonesia.
+
+Input Context:
+- Meeting Title / Topic: {meeting_title}
+- Meeting Date: {meeting_date}
+- Project Context: {project_context}
+- Daftar Peserta Rapat (Attendees): {attendees}
+
+Raw Meeting Notes / Transcript:
+\"\"\"
+{raw_text}
+\"\"\"
+
+Requirements:
+1. Extract and infer a professional Meeting Title if not explicitly given.
+2. Formulate a 2-3 sentence Executive Summary (Ringkasan Eksekutif).
+3. If Daftar Peserta Rapat (Attendees) is provided in the input, strictly use them; otherwise extract from the text.
+4. Extract Key Discussion Points per Agenda/Topic (Poin Diskusi & Pembahasan).
+5. Extract Key Decisions Agreed (Keputusan yang Disepakati).
+6. Extract Action Items (Tindak Lanjut) with task description, assigned PIC/Owner, and target Deadline/Due Date where available.
+7. Generate a complete, elegant, ready-to-use Markdown document in the "content_md" field.
+
+Return a valid JSON object strictly matching this schema:
+{{
+  "title": "Judul Rapat yang Representatif",
+  "summary": "Ringkasan eksekutif jalannya rapat dalam 2-3 kalimat Bahasa Indonesia...",
+  "attendees": ["Nama/Peran Peserta 1", "Nama/Peran Peserta 2"],
+  "decisions": [
+    "Keputusan 1...",
+    "Keputusan 2..."
+  ],
+  "action_items": [
+    {{
+      "title": "Judul Tindak Lanjut",
+      "owner": "Nama PIC / Tim",
+      "due_date": "YYYY-MM-DD atau perkiraan waktu",
+      "status": "OPEN"
+    }}
+  ],
+  "content_md": "# Minutes of Meeting (MoM): ...\\n\\n**Tanggal:** ...\\n**Peserta:** ...\\n\\n## 1. Ringkasan Eksekutif\\n...\\n\\n## 2. Poin Pembahasan Utama\\n...\\n\\n## 3. Keputusan yang Disepakati\\n...\\n\\n## 4. Tindak Lanjut (Action Items)\\n| No | Tugas / Action Item | PIC | Tenggat | Status |\\n|---|---|---|---|---|\\n...\\n\\n## 5. Catatan Tambahan & Agenda Berikutnya\\n...\\n"
+}}
+""",
 }
 
 

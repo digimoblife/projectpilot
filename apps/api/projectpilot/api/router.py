@@ -11,6 +11,7 @@ from projectpilot.api.routes import (
     issues_risks,
     leads,
     meetings,
+    mom,
     planning_tasks,
     projects,
     reports,
@@ -35,5 +36,6 @@ api_router.include_router(meetings.router)
 api_router.include_router(control_center.router)
 api_router.include_router(reports.router)
 api_router.include_router(documents.router)
+api_router.include_router(mom.router)
 api_router.include_router(handover.router)
 api_router.include_router(search.router)

@@ -47,6 +47,7 @@ from projectpilot.persistence.models.meeting import (
     MeetingType,
     ParticipantType,
 )
+from projectpilot.persistence.models.mom import MoMDocument
 from projectpilot.persistence.models.planning_tasks import (
     Epic,
     Feature,
@@ -143,6 +144,7 @@ __all__ = [
     "DocumentType",
     "DocumentStatus",
     "DocumentEvidence",
+    "MoMDocument",
     "Handover",
     "HandoverStatus",
     "HandoverItem",

@@ -730,6 +730,7 @@ async def process_ai_sync(
     result_data = await gemini_adapter.generate_structured(
         prompt=prompt,
         system_instruction=SYSTEM_LANGUAGE_INSTRUCTION,
+        capability=request_in.capability,
     )
 
     return AISyncProcessResponse(

@@ -10,6 +10,7 @@ import {
   Files,
   FolderKanban,
   LayoutDashboard,
+  Sparkles,
   Users,
 } from "lucide-react";
 
@@ -18,6 +19,7 @@ const navigationItems = [
   { name: "Leads", href: "/leads", icon: Users, label: "Buka Pipeline Leads" },
   { name: "Projects", href: "/projects", icon: FolderKanban, label: "Buka Daftar Proyek" },
   { name: "My Work", href: "/my-work", icon: CheckSquare, label: "Buka Task Saya" },
+  { name: "MoM Generator", href: "/mom", icon: Sparkles, label: "Buka MoM Generator AI" },
   { name: "Reports", href: "/reports", icon: FileText, label: "Buka Repositori Laporan" },
   { name: "Documents", href: "/documents", icon: Files, label: "Buka Repositori Dokumen" },
 ];

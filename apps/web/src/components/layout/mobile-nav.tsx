@@ -33,6 +33,12 @@ export function MobileNav() {
 
   const secondaryItems = [
     {
+      name: "MoM Generator (AI)",
+      desc: "Generate notulensi rapat otomatis (.md)",
+      href: "/mom",
+      icon: Sparkles,
+    },
+    {
       name: "Laporan Portfolio",
       desc: "Arsip laporan mingguan & bulanan",
       href: "/reports",
@@ -46,7 +52,7 @@ export function MobileNav() {
     },
   ];
 
-  const isMoreActive = pathname.startsWith("/reports") || pathname.startsWith("/documents");
+  const isMoreActive = pathname.startsWith("/mom") || pathname.startsWith("/reports") || pathname.startsWith("/documents");
 
   function handleLogout() {
     setIsDrawerOpen(false);

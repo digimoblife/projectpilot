@@ -77,6 +77,33 @@ class GeminiAdapter:
                     validated = response_schema.model_validate(parsed_json)
                     return validated.model_dump()
 
+                if isinstance(parsed_json, list):
+                    cap_upper = (capability or "").upper()
+                    if cap_upper == "REQUIREMENT_EXTRACTION":
+                        return {"requirements": parsed_json}
+                    elif cap_upper == "DISCOVERY_QUESTION_GEN":
+                        return {"questions": parsed_json}
+                    elif cap_upper == "TASK_BREAKDOWN_GEN":
+                        return {"tasks": parsed_json}
+                    elif cap_upper.startswith("DOC_") or cap_upper.startswith("REPORT_"):
+                        return {"title": "Dokumen", "content": "\n".join(str(x) for x in parsed_json), "summary": ""}
+
+                    prompt_lower = prompt.lower()
+                    if "extract candidate functional" in prompt_lower or "requirement" in prompt_lower:
+                        return {"requirements": parsed_json}
+                    elif "discovery question" in prompt_lower or "pertanyaan discovery" in prompt_lower:
+                        return {"questions": parsed_json}
+                    elif "break down each module" in prompt_lower:
+                        return {"tasks": parsed_json}
+                    else:
+                        return {"items": parsed_json}
+
+                if isinstance(parsed_json, dict):
+                    if "discovery_questions" in parsed_json and "questions" not in parsed_json:
+                        parsed_json["questions"] = parsed_json["discovery_questions"]
+                    if "candidate_requirements" in parsed_json and "requirements" not in parsed_json:
+                        parsed_json["requirements"] = parsed_json["candidate_requirements"]
+
                 return parsed_json
             except Exception as e:
                 logger.error(f"Gemini API invocation failed: {str(e)}. Falling back to structured response.")
@@ -328,6 +355,93 @@ Sistem berbasis FastAPI dengan asynchronous PostgreSQL, didukung worker backgrou
 - Jalankan server: `uvicorn projectpilot.main:app --host 0.0.0.0 --port 8000`.
 """,
                 }
+
+        if cap == "MOM_GENERATION" or (not cap and ("mom" in prompt_lower or "minutes of meeting" in prompt_lower or "hasil rapat" in prompt_lower)):
+            return {
+                "title": "Notulensi Rapat Pembahasan Teknis & Koordinasi Proyek",
+                "summary": "Rapat membahas progres implementasi sistem, kesepakatan integrasi modul utama, pembagian tugas teknis, serta tindak lanjut mitigasi kendala.",
+                "attendees": [
+                    "Project Manager (PM Lead)",
+                    "Lead Developer",
+                    "UI/UX Designer",
+                    "Stakeholder Klien",
+                ],
+                "decisions": [
+                    "Menyetujui arsitektur integrasi modul utama berbasis REST API & webhook.",
+                    "Jadwal pengujian end-to-end ditetapkan pada akhir minggu berjalan.",
+                    "Format dokumen pelaporan disepakati menggunakan standar Markdown (.md).",
+                ],
+                "action_items": [
+                    {
+                        "title": "Menyiapkan endpoint staging dan verifikasi payload",
+                        "owner": "Lead Developer",
+                        "due_date": "2026-09-01",
+                        "status": "OPEN",
+                    },
+                    {
+                        "title": "Finalisasi prototype antarmuka pengguna (UI/UX)",
+                        "owner": "UI/UX Designer",
+                        "due_date": "2026-08-30",
+                        "status": "OPEN",
+                    },
+                    {
+                        "title": "Mengirimkan dokumentasi teknis dan kredensial akses ke tim klien",
+                        "owner": "Project Manager",
+                        "due_date": "2026-08-28",
+                        "status": "OPEN",
+                    },
+                ],
+                "content_md": """# Minutes of Meeting (MoM)
+
+**Topik / Judul:** Notulensi Rapat Pembahasan Teknis & Koordinasi Proyek  
+**Tanggal Pelaksanaan:** 26 Agustus 2026  
+**Pencatat / Fasilitator:** Project Manager Lead  
+
+---
+
+## 👥 1. Daftar Hadir Peserta
+- **Project Manager (PM Lead)** - Pimpinan Rapat / Moderator
+- **Lead Developer** - Engineering Tim
+- **UI/UX Designer** - Product Design Tim
+- **Stakeholder Klien** - PIC Klien
+
+---
+
+## 📌 2. Ringkasan Eksekutif
+Rapat koordinasi teknis telah terlaksana dengan lancar untuk menyelaraskan pemahaman ruang lingkup, jadwal pengujian, dan pembagian tanggung jawab tindak lanjut. Seluruh pihak telah menyepakati alur kerja utama dan target penyelesaian sprint.
+
+---
+
+## 📝 3. Poin Diskusi & Pembahasan Utama
+1. **Status Kemajuan Pengerjaan**: Tim teknis telah menyelesaikan 80% modul inti dan siap memulai tahap integrasi backend.
+2. **Kebutuhan Akses Staging**: Diperlukan kredensial API dan IP whitelist staging environment dari pihak klien untuk keperluan simulasi transaksi.
+3. **Standarisasi Pelaporan**: Seluruh catatan dan dokumentasi notulensi rapat akan diarsipkan secara digital dalam format Markdown terstruktur.
+
+---
+
+## ⚖️ 4. Keputusan yang Disepakati (Key Decisions)
+- **Keputusan 1**: Arsitektur integrasi modul utama disepakati menggunakan REST API dengan autentikasi berbasis token JWT & HMAC webhook.
+- **Keputusan 2**: Sesi demo antarmuka dan uji fungsi (UAT internal) dijadwalkan pada hari Jumat pukul 14:00 WIB.
+- **Keputusan 3**: Format MoM Markdown diadopsi sebagai dokumen acuan resmi tim proyek.
+
+---
+
+## ✅ 5. Tindak Lanjut & Action Items
+| No | Tugas / Action Item | Penanggung Jawab (PIC) | Target Tenggat | Status |
+|:---|:---|:---|:---|:---|
+| 1 | Menyiapkan endpoint staging dan verifikasi payload | Lead Developer | 2026-09-01 | OPEN |
+| 2 | Finalisasi prototype antarmuka pengguna (UI/UX) | UI/UX Designer | 2026-08-30 | OPEN |
+| 3 | Mengirimkan dokumentasi teknis dan kredensial akses | Project Manager | 2026-08-28 | OPEN |
+
+---
+
+## 📅 6. Catatan Tambahan & Agenda Rapat Berikutnya
+- Rapat evaluasi mingguan berikutnya (*Weekly Sync*) akan diadakan pada hari Senin pekan depan melalui video conference.
+
+---
+*Dokumen ini digenerate secara otomatis oleh ProjectPilot AI MoM Copilot pada 26 Agustus 2026.*
+""",
+            }
 
         return {
             "status": "SUCCESS",
