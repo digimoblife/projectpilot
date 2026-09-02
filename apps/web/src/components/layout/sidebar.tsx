@@ -32,7 +32,7 @@ export function Sidebar() {
       aria-label="Navigasi Sidebar Desktop"
       className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50 bg-white border-r border-slate-200"
     >
-      <div className="flex items-center px-4 h-16 border-b border-slate-200">
+      <div className="flex items-center px-4 h-16 border-b border-slate-200 shrink-0">
         <Link href="/dashboard" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -43,7 +43,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Menu Utama">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Menu Utama">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}`));
           const Icon = item.icon;
