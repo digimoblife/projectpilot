@@ -166,7 +166,7 @@ export default function ReportsPage() {
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
+            <table className="w-full text-left text-xs text-slate-700 min-w-[750px]">
               <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3">Laporan & Kode</th>

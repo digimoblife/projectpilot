@@ -646,8 +646,8 @@ export default function ProjectIssuesRisksPage({
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-              <table className="w-full text-left text-xs">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[750px]">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px]">
                   <tr>
                     <th className="py-3 px-4">Key</th>

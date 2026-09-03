@@ -541,14 +541,14 @@ export default function ProjectTasksPage({
       {/* VIEW 1: KANBAN BOARD */}
       {viewMode === "kanban" && (
         <div className="w-full max-w-full overflow-x-auto pb-4">
-          <div className="flex md:grid md:grid-cols-5 gap-3.5 items-start min-w-[1100px] md:min-w-0">
+          <div className="flex gap-3.5 items-start min-w-[1200px] xl:min-w-0 xl:grid xl:grid-cols-5">
             {columns.map((col) => {
               const colTasks = filteredTasks.filter((t) => t.status === col.key);
 
               return (
                 <div
                   key={col.key}
-                  className="w-[260px] md:w-auto shrink-0 md:shrink bg-slate-100/70 rounded-xl p-2.5 border border-slate-200/80 flex flex-col min-h-[450px]"
+                  className="w-[260px] xl:w-auto shrink-0 xl:shrink bg-slate-100/70 rounded-xl p-2.5 border border-slate-200/80 flex flex-col min-h-[450px]"
                 >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
@@ -670,8 +670,8 @@ export default function ProjectTasksPage({
 
       {/* VIEW 2: TASK LIST TABLE */}
       {viewMode === "table" && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-          <table className="w-full text-left text-xs">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[750px]">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
               <tr>
                 <th className="py-3 px-4">Key</th>
