@@ -148,6 +148,8 @@ export default function MoMGeneratorPage() {
   const [selectedImportKeys, setSelectedImportKeys] = useState<Record<string, boolean>>({});
   const [importedItemsList, setImportedItemsList] = useState<string[]>([]);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
+  const [isRemovingItemKey, setIsRemovingItemKey] = useState<string | null>(null);
+  const [isBatchRemoving, setIsBatchRemoving] = useState(false);
 
   // History repository state
   const [historyList, setHistoryList] = useState<MoMListItem[]>([]);
@@ -236,6 +238,76 @@ export default function MoMGeneratorPage() {
     });
 
     setIsImportModalOpen(false);
+  }
+
+  async function handleRemovePendingItem(item: PendingMoMItem, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const itemKey = `${item.mom_id}-${item.item_index}`;
+    setIsRemovingItemKey(itemKey);
+
+    // Optimistically remove from pendingChecklist in modal
+    setPendingChecklist((prev) =>
+      prev.filter((p) => !(p.mom_id === item.mom_id && p.item_index === item.item_index))
+    );
+    setSelectedImportKeys((prev) => {
+      const next = { ...prev };
+      delete next[itemKey];
+      return next;
+    });
+
+    try {
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      await apiClient(`/mom/${item.mom_id}/items/${item.item_index}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ status: "COMPLETED" }),
+      });
+      fetchHistory();
+    } catch {
+      // Re-fetch if failed
+      fetchPendingItems();
+    } finally {
+      setIsRemovingItemKey(null);
+    }
+  }
+
+  async function handleBatchRemovePendingItems() {
+    const selected = pendingChecklist.filter(
+      (item) => selectedImportKeys[`${item.mom_id}-${item.item_index}`]
+    );
+    if (selected.length === 0) return;
+
+    setIsBatchRemoving(true);
+
+    const selectedKeysSet = new Set(
+      selected.map((item) => `${item.mom_id}-${item.item_index}`)
+    );
+
+    // Optimistically remove
+    setPendingChecklist((prev) =>
+      prev.filter((item) => !selectedKeysSet.has(`${item.mom_id}-${item.item_index}`))
+    );
+    setSelectedImportKeys({});
+
+    try {
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      await Promise.all(
+        selected.map((item) =>
+          apiClient(`/mom/${item.mom_id}/items/${item.item_index}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({ status: "COMPLETED" }),
+          })
+        )
+      );
+      fetchHistory();
+    } catch {
+      fetchPendingItems();
+    } finally {
+      setIsBatchRemoving(false);
+    }
   }
 
   async function handleToggleItemStatus(
@@ -1453,12 +1525,12 @@ export default function MoMGeneratorPage() {
 
             {/* Modal Content */}
             <div className="p-4 overflow-y-auto flex-1 space-y-3">
-              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 text-xs">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 text-xs flex-wrap">
                 <span className="text-slate-600 font-medium">
                   Ditemukan <strong>{pendingChecklist.length}</strong> item yang masih terbuka
                 </span>
                 {pendingChecklist.length > 0 && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() => handleSelectAllImport(true)}
@@ -1474,6 +1546,25 @@ export default function MoMGeneratorPage() {
                     >
                       Batal Pilih
                     </button>
+                    {Object.values(selectedImportKeys).filter(Boolean).length > 0 && (
+                      <>
+                        <span className="text-slate-300">|</span>
+                        <button
+                          type="button"
+                          disabled={isBatchRemoving}
+                          onClick={handleBatchRemovePendingItems}
+                          className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200"
+                          title="Tandai selesai & hilangkan item yang dicentang dari daftar ini"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>
+                            {isBatchRemoving
+                              ? "Menghilangkan..."
+                              : `Hilangkan Terpilih (${Object.values(selectedImportKeys).filter(Boolean).length})`}
+                          </span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -1511,48 +1602,64 @@ export default function MoMGeneratorPage() {
                         : "Tugas Tim";
 
                     return (
-                      <label
+                      <div
                         key={itemKey}
-                        className={`p-3 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
+                        onClick={() => handleToggleImportSelection(itemKey)}
+                        className={`p-3 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer group ${
                           isSelected
                             ? "border-sky-300 bg-sky-50/40"
                             : "border-slate-200 hover:border-slate-300 bg-white"
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleImportSelection(itemKey)}
-                          className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                        />
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                              {item.mom_key}
-                            </span>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${catBadge}`}>
-                              {catLabel}
-                            </span>
-                            {item.project_name && (
-                              <span className="text-[10px] text-slate-400 truncate">
-                                • {item.project_name}
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleImportSelection(itemKey)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                          />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                {item.mom_key}
                               </span>
-                            )}
-                          </div>
-                          <p className="text-xs font-semibold text-slate-800 leading-snug">
-                            {item.title}
-                          </p>
-                          <div className="flex items-center gap-3 text-[10px] text-slate-500 flex-wrap">
-                            {item.owner && (
-                              <span>PIC: <strong>{item.owner}</strong></span>
-                            )}
-                            {item.due_date && (
-                              <span>Tenggat: {item.due_date}</span>
-                            )}
-                            <span className="text-amber-600 font-medium">Status: {item.status}</span>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${catBadge}`}>
+                                {catLabel}
+                              </span>
+                              {item.project_name && (
+                                <span className="text-[10px] text-slate-400 truncate">
+                                  • {item.project_name}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-semibold text-slate-800 leading-snug">
+                              {item.title}
+                            </p>
+                            <div className="flex items-center gap-3 text-[10px] text-slate-500 flex-wrap">
+                              {item.owner && (
+                                <span>PIC: <strong>{item.owner}</strong></span>
+                              )}
+                              {item.due_date && (
+                                <span>Tenggat: {item.due_date}</span>
+                              )}
+                              <span className="text-amber-600 font-medium">Status: {item.status}</span>
+                            </div>
                           </div>
                         </div>
-                      </label>
+
+                        {/* Tombol Remove / Hilangkan Item */}
+                        <button
+                          type="button"
+                          disabled={isRemovingItemKey === itemKey}
+                          onClick={(e) => handleRemovePendingItem(item, e)}
+                          className="px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-transparent hover:border-rose-200 transition-colors shrink-0 flex items-center gap-1 text-[11px] font-medium"
+                          title="Hilangkan dari daftar pop-up ini (tandai selesai)"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Hilangkan</span>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
