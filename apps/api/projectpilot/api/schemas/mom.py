@@ -12,6 +12,30 @@ class MoMGenerateRequest(BaseModel):
     project_name: Optional[str] = None
     attendees: Optional[List[str]] = None
     attendees_raw: Optional[str] = None
+    previous_pending_items: Optional[List[str]] = None
+
+
+class ActionItemUpdate(BaseModel):
+    status: str = "PENDING"  # PENDING, COMPLETED, CARRIED_OVER
+    title: Optional[str] = None
+    owner: Optional[str] = None
+    due_date: Optional[str] = None
+    category: Optional[str] = None  # ACTION_ITEM, DEPENDENCY, OPEN_ISSUE
+
+
+class PendingMoMItemResponse(BaseModel):
+    mom_id: uuid.UUID
+    mom_key: str
+    meeting_title: str
+    project_id: Optional[uuid.UUID] = None
+    project_name: Optional[str] = None
+    item_index: int
+    id: Optional[str] = None
+    title: str
+    owner: Optional[str] = None
+    due_date: Optional[str] = None
+    category: str = "ACTION_ITEM"
+    status: str = "PENDING"
 
 
 class MoMUpdateRequest(BaseModel):
@@ -22,6 +46,7 @@ class MoMUpdateRequest(BaseModel):
     project_id: Optional[uuid.UUID] = None
     project_name: Optional[str] = None
     attendees: Optional[List[str]] = None
+    action_items: Optional[List[Dict[str, Any]]] = None
 
 
 class MoMDocumentResponse(BaseModel):

@@ -278,6 +278,7 @@ Input Context:
 - Meeting Date: {meeting_date}
 - Project Context: {project_context}
 - Daftar Peserta Rapat (Attendees): {attendees}
+- Item / Tugas Tertunda dari Rapat Sebelumnya (jika ada): {outstanding_items_context}
 
 Raw Meeting Notes / Transcript:
 \"\"\"
@@ -288,10 +289,14 @@ Requirements:
 1. Extract and infer a professional Meeting Title if not explicitly given.
 2. Formulate a 2-3 sentence Executive Summary (Ringkasan Eksekutif).
 3. If Daftar Peserta Rapat (Attendees) is provided in the input, strictly use them; otherwise extract from the text.
-4. Extract Key Discussion Points per Agenda/Topic (Poin Diskusi & Pembahasan).
+4. Extract Key Discussion Points per Agenda/Topic (Poin Diskusi & Pembahasan). If previous outstanding items are provided, document their review/status update as the first agenda item.
 5. Extract Key Decisions Agreed (Keputusan yang Disepakati).
-6. Extract Action Items (Tindak Lanjut) with task description, assigned PIC/Owner, and target Deadline/Due Date where available.
-7. Generate a complete, elegant, ready-to-use Markdown document in the "content_md" field.
+6. Extract and classify all Outstanding Action Items / Checklist into 3 distinct categories:
+   - "ACTION_ITEM": Komitmen tugas internal tim (misal: coding, desain, setup infra).
+   - "DEPENDENCY": Tugas tertahan pihak eksternal/klien (misal: menunggu data, approval, API credentials).
+   - "OPEN_ISSUE": Isu terbuka atau topik yang belum diputuskan / ditunda pembahasannya (Parking Lot).
+7. For each action item, extract task title, PIC/Owner, target deadline (YYYY-MM-DD or readable date), category, and default status to "PENDING".
+8. Generate a complete, elegant, ready-to-use Markdown document in the "content_md" field, including an interactive-styled checklist section (- [ ] [Kategori] Tugas (PIC: ...) - Deadline: ...).
 
 Return a valid JSON object strictly matching this schema:
 {{
@@ -304,13 +309,14 @@ Return a valid JSON object strictly matching this schema:
   ],
   "action_items": [
     {{
-      "title": "Judul Tindak Lanjut",
-      "owner": "Nama PIC / Tim",
+      "title": "Deskripsi tindak lanjut atau hal yang belum selesai",
+      "owner": "Nama PIC / Tim penanggung jawab",
       "due_date": "YYYY-MM-DD atau perkiraan waktu",
-      "status": "OPEN"
+      "category": "ACTION_ITEM",
+      "status": "PENDING"
     }}
   ],
-  "content_md": "# Minutes of Meeting (MoM): ...\\n\\n**Tanggal:** ...\\n**Peserta:** ...\\n\\n## 1. Ringkasan Eksekutif\\n...\\n\\n## 2. Poin Pembahasan Utama\\n...\\n\\n## 3. Keputusan yang Disepakati\\n...\\n\\n## 4. Tindak Lanjut (Action Items)\\n| No | Tugas / Action Item | PIC | Tenggat | Status |\\n|---|---|---|---|---|\\n...\\n\\n## 5. Catatan Tambahan & Agenda Berikutnya\\n...\\n"
+  "content_md": "# Minutes of Meeting (MoM): ...\\n\\n**Tanggal:** ...\\n**Peserta:** ...\\n\\n## 1. Ringkasan Eksekutif\\n...\\n\\n## 2. Poin Pembahasan Utama\\n...\\n\\n## 3. Keputusan yang Disepakati\\n...\\n\\n## 4. Checklist Tindak Lanjut & Agenda Rapat Berikutnya\\n- [ ] **[ACTION_ITEM]** Tugas ... (PIC: ..., Tenggat: ...)\\n- [ ] **[DEPENDENCY]** Tunggakan ... (PIC: ..., Tenggat: ...)\\n- [ ] **[OPEN_ISSUE]** Isu Terbuka ...\\n\\n## 5. Catatan Tambahan\\n...\\n"
 }}
 """,
 }

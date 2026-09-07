@@ -8,9 +8,11 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  CheckSquare,
   ChevronRight,
   Clock,
   Copy,
+  CornerDownRight,
   Download,
   Edit3,
   ExternalLink,
@@ -26,6 +28,7 @@ import {
   RefreshCw,
   Search,
   Sparkles,
+  Square,
   Tag,
   Trash2,
   User,
@@ -44,10 +47,27 @@ interface ProjectOption {
 }
 
 interface ActionItem {
+  id?: string;
   title: string;
   owner?: string | null;
   due_date?: string | null;
-  status?: string;
+  category?: "ACTION_ITEM" | "DEPENDENCY" | "OPEN_ISSUE" | string;
+  status?: "PENDING" | "COMPLETED" | "CARRIED_OVER" | string;
+}
+
+interface PendingMoMItem {
+  mom_id: string;
+  mom_key: string;
+  meeting_title: string;
+  project_id?: string | null;
+  project_name?: string | null;
+  item_index: number;
+  id?: string;
+  title: string;
+  owner?: string | null;
+  due_date?: string | null;
+  category: string;
+  status: string;
 }
 
 interface MoMDocument {
@@ -114,11 +134,20 @@ export default function MoMGeneratorPage() {
 
   // Active generated/viewed MoM
   const [currentMoM, setCurrentMoM] = useState<MoMDocument | null>(null);
-  const [previewMode, setPreviewMode] = useState<"DOCUMENT" | "MARKDOWN">("DOCUMENT");
+  const [previewMode, setPreviewMode] = useState<"DOCUMENT" | "CHECKLIST" | "MARKDOWN">("DOCUMENT");
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedContentMd, setEditedContentMd] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [checklistFilter, setChecklistFilter] = useState<"ALL" | "ACTION_ITEM" | "DEPENDENCY" | "OPEN_ISSUE" | "PENDING_ONLY">("ALL");
+  const [updatingItemIndex, setUpdatingItemIndex] = useState<number | null>(null);
+
+  // Import pending items from previous meetings
+  const [pendingChecklist, setPendingChecklist] = useState<PendingMoMItem[]>([]);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedImportKeys, setSelectedImportKeys] = useState<Record<string, boolean>>({});
+  const [importedItemsList, setImportedItemsList] = useState<string[]>([]);
+  const [isLoadingPending, setIsLoadingPending] = useState(false);
 
   // History repository state
   const [historyList, setHistoryList] = useState<MoMListItem[]>([]);
@@ -137,6 +166,129 @@ export default function MoMGeneratorPage() {
     fetchProjects();
     fetchHistory();
   }, [token]);
+
+  async function fetchPendingItems() {
+    if (!token) return;
+    setIsLoadingPending(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await apiClient<PendingMoMItem[]>("/mom/pending-items", { headers });
+      if (res.data) {
+        setPendingChecklist(res.data);
+      }
+    } catch {
+      // Handled silently
+    } finally {
+      setIsLoadingPending(false);
+    }
+  }
+
+  function handleOpenImportModal() {
+    setIsImportModalOpen(true);
+    fetchPendingItems();
+  }
+
+  function handleToggleImportSelection(key: string) {
+    setSelectedImportKeys((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  }
+
+  function handleSelectAllImport(select: boolean) {
+    const next: Record<string, boolean> = {};
+    if (select) {
+      pendingChecklist.forEach((item) => {
+        next[`${item.mom_id}-${item.item_index}`] = true;
+      });
+    }
+    setSelectedImportKeys(next);
+  }
+
+  function handleConfirmImport() {
+    const selected = pendingChecklist.filter(
+      (item) => selectedImportKeys[`${item.mom_id}-${item.item_index}`]
+    );
+    if (selected.length === 0) {
+      setIsImportModalOpen(false);
+      return;
+    }
+
+    const itemsSummary = selected.map(
+      (s) => `[${s.category}] ${s.title} (PIC: ${s.owner || "Tim"}, Tenggat: ${s.due_date || "-"}, Status Lalu: ${s.status})`
+    );
+
+    setImportedItemsList(itemsSummary);
+
+    const importBlock =
+      `\n\n--- REVIEW ITEM & TUGAS TERTUNDA DARI RAPAT SEBELUMNYA ---\n` +
+      selected
+        .map(
+          (s, i) =>
+            `${i + 1}. [${s.category}] ${s.title} (PIC: ${s.owner || "-"}, Tenggat: ${s.due_date || "-"}, Dari: ${s.mom_key})`
+        )
+        .join("\n") +
+      `\n--- CATATAN PEMBAHASAN RAPAT HARI INI ---\n`;
+
+    setRawText((prev) => {
+      const cleanPrev = prev.trim();
+      return importBlock + (cleanPrev ? cleanPrev : "");
+    });
+
+    setIsImportModalOpen(false);
+  }
+
+  async function handleToggleItemStatus(
+    docId: string,
+    itemIndex: number,
+    currentStatus: string,
+    targetStatus?: string
+  ) {
+    let nextStatus = targetStatus;
+    if (!nextStatus) {
+      if (currentStatus === "PENDING" || currentStatus === "OPEN") {
+        nextStatus = "COMPLETED";
+      } else if (currentStatus === "COMPLETED") {
+        nextStatus = "CARRIED_OVER";
+      } else {
+        nextStatus = "PENDING";
+      }
+    }
+
+    setUpdatingItemIndex(itemIndex);
+
+    // Optimistically update currentMoM
+    if (currentMoM && currentMoM.id === docId) {
+      const updated = [...(currentMoM.action_items || [])];
+      if (updated[itemIndex]) {
+        updated[itemIndex] = { ...updated[itemIndex], status: nextStatus };
+        setCurrentMoM({ ...currentMoM, action_items: updated });
+      }
+    }
+
+    // Optimistically update selectedHistoryMoM
+    if (selectedHistoryMoM && selectedHistoryMoM.id === docId) {
+      const updated = [...(selectedHistoryMoM.action_items || [])];
+      if (updated[itemIndex]) {
+        updated[itemIndex] = { ...updated[itemIndex], status: nextStatus };
+        setSelectedHistoryMoM({ ...selectedHistoryMoM, action_items: updated });
+      }
+    }
+
+    try {
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      await apiClient(`/mom/${docId}/items/${itemIndex}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      fetchHistory();
+    } catch {
+      // Handled silently
+    } finally {
+      setUpdatingItemIndex(null);
+    }
+  }
 
   async function fetchProjects() {
     if (!token) return;
@@ -188,6 +340,7 @@ export default function MoMGeneratorPage() {
           attendees_raw: meetingAttendees.trim() || undefined,
           meeting_date: meetingDate ? new Date(meetingDate).toISOString() : undefined,
           project_name: projectName.trim() || undefined,
+          previous_pending_items: importedItemsList.length > 0 ? importedItemsList : undefined,
         }),
       });
 
@@ -195,6 +348,7 @@ export default function MoMGeneratorPage() {
         setCurrentMoM(res.data);
         setEditedContentMd(res.data.content_md);
         setIsEditingContent(false);
+        setImportedItemsList([]);
         fetchHistory(); // Refresh history
       } else {
         setGenerateError(res.error || "Gagal meng-generate MoM. Coba lagi.");
@@ -369,19 +523,31 @@ export default function MoMGeneratorPage() {
           {/* Left Column: Input Form */}
           <div className="lg:col-span-5 space-y-4">
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 gap-2">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-purple-600" />
                   <h2 className="text-sm font-bold text-slate-900">Masukan Hasil Rapat</h2>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleUseSampleTemplate}
-                  className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 hover:underline flex items-center gap-1"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Gunakan Contoh Catatan</span>
-                </button>
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  <button
+                    type="button"
+                    onClick={handleOpenImportModal}
+                    className="text-[11px] font-semibold text-sky-600 hover:text-sky-700 hover:underline flex items-center gap-1"
+                    title="Tarik checklist atau tugas yang belum selesai dari notulensi rapat sebelumnya"
+                  >
+                    <ListTodo className="w-3 h-3 text-sky-500" />
+                    <span>Tarik Item Rapat Lalu</span>
+                  </button>
+                  <span className="text-slate-300">•</span>
+                  <button
+                    type="button"
+                    onClick={handleUseSampleTemplate}
+                    className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 hover:underline flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Contoh</span>
+                  </button>
+                </div>
               </div>
 
               {generateError && (
@@ -628,8 +794,8 @@ export default function MoMGeneratorPage() {
 
                 {/* View Switcher & Document Container */}
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <button
                         type="button"
                         onClick={() => {
@@ -643,6 +809,21 @@ export default function MoMGeneratorPage() {
                         }`}
                       >
                         Pratinjau Dokumen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewMode("CHECKLIST");
+                          setIsEditingContent(false);
+                        }}
+                        className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
+                          previewMode === "CHECKLIST" && !isEditingContent
+                            ? "bg-purple-700 text-white shadow-2xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <CheckSquare className="w-3.5 h-3.5" />
+                        <span>Checklist Interaktif ({currentMoM.action_items?.length || 0})</span>
                       </button>
                       <button
                         type="button"
@@ -704,6 +885,179 @@ export default function MoMGeneratorPage() {
                         onChange={(e) => setEditedContentMd(e.target.value)}
                         className="w-full p-4 text-xs font-mono leading-relaxed bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500/20"
                       />
+                    </div>
+                  ) : previewMode === "CHECKLIST" ? (
+                    <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900">
+                            Checklist Tindak Lanjut & Review Rapat Berikutnya
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Centang untuk menyelesaikan tugas atau ubah status untuk dibawa ke rapat selanjutnya.
+                          </p>
+                        </div>
+
+                        {/* Filter Category pills */}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {(
+                            [
+                              { key: "ALL", label: "Semua" },
+                              { key: "ACTION_ITEM", label: "Tugas Tim" },
+                              { key: "DEPENDENCY", label: "Dependensi" },
+                              { key: "OPEN_ISSUE", label: "Isu Terbuka" },
+                              { key: "PENDING_ONLY", label: "Belum Selesai" },
+                            ] as const
+                          ).map((f) => (
+                            <button
+                              key={f.key}
+                              type="button"
+                              onClick={() => setChecklistFilter(f.key)}
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
+                                checklistFilter === f.key
+                                  ? "bg-purple-600 text-white shadow-2xs"
+                                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                              }`}
+                            >
+                              {f.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Items List */}
+                      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                        {currentMoM.action_items
+                          ?.map((item, originalIndex) => ({ item, originalIndex }))
+                          .filter(({ item }) => {
+                            if (checklistFilter === "ALL") return true;
+                            if (checklistFilter === "PENDING_ONLY")
+                              return item.status === "PENDING" || item.status === "OPEN" || item.status === "CARRIED_OVER";
+                            return item.category === checklistFilter;
+                          })
+                          .map(({ item, originalIndex }) => {
+                            const isDone = item.status === "COMPLETED";
+                            const isCarried = item.status === "CARRIED_OVER";
+                            const catBadge =
+                              item.category === "DEPENDENCY"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : item.category === "OPEN_ISSUE"
+                                ? "bg-purple-50 text-purple-700 border-purple-200"
+                                : "bg-blue-50 text-blue-700 border-blue-200";
+
+                            const catLabel =
+                              item.category === "DEPENDENCY"
+                                ? "Dependensi / Klien"
+                                : item.category === "OPEN_ISSUE"
+                                ? "Isu Terbuka / Parking Lot"
+                                : "Tugas Tim";
+
+                            return (
+                              <div
+                                key={originalIndex}
+                                className={`p-3 bg-white rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                  isDone
+                                    ? "border-emerald-200 bg-emerald-50/20"
+                                    : isCarried
+                                    ? "border-indigo-200 bg-indigo-50/20"
+                                    : "border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-start gap-3 flex-1 min-w-0">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleToggleItemStatus(
+                                        currentMoM.id,
+                                        originalIndex,
+                                        item.status || "PENDING",
+                                        isDone ? "PENDING" : "COMPLETED"
+                                      )
+                                    }
+                                    className="mt-0.5 text-slate-400 hover:text-emerald-600 transition-colors shrink-0"
+                                    title={isDone ? "Tandai belum selesai" : "Tandai selesai"}
+                                  >
+                                    {isDone ? (
+                                      <CheckSquare className="w-4 h-4 text-emerald-600" />
+                                    ) : (
+                                      <Square className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+                                    )}
+                                  </button>
+
+                                  <div className="space-y-1 min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span
+                                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider ${catBadge}`}
+                                      >
+                                        {catLabel}
+                                      </span>
+                                      <span className="font-mono text-[10px] font-bold text-slate-400">
+                                        {item.id || `ACT-${originalIndex + 1}`}
+                                      </span>
+                                    </div>
+                                    <p
+                                      className={`text-xs font-semibold text-slate-800 leading-snug ${
+                                        isDone ? "line-through text-slate-400" : ""
+                                      }`}
+                                    >
+                                      {item.title}
+                                    </p>
+                                    <div className="flex items-center gap-3 text-[11px] text-slate-500 flex-wrap">
+                                      {item.owner && (
+                                        <span className="flex items-center gap-1">
+                                          <User className="w-3 h-3 text-slate-400" />
+                                          <span>
+                                            PIC: <strong>{item.owner}</strong>
+                                          </span>
+                                        </span>
+                                      )}
+                                      {item.due_date && (
+                                        <span className="flex items-center gap-1">
+                                          <Calendar className="w-3 h-3 text-slate-400" />
+                                          <span>Tenggat: {item.due_date}</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Status Switcher Action */}
+                                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                  <button
+                                    type="button"
+                                    disabled={updatingItemIndex === originalIndex}
+                                    onClick={() =>
+                                      handleToggleItemStatus(
+                                        currentMoM.id,
+                                        originalIndex,
+                                        item.status || "PENDING"
+                                      )
+                                    }
+                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                                      isDone
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                                        : isCarried
+                                        ? "bg-indigo-50 text-indigo-700 border-indigo-300"
+                                        : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+                                    }`}
+                                  >
+                                    {isDone
+                                      ? "✓ Selesai"
+                                      : isCarried
+                                      ? "↷ Bawa ke Rapat Depan"
+                                      : "○ Belum Selesai"}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                        {(!currentMoM.action_items || currentMoM.action_items.length === 0) && (
+                          <div className="text-center py-6 text-xs text-slate-400">
+                            Tidak ada item tindak lanjut dalam dokumen ini.
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : previewMode === "MARKDOWN" ? (
                     <pre className="p-5 bg-slate-900 text-slate-100 rounded-xl text-xs font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
@@ -927,10 +1281,105 @@ export default function MoMGeneratorPage() {
                 </div>
               )}
 
+              {/* Interactive Checklist in Modal */}
+              {selectedHistoryMoM.action_items && selectedHistoryMoM.action_items.length > 0 && (
+                <div className="space-y-2.5 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <CheckSquare className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Checklist Tindak Lanjut ({selectedHistoryMoM.action_items.length})</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">Centang untuk ubah status</span>
+                  </div>
+
+                  <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                    {selectedHistoryMoM.action_items.map((item, idx) => {
+                      const isDone = item.status === "COMPLETED";
+                      const isCarried = item.status === "CARRIED_OVER";
+                      const catBadge =
+                        item.category === "DEPENDENCY"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : item.category === "OPEN_ISSUE"
+                          ? "bg-purple-50 text-purple-700 border-purple-200"
+                          : "bg-blue-50 text-blue-700 border-blue-200";
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-2.5 bg-white rounded-lg border text-xs flex items-center justify-between gap-2 transition-all ${
+                            isDone
+                              ? "border-emerald-200 bg-emerald-50/20"
+                              : isCarried
+                              ? "border-indigo-200 bg-indigo-50/20"
+                              : "border-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleToggleItemStatus(
+                                  selectedHistoryMoM.id,
+                                  idx,
+                                  item.status || "PENDING",
+                                  isDone ? "PENDING" : "COMPLETED"
+                                )
+                              }
+                              className="text-slate-400 hover:text-emerald-600 transition-colors shrink-0"
+                            >
+                              {isDone ? (
+                                <CheckSquare className="w-4 h-4 text-emerald-600" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-400" />
+                              )}
+                            </button>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded border uppercase ${catBadge}`}>
+                                  {item.category || "ACTION_ITEM"}
+                                </span>
+                                <span className={`font-medium line-clamp-1 ${isDone ? "line-through text-slate-400" : "text-slate-800"}`}>
+                                  {item.title}
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                                {item.owner && <span>PIC: {item.owner}</span>}
+                                {item.due_date && <span>Tenggat: {item.due_date}</span>}
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={updatingItemIndex === idx}
+                            onClick={() =>
+                              handleToggleItemStatus(
+                                selectedHistoryMoM.id,
+                                idx,
+                                item.status || "PENDING"
+                              )
+                            }
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all shrink-0 ${
+                              isDone
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                                : isCarried
+                                ? "bg-indigo-50 text-indigo-700 border-indigo-300"
+                                : "bg-slate-100 text-slate-700 border-slate-200"
+                            }`}
+                          >
+                            {isDone ? "✓ Selesai" : isCarried ? "↷ Bawa ke Depan" : "○ Belum"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Rendered Markdown Document */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-slate-900 block">Isi Dokumen Notulensi:</span>
-                <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 font-sans leading-relaxed whitespace-pre-wrap">
+                <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 font-sans leading-relaxed whitespace-pre-wrap max-h-[350px] overflow-y-auto">
                   {selectedHistoryMoM.content_md}
                 </div>
               </div>
@@ -966,6 +1415,171 @@ export default function MoMGeneratorPage() {
                   <span>Download (.md)</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: TARIK CHECKLIST / ITEM TERTUNDA DARI RAPAT SEBELUMNYA */}
+      {/* ========================================================================= */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-fadeIn">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-start justify-between bg-slate-50 shrink-0">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-sky-100 text-sky-700">
+                    <ListTodo className="w-4 h-4" />
+                  </span>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                    Tarik Checklist / Item Belum Selesai dari Rapat Sebelumnya
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Pilih tugas, dependensi, atau isu terbuka dari notulensi terdahulu untuk dijadikan agenda evaluasi pada rapat ini.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 overflow-y-auto flex-1 space-y-3">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 text-xs">
+                <span className="text-slate-600 font-medium">
+                  Ditemukan <strong>{pendingChecklist.length}</strong> item yang masih terbuka
+                </span>
+                {pendingChecklist.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectAllImport(true)}
+                      className="text-[11px] font-semibold text-sky-600 hover:underline"
+                    >
+                      Pilih Semua
+                    </button>
+                    <span className="text-slate-300">|</span>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectAllImport(false)}
+                      className="text-[11px] font-semibold text-slate-500 hover:underline"
+                    >
+                      Batal Pilih
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {isLoadingPending ? (
+                <div className="py-12 text-center text-xs text-slate-500 flex flex-col items-center gap-2">
+                  <RefreshCw className="w-5 h-5 animate-spin text-sky-600" />
+                  <span>Memuat daftar tugas belum selesai...</span>
+                </div>
+              ) : pendingChecklist.length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                  <h4 className="text-xs font-bold text-slate-800">Semua Tugas Sudah Selesai!</h4>
+                  <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                    Tidak ada item atau tindak lanjut yang berstatus belum selesai dari rapat-rapat sebelumnya.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                  {pendingChecklist.map((item) => {
+                    const itemKey = `${item.mom_id}-${item.item_index}`;
+                    const isSelected = !!selectedImportKeys[itemKey];
+                    const catBadge =
+                      item.category === "DEPENDENCY"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : item.category === "OPEN_ISSUE"
+                        ? "bg-purple-50 text-purple-700 border-purple-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200";
+
+                    const catLabel =
+                      item.category === "DEPENDENCY"
+                        ? "Dependensi"
+                        : item.category === "OPEN_ISSUE"
+                        ? "Isu Terbuka"
+                        : "Tugas Tim";
+
+                    return (
+                      <label
+                        key={itemKey}
+                        className={`p-3 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
+                          isSelected
+                            ? "border-sky-300 bg-sky-50/40"
+                            : "border-slate-200 hover:border-slate-300 bg-white"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleImportSelection(itemKey)}
+                          className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                              {item.mom_key}
+                            </span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${catBadge}`}>
+                              {catLabel}
+                            </span>
+                            {item.project_name && (
+                              <span className="text-[10px] text-slate-400 truncate">
+                                • {item.project_name}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-semibold text-slate-800 leading-snug">
+                            {item.title}
+                          </p>
+                          <div className="flex items-center gap-3 text-[10px] text-slate-500 flex-wrap">
+                            {item.owner && (
+                              <span>PIC: <strong>{item.owner}</strong></span>
+                            )}
+                            {item.due_date && (
+                              <span>Tenggat: {item.due_date}</span>
+                            )}
+                            <span className="text-amber-600 font-medium">Status: {item.status}</span>
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                disabled={Object.values(selectedImportKeys).filter(Boolean).length === 0}
+                onClick={handleConfirmImport}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-xs transition-colors disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>
+                  Sisipkan {Object.values(selectedImportKeys).filter(Boolean).length} Item ke Catatan Rapat
+                </span>
+              </button>
             </div>
           </div>
         </div>

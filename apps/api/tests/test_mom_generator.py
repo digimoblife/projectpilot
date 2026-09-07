@@ -110,7 +110,40 @@ async def test_mom_generation_and_history_workflow(client: AsyncClient):
     assert detail_res.status_code == 200
     assert detail_res.json()["id"] == mom_id
 
-    # 7. Test Update MoM
+    # 7. Test Get Pending Checklist Items
+    pending_res = await client.get("/api/v1/mom/pending-items", headers=headers)
+    assert pending_res.status_code == 200
+    pending_items = pending_res.json()
+    assert len(pending_items) > 0
+    assert any(item["mom_id"] == mom_id for item in pending_items)
+
+    # 8. Test Patch Action Item Checklist Status
+    patch_res = await client.patch(
+        f"/api/v1/mom/{mom_id}/items/0",
+        json={"status": "COMPLETED"},
+        headers=headers,
+    )
+    assert patch_res.status_code == 200
+    updated_doc = patch_res.json()
+    assert updated_doc["action_items"][0]["status"] == "COMPLETED"
+
+    # 9. Test Follow-up MoM with previous_pending_items
+    gen_followup_res = await client.post(
+        "/api/v1/mom/generate",
+        json={
+            "raw_text": "Rapat Sprint 2: Review item sebelumnya dan status staging.",
+            "title": "Rapat Lanjutan Sprint 2",
+            "previous_pending_items": [
+                "Menunggu pembukaan IP whitelist & API sandbox dari tim IT klien",
+            ],
+            "project_name": "POS & CRM Integration",
+        },
+        headers=headers,
+    )
+    assert gen_followup_res.status_code == 201
+    assert len(gen_followup_res.json()["action_items"]) > 0
+
+    # 10. Test Update MoM
     update_res = await client.put(
         f"/api/v1/mom/{mom_id}",
         json={
@@ -123,7 +156,7 @@ async def test_mom_generation_and_history_workflow(client: AsyncClient):
     assert update_res.json()["title"] == "Rapat Koordinasi Integrasi Payment & POS (Final)"
     assert update_res.json()["content_md"] == "# MoM Final Edited\n\nKonten sudah direview bersama."
 
-    # 8. Test Delete MoM
+    # 11. Test Delete MoM
     del_res = await client.delete(f"/api/v1/mom/{standalone_id}", headers=headers)
     assert del_res.status_code == 204
 

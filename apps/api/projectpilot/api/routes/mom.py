@@ -4,15 +4,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 
 from projectpilot.ai.gemini_adapter import gemini_adapter
 from projectpilot.ai.prompt_registry import SYSTEM_LANGUAGE_INSTRUCTION, get_prompt
 from projectpilot.api.deps import get_current_user, get_db
 from projectpilot.api.schemas.mom import (
+    ActionItemUpdate,
     MoMDocumentResponse,
     MoMGenerateRequest,
     MoMListItemResponse,
     MoMUpdateRequest,
+    PendingMoMItemResponse,
 )
 from projectpilot.persistence.base import utc_now
 from projectpilot.persistence.models.activity import ActivityEvent
@@ -103,12 +106,19 @@ async def generate_mom(
 
     attendees_prompt_str = ", ".join(explicit_attendees) if explicit_attendees else "Ekstrak otomatis dari teks rapat jika tersedia"
 
+    # Process previous outstanding items to review
+    if req.previous_pending_items and len(req.previous_pending_items) > 0:
+        outstanding_items_context = "\n".join([f"- {item}" for item in req.previous_pending_items])
+    else:
+        outstanding_items_context = "Tidak ada item tertunda dari rapat sebelumnya."
+
     prompt = get_prompt(
         "MOM_GENERATION",
         meeting_title=meeting_title_str,
         meeting_date=meeting_date_str,
         project_context=project_context,
         attendees=attendees_prompt_str,
+        outstanding_items_context=outstanding_items_context,
         raw_text=req.raw_text,
     )
 
@@ -127,8 +137,27 @@ async def generate_mom(
     content_md = ai_result.get("content_md", f"# Minutes of Meeting (MoM)\n\n{req.raw_text}")
     summary = ai_result.get("summary")
     attendees = explicit_attendees if explicit_attendees else (ai_result.get("attendees") or [])
-    action_items = ai_result.get("action_items") or []
+    raw_action_items = ai_result.get("action_items") or []
     decisions = ai_result.get("decisions") or []
+
+    # Normalize action items with id, category, and status
+    normalized_action_items = []
+    for idx, act in enumerate(raw_action_items):
+        item_id = act.get("id") or f"ACT-{(idx + 1)}"
+        category = act.get("category") or "ACTION_ITEM"
+        if category not in ["ACTION_ITEM", "DEPENDENCY", "OPEN_ISSUE"]:
+            category = "ACTION_ITEM"
+        status_val = act.get("status") or "PENDING"
+        if status_val not in ["PENDING", "COMPLETED", "CARRIED_OVER"]:
+            status_val = "PENDING"
+        normalized_action_items.append({
+            "id": item_id,
+            "title": act.get("title") or "Tindak lanjut rapat",
+            "owner": act.get("owner") or act.get("owner_name") or "Tim Terkait",
+            "due_date": act.get("due_date"),
+            "category": category,
+            "status": status_val,
+        })
 
     doc = MoMDocument(
         mom_key=mom_key,
@@ -140,7 +169,7 @@ async def generate_mom(
         content_md=content_md,
         summary=summary,
         attendees=attendees,
-        action_items=action_items,
+        action_items=normalized_action_items,
         decisions=decisions,
         created_by_user_id=current_user.id,
     )
@@ -221,7 +250,49 @@ async def list_mom_documents(
 
 
 # =========================================================================
-# 3. GET MOM DETAIL
+# 3. GET PENDING & OUTSTANDING MOM CHECKLIST ITEMS
+# =========================================================================
+@router.get("/pending-items", response_model=List[PendingMoMItemResponse])
+async def get_pending_mom_items(
+    project_id: Optional[uuid.UUID] = Query(None, description="Filter berdasarkan ID proyek"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = select(MoMDocument).options(selectinload(MoMDocument.project)).order_by(desc(MoMDocument.meeting_date), desc(MoMDocument.created_at))
+    if project_id:
+        query = query.where(MoMDocument.project_id == project_id)
+
+    res = await db.execute(query)
+    docs = res.scalars().all()
+
+    pending_items: List[PendingMoMItemResponse] = []
+    for doc in docs:
+        if not doc.action_items:
+            continue
+        for idx, item in enumerate(doc.action_items):
+            status_val = (item.get("status") or "PENDING").upper()
+            if status_val in ["PENDING", "CARRIED_OVER", "OPEN"]:
+                pending_items.append(
+                    PendingMoMItemResponse(
+                        mom_id=doc.id,
+                        mom_key=doc.mom_key,
+                        meeting_title=doc.title,
+                        project_id=doc.project_id,
+                        project_name=doc.project.name if doc.project else doc.project_name,
+                        item_index=idx,
+                        id=item.get("id") or f"ACT-{idx+1}",
+                        title=item.get("title") or "Tugas belum selesai",
+                        owner=item.get("owner"),
+                        due_date=item.get("due_date"),
+                        category=item.get("category") or "ACTION_ITEM",
+                        status=status_val,
+                    )
+                )
+    return pending_items
+
+
+# =========================================================================
+# 4. GET MOM DETAIL
 # =========================================================================
 @router.get("/{mom_id}", response_model=MoMDocumentResponse)
 async def get_mom_detail(
@@ -240,7 +311,50 @@ async def get_mom_detail(
 
 
 # =========================================================================
-# 4. UPDATE MOM DOCUMENT
+# 5. UPDATE ACTION ITEM STATUS (CHECKLIST INTERAKTIF)
+# =========================================================================
+@router.patch("/{mom_id}/items/{item_index}", response_model=MoMDocumentResponse)
+async def update_action_item_status(
+    mom_id: uuid.UUID,
+    item_index: int,
+    req: ActionItemUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = select(MoMDocument).where(MoMDocument.id == mom_id).options(selectinload(MoMDocument.project))
+    res = await db.execute(query)
+    doc = res.scalar_one_or_none()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen MoM tidak ditemukan.")
+
+    items = list(doc.action_items or [])
+    if item_index < 0 or item_index >= len(items):
+        raise HTTPException(status_code=400, detail="Index item checklist tidak valid.")
+
+    curr = dict(items[item_index])
+    curr["status"] = req.status
+    if req.title is not None:
+        curr["title"] = req.title
+    if req.owner is not None:
+        curr["owner"] = req.owner
+    if req.due_date is not None:
+        curr["due_date"] = req.due_date
+    if req.category is not None:
+        curr["category"] = req.category
+
+    items[item_index] = curr
+    doc.action_items = items
+    doc.updated_at = utc_now()
+    flag_modified(doc, "action_items")
+
+    await db.commit()
+    await db.refresh(doc)
+    return _map_mom_response(doc)
+
+
+# =========================================================================
+# 6. UPDATE MOM DOCUMENT
 # =========================================================================
 @router.put("/{mom_id}", response_model=MoMDocumentResponse)
 async def update_mom_document(
@@ -270,6 +384,9 @@ async def update_mom_document(
         doc.project_name = req.project_name
     if req.attendees is not None:
         doc.attendees = req.attendees
+    if req.action_items is not None:
+        doc.action_items = req.action_items
+        flag_modified(doc, "action_items")
 
     doc.updated_at = utc_now()
     await db.commit()
@@ -279,7 +396,7 @@ async def update_mom_document(
 
 
 # =========================================================================
-# 5. DELETE MOM DOCUMENT
+# 7. DELETE MOM DOCUMENT
 # =========================================================================
 @router.delete("/{mom_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_mom_document(

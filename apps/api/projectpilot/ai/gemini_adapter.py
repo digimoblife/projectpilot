@@ -373,22 +373,36 @@ Sistem berbasis FastAPI dengan asynchronous PostgreSQL, didukung worker backgrou
                 ],
                 "action_items": [
                     {
+                        "id": "ACT-1",
                         "title": "Menyiapkan endpoint staging dan verifikasi payload",
                         "owner": "Lead Developer",
                         "due_date": "2026-09-01",
-                        "status": "OPEN",
+                        "category": "ACTION_ITEM",
+                        "status": "PENDING",
                     },
                     {
-                        "title": "Finalisasi prototype antarmuka pengguna (UI/UX)",
+                        "id": "ACT-2",
+                        "title": "Finalisasi prototype antarmuka pengguna (UI/UX) di Figma",
                         "owner": "UI/UX Designer",
                         "due_date": "2026-08-30",
-                        "status": "OPEN",
+                        "category": "ACTION_ITEM",
+                        "status": "PENDING",
                     },
                     {
-                        "title": "Mengirimkan dokumentasi teknis dan kredensial akses ke tim klien",
-                        "owner": "Project Manager",
+                        "id": "ACT-3",
+                        "title": "Menunggu pembukaan IP whitelist & API sandbox dari tim IT klien",
+                        "owner": "Stakeholder Klien",
                         "due_date": "2026-08-28",
-                        "status": "OPEN",
+                        "category": "DEPENDENCY",
+                        "status": "PENDING",
+                    },
+                    {
+                        "id": "ACT-4",
+                        "title": "Kajian kebutuhan modul multi-currency (Parking Lot)",
+                        "owner": "Project Manager",
+                        "due_date": "Rapat Teknis Berikutnya",
+                        "category": "OPEN_ISSUE",
+                        "status": "PENDING",
                     },
                 ],
                 "content_md": """# Minutes of Meeting (MoM)
@@ -426,12 +440,11 @@ Rapat koordinasi teknis telah terlaksana dengan lancar untuk menyelaraskan pemah
 
 ---
 
-## ✅ 5. Tindak Lanjut & Action Items
-| No | Tugas / Action Item | Penanggung Jawab (PIC) | Target Tenggat | Status |
-|:---|:---|:---|:---|:---|
-| 1 | Menyiapkan endpoint staging dan verifikasi payload | Lead Developer | 2026-09-01 | OPEN |
-| 2 | Finalisasi prototype antarmuka pengguna (UI/UX) | UI/UX Designer | 2026-08-30 | OPEN |
-| 3 | Mengirimkan dokumentasi teknis dan kredensial akses | Project Manager | 2026-08-28 | OPEN |
+## 📋 5. Checklist Tindak Lanjut & Agenda Rapat Berikutnya
+- [ ] **[ACTION_ITEM]** Menyiapkan endpoint staging dan verifikasi payload (PIC: Lead Developer, Tenggat: 2026-09-01)
+- [ ] **[ACTION_ITEM]** Finalisasi prototype antarmuka pengguna (UI/UX) di Figma (PIC: UI/UX Designer, Tenggat: 2026-08-30)
+- [ ] **[DEPENDENCY]** Menunggu pembukaan IP whitelist & API sandbox dari tim IT klien (PIC: Stakeholder Klien, Tenggat: 2026-08-28)
+- [ ] **[OPEN_ISSUE]** Kajian kebutuhan modul multi-currency (Parking Lot) (PIC: Project Manager, Tenggat: Rapat Teknis Berikutnya)
 
 ---
 
