@@ -73,3 +73,39 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Print optimization for official documents / PDF export */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide navigation, sidebar, headers, and UI action bars */
+  header,
+  nav,
+  aside,
+  button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Expand printable document to full width */
+  #printable-markdown-document,
+  .markdown-document {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Prevent awkward page breaks inside tables and quotes */
+  table, tr, td, th, blockquote, pre {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

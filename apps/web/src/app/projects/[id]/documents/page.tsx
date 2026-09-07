@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { MarkdownViewer } from "@/components/ui/markdown-viewer";
 
 interface DocumentEvidence {
   id: string;
@@ -520,9 +521,11 @@ export default function ProjectDocumentsPage({
                     </button>
                   </div>
 
-                  <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed font-sans whitespace-pre-wrap">
-                    {selectedDoc.content}
-                  </div>
+                  <MarkdownViewer
+                    content={selectedDoc.content}
+                    title={`${selectedDoc.document_key} - ${selectedDoc.title}`}
+                    className="p-5 border border-slate-200 shadow-2xs"
+                  />
                 </div>
               )}
 

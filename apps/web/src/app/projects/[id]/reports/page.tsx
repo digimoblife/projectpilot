@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { MarkdownViewer } from "@/components/ui/markdown-viewer";
 
 interface ReportEvidence {
   id: string;
@@ -585,9 +586,11 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
                     </div>
                   </div>
 
-                  <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed font-sans whitespace-pre-wrap">
-                    {selectedReport.content}
-                  </div>
+                  <MarkdownViewer
+                    content={selectedReport.content}
+                    title={`${selectedReport.report_key} - ${selectedReport.title}`}
+                    className="p-5 border border-slate-200 shadow-2xs"
+                  />
                 </div>
               )}
 

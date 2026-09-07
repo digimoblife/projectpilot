@@ -39,6 +39,7 @@ import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { SkeletonCardGrid, SkeletonTable } from "@/components/ui/skeleton-loader";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MarkdownViewer } from "@/components/ui/markdown-viewer";
 
 interface ProjectOption {
   id: string;
@@ -1136,9 +1137,11 @@ export default function MoMGeneratorPage() {
                       {currentMoM.content_md}
                     </pre>
                   ) : (
-                    <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed font-sans whitespace-pre-wrap max-h-[500px] overflow-y-auto shadow-inner">
-                      {currentMoM.content_md}
-                    </div>
+                    <MarkdownViewer
+                      content={currentMoM.content_md}
+                      title={currentMoM.title}
+                      className="p-6 border border-slate-200 shadow-2xs max-h-[550px] overflow-y-auto"
+                    />
                   )}
                 </div>
               </div>
@@ -1451,9 +1454,11 @@ export default function MoMGeneratorPage() {
               {/* Rendered Markdown Document */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-slate-900 block">Isi Dokumen Notulensi:</span>
-                <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 font-sans leading-relaxed whitespace-pre-wrap max-h-[350px] overflow-y-auto">
-                  {selectedHistoryMoM.content_md}
-                </div>
+                <MarkdownViewer
+                  content={selectedHistoryMoM.content_md}
+                  title={selectedHistoryMoM.title}
+                  className="p-5 border border-slate-200 shadow-2xs max-h-[450px] overflow-y-auto"
+                />
               </div>
             </div>
 
