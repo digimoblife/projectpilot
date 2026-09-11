@@ -31,39 +31,201 @@ export function MarkdownViewer({
   }
 
   function handlePrint() {
-    const originalTitle = document.title;
-    if (title) {
-      document.title = title;
-    }
-
     const docEl = printableRef.current;
-    if (docEl) {
-      docEl.classList.add("print-target-active");
+    if (!docEl) return;
+
+    // Create a hidden, isolated iframe to print strictly the formatted document content
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    const contentHtml = docEl.innerHTML;
+    const docTitle = title || "Dokumen Resmi ProjectPilot";
+
+    doc.open();
+    doc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${docTitle}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 20mm 15mm 20mm 15mm;
     }
-    document.body.classList.add("printing-markdown-doc");
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.6;
+      color: #0f172a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    h1 {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 0;
+      margin-bottom: 12pt;
+      padding-bottom: 6pt;
+      border-bottom: 2px solid #e2e8f0;
+      line-height: 1.25;
+    }
+    h2 {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 14pt;
+      margin-bottom: 6pt;
+      padding-bottom: 3pt;
+      border-bottom: 1px solid #f1f5f9;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    h3 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 10pt;
+      margin-bottom: 4pt;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    h4 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 8pt;
+      margin-bottom: 3pt;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 8pt;
+      color: #334155;
+    }
+    ul, ol {
+      margin-top: 0;
+      margin-bottom: 8pt;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 3pt;
+      color: #334155;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8pt;
+      margin-bottom: 12pt;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    th {
+      background-color: #f1f5f9 !important;
+      color: #0f172a;
+      font-weight: 700;
+      text-align: left;
+      padding: 6pt 8pt;
+      border: 1px solid #cbd5e1;
+    }
+    td {
+      padding: 5pt 8pt;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+    blockquote {
+      margin: 8pt 0;
+      padding: 6pt 12pt;
+      background-color: #f8fafc;
+      border-left: 4px solid #0f172a;
+      color: #475569;
+      font-style: italic;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9pt;
+      background-color: #f1f5f9;
+      padding: 1pt 3pt;
+      border-radius: 3px;
+      border: 1px solid #e2e8f0;
+    }
+    pre {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      padding: 10pt;
+      border-radius: 6px;
+      font-size: 8.5pt;
+      overflow: hidden;
+      white-space: pre-wrap;
+      word-break: break-all;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      margin: 8pt 0;
+    }
+    pre code {
+      background: transparent !important;
+      border: none !important;
+      color: inherit !important;
+      padding: 0;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 12pt 0;
+    }
+    strong {
+      color: #0f172a;
+      font-weight: 700;
+    }
+    input[type="checkbox"] {
+      margin-right: 4pt;
+    }
+  </style>
+</head>
+<body>
+  ${contentHtml}
+</body>
+</html>`);
+    doc.close();
 
-    const cleanup = () => {
-      document.body.classList.remove("printing-markdown-doc");
-      if (docEl) {
-        docEl.classList.remove("print-target-active");
-      }
-      if (title) {
-        document.title = originalTitle;
-      }
-      window.removeEventListener("afterprint", cleanup);
-    };
-
-    window.addEventListener("afterprint", cleanup);
-    window.print();
-    setTimeout(cleanup, 2000);
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 2000);
+    }, 250);
   }
 
   return (
-    <div className={`relative flex flex-col bg-white rounded-xl ${className}`}>
+    <div className={`relative flex flex-col bg-white rounded-2xl ${className}`}>
       {/* Top action toolbar (hidden on print) */}
       {(showPrintButton || showCopyButton) && (
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 print:hidden">
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             {title ? title : "Format Dokumen Resmi"}
           </span>
 
@@ -72,7 +234,7 @@ export function MarkdownViewer({
               <button
                 type="button"
                 onClick={handleCopy}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl active:scale-[0.98] transition-all cursor-pointer shadow-2xs"
                 title="Salin isi dokumen teks"
               >
                 {copied ? (
@@ -93,7 +255,7 @@ export function MarkdownViewer({
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg shadow-2xs transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-black rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
                 title="Cetak atau simpan sebagai PDF"
               >
                 <Printer className="w-3.5 h-3.5" />
