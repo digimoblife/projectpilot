@@ -21,6 +21,7 @@ export function MarkdownViewer({
   showCopyButton = true,
 }: MarkdownViewerProps) {
   const [copied, setCopied] = useState(false);
+  const printableRef = React.useRef<HTMLDivElement>(null);
 
   function handleCopy() {
     if (!content) return;
@@ -30,7 +31,31 @@ export function MarkdownViewer({
   }
 
   function handlePrint() {
+    const originalTitle = document.title;
+    if (title) {
+      document.title = title;
+    }
+
+    const docEl = printableRef.current;
+    if (docEl) {
+      docEl.classList.add("print-target-active");
+    }
+    document.body.classList.add("printing-markdown-doc");
+
+    const cleanup = () => {
+      document.body.classList.remove("printing-markdown-doc");
+      if (docEl) {
+        docEl.classList.remove("print-target-active");
+      }
+      if (title) {
+        document.title = originalTitle;
+      }
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    window.addEventListener("afterprint", cleanup);
     window.print();
+    setTimeout(cleanup, 2000);
   }
 
   return (
@@ -80,7 +105,7 @@ export function MarkdownViewer({
       )}
 
       {/* Rendered Markdown Document Container */}
-      <div id="printable-markdown-document" className="markdown-document text-slate-800">
+      <div ref={printableRef} id="printable-markdown-document" className="markdown-document text-slate-800">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{

@@ -73,7 +73,7 @@ function ShieldCheck(props: any) {
 }
 
 const docStatusConfigs = {
-  DRAFT: { label: "Draft AI", color: "bg-amber-50 text-amber-700 border-amber-200" },
+  DRAFT: { label: "Draft", color: "bg-amber-50 text-amber-700 border-amber-200" },
   UNDER_REVIEW: { label: "Dalam Review", color: "bg-blue-50 text-blue-700 border-blue-200" },
   FINAL: { label: "Final (Resmi)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   SUPERSEDED: { label: "Tergantikan", color: "bg-slate-100 text-slate-500 border-slate-200" },
@@ -490,7 +490,7 @@ export default function ProjectDocumentsPage({
               {selectedDoc.summary && (
                 <div className="p-3 bg-sky-50/60 border border-sky-200 rounded-xl">
                   <span className="text-[10px] font-bold uppercase text-sky-800 block mb-0.5">
-                    Ringkasan Dokumen (AI Grounded):
+                    Ringkasan Dokumen:
                   </span>
                   <p className="text-xs text-slate-800 leading-relaxed">{selectedDoc.summary}</p>
                 </div>

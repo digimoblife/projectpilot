@@ -538,14 +538,9 @@ export default function MoMGeneratorPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Minutes of Meeting (MoM) Generator
-            </h1>
-            <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold border border-purple-200">
-              ✨ AI Powered
-            </span>
-          </div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            Minutes of Meeting (MoM) Generator
+          </h1>
           <p className="text-xs text-slate-500 mt-1">
             Transformasikan teks mentah atau transkrip rapat menjadi dokumen notulensi resmi terstruktur (.md) dan kelola riwayatnya.
           </p>
@@ -728,7 +723,7 @@ export default function MoMGeneratorPage() {
                     {isGenerating ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>AI Sedang Menyusun MoM...</span>
+                        <span>Sedang Menyusun MoM...</span>
                       </>
                     ) : (
                       <>
@@ -750,7 +745,7 @@ export default function MoMGeneratorPage() {
                   <Sparkles className="w-6 h-6 animate-spin" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-slate-900">ProjectPilot AI sedang menganalisis rapat...</h3>
+                  <h3 className="text-sm font-bold text-slate-900">ProjectPilot sedang menganalisis rapat...</h3>
                   <p className="text-xs text-slate-500 max-w-md mx-auto">
                     Mengekstrak peserta rapat, merangkum poin diskusi, memisahkan keputusan kunci, serta menyusun tabel action items ke dalam format Markdown (.md).
                   </p>
@@ -814,7 +809,7 @@ export default function MoMGeneratorPage() {
                   <div className="p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
                     <div className="flex items-center gap-1.5 text-purple-900 font-bold text-xs">
                       <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                      <span>Ringkasan Eksekutif (AI Summary):</span>
+                      <span>Ringkasan Eksekutif:</span>
                     </div>
                     <p className="text-xs text-slate-800 leading-relaxed">{currentMoM.summary}</p>
                   </div>

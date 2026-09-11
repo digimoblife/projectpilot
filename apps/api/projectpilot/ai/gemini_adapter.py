@@ -452,7 +452,7 @@ Rapat koordinasi teknis telah terlaksana dengan lancar untuk menyelaraskan pemah
 - Rapat evaluasi mingguan berikutnya (*Weekly Sync*) akan diadakan pada hari Senin pekan depan melalui video conference.
 
 ---
-*Dokumen ini digenerate secara otomatis oleh ProjectPilot AI MoM Copilot pada 26 Agustus 2026.*
+*Dokumen ini digenerate secara otomatis oleh ProjectPilot pada 26 Agustus 2026.*
 """,
             }
 

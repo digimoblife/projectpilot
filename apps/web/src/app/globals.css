@@ -76,11 +76,6 @@ body {
 
 /* Print optimization for official documents / PDF export */
 @media print {
-  body {
-    background: white !important;
-    color: black !important;
-  }
-
   /* Hide navigation, sidebar, headers, and UI action bars */
   header,
   nav,
@@ -88,6 +83,67 @@ body {
   button,
   .print\:hidden {
     display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset layout constraints on print */
+  .md\:pl-64,
+  main,
+  div {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Isolate printable document when printing Markdown document */
+  body.printing-markdown-doc * {
+    visibility: hidden;
+  }
+
+  body.printing-markdown-doc .print-target-active,
+  body.printing-markdown-doc .print-target-active * {
+    visibility: visible;
+  }
+
+  body.printing-markdown-doc .print-target-active {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Fallback isolation if printed via browser shortcut (Ctrl/Cmd+P) */
+  body:has(#printable-markdown-document):not(.printing-markdown-doc) * {
+    visibility: hidden;
+  }
+
+  body:has(#printable-markdown-document):not(.printing-markdown-doc) #printable-markdown-document,
+  body:has(#printable-markdown-document):not(.printing-markdown-doc) #printable-markdown-document * {
+    visibility: visible;
+  }
+
+  body:has(#printable-markdown-document):not(.printing-markdown-doc) #printable-markdown-document {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
   }
 
   /* Expand printable document to full width */

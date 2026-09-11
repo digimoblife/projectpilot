@@ -279,7 +279,7 @@ export default function ProjectMeetingsPage({
 
 ---
 
-${m.summary ? `## 🌟 Ringkasan Eksekutif (AI Summary)\n${m.summary}\n\n---\n\n` : ""}## 👥 Daftar Kehadiran Peserta
+${m.summary ? `## 🌟 Ringkasan Eksekutif\n${m.summary}\n\n---\n\n` : ""}## 👥 Daftar Kehadiran Peserta
 ${participantsList}
 
 ---
@@ -598,7 +598,7 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                 <div className="p-3.5 bg-purple-50/60 border border-purple-200 rounded-xl space-y-1.5">
                   <div className="flex items-center gap-1.5 text-purple-800 font-bold text-xs">
                     <Sparkles className="w-4 h-4 text-purple-600" />
-                    <span>Ringkasan Eksekutif Rapat (AI Copilot):</span>
+                    <span>Ringkasan Eksekutif Rapat:</span>
                   </div>
                   <p className="text-xs text-slate-800 leading-relaxed">{selectedMeeting.summary}</p>
                 </div>

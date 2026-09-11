@@ -71,7 +71,7 @@ const reportTypeConfigs = {
 };
 
 const reportStatusConfigs = {
-  DRAFT: { label: "Draft AI", color: "bg-amber-50 text-amber-700 border-amber-200" },
+  DRAFT: { label: "Draft", color: "bg-amber-50 text-amber-700 border-amber-200" },
   UNDER_REVIEW: { label: "Dalam Review", color: "bg-blue-50 text-blue-700 border-blue-200" },
   FINAL: { label: "Final (Resmi)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   SUPERSEDED: { label: "Tergantikan (Superseded)", color: "bg-slate-100 text-slate-500 border-slate-200" },
@@ -332,7 +332,7 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
         >
           <Sparkles className="w-4 h-4 text-emerald-200" />
-          <span>✨ Buat Laporan Baru (AI Draft)</span>
+          <span>✨ Buat Laporan Baru</span>
         </button>
       </div>
 
@@ -545,7 +545,7 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
               {selectedReport.summary && (
                 <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl">
                   <span className="text-[10px] font-bold uppercase text-emerald-800 block mb-0.5">
-                    Ringkasan Eksekutif (AI Grounded):
+                    Ringkasan Eksekutif:
                   </span>
                   <p className="text-xs text-slate-800 leading-relaxed">{selectedReport.summary}</p>
                 </div>
@@ -629,7 +629,7 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
                 <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm">Generator Laporan Proyek AI</h3>
+                <h3 className="font-bold text-slate-900 text-sm">Generator Laporan Proyek</h3>
               </div>
               <button
                 type="button"

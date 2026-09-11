@@ -289,14 +289,17 @@ Requirements:
 1. Extract and infer a professional Meeting Title if not explicitly given.
 2. Formulate a 2-3 sentence Executive Summary (Ringkasan Eksekutif).
 3. If Daftar Peserta Rapat (Attendees) is provided in the input, strictly use them; otherwise extract from the text.
-4. Extract Key Discussion Points per Agenda/Topic (Poin Diskusi & Pembahasan). If previous outstanding items are provided, document their review/status update as the first agenda item.
-5. Extract Key Decisions Agreed (Keputusan yang Disepakati).
+4. Extract Key Discussion Points per Agenda/Topic (Poin Pembahasan Utama) dengan aturan ketat:
+   - ATURAN PEMISAHAN TOPIK (ANTI-OVERCLUSTERING): Pisahkan setiap topik, modul, fitur, atau bahasan yang berbeda menjadi sub-topik tersendiri. DILARANG KERAS menggabungkan topik-topik yang berbeda menjadi satu judul gabungan (misalnya JANGAN menggabungkan Addon, Roadmap, dan Analitik menjadi satu judul; pecah masing-masing menjadi sub-topik mandiri).
+   - ATURAN STRUKTUR SUB-BULLET (ANTI-WALL-OF-TEXT): DILARANG menuliskan pembahasan sebagai satu paragraf panjang yang padat. Setiap sub-topik wajib diuraikan menggunakan daftar poin/sub-bullet (1 ide pokok per butir) yang jelas, to-the-point, dan mudah dibaca.
+   - JIKA ADA EVALUASI TUGAS TERTUNDA: Selalu posisikan review status tugas tertunda dari rapat sebelumnya sebagai sub-topik pertama (misal: 'Review Tugas Tertunda dari Rapat Sebelumnya').
+5. Extract Key Decisions Agreed (Keputusan yang Disepakati) secara terpisah dari poin diskusi.
 6. Extract and classify all Outstanding Action Items / Checklist into 3 distinct categories:
    - "ACTION_ITEM": Komitmen tugas internal tim (misal: coding, desain, setup infra).
    - "DEPENDENCY": Tugas tertahan pihak eksternal/klien (misal: menunggu data, approval, API credentials).
    - "OPEN_ISSUE": Isu terbuka atau topik yang belum diputuskan / ditunda pembahasannya (Parking Lot).
 7. For each action item, extract task title, PIC/Owner, target deadline (YYYY-MM-DD or readable date), category, and default status to "PENDING".
-8. Generate a complete, elegant, ready-to-use Markdown document in the "content_md" field, including an interactive-styled checklist section (- [ ] [Kategori] Tugas (PIC: ...) - Deadline: ...).
+8. Generate a complete, elegant, ready-to-use Markdown document in the "content_md" field, strictly adhering to the formatting structure below.
 
 Return a valid JSON object strictly matching this schema:
 {{
@@ -316,7 +319,7 @@ Return a valid JSON object strictly matching this schema:
       "status": "PENDING"
     }}
   ],
-  "content_md": "# Minutes of Meeting (MoM): ...\\n\\n**Tanggal:** ...\\n**Peserta:** ...\\n\\n## 1. Ringkasan Eksekutif\\n...\\n\\n## 2. Poin Pembahasan Utama\\n...\\n\\n## 3. Keputusan yang Disepakati\\n...\\n\\n## 4. Checklist Tindak Lanjut & Agenda Rapat Berikutnya\\n- [ ] **[ACTION_ITEM]** Tugas ... (PIC: ..., Tenggat: ...)\\n- [ ] **[DEPENDENCY]** Tunggakan ... (PIC: ..., Tenggat: ...)\\n- [ ] **[OPEN_ISSUE]** Isu Terbuka ...\\n\\n## 5. Catatan Tambahan\\n...\\n"
+  "content_md": "# Minutes of Meeting (MoM): [Judul Rapat]\\n\\n**Tanggal:** ...\\n**Peserta:** ...\\n\\n## 1. Ringkasan Eksekutif\\n...\\n\\n## 2. Poin Pembahasan Utama\\n\\n### 2.1. [Nama Topik/Fitur/Modul 1]\\n- [Poin detail pembahasan/kondisi]\\n- [Poin detail tindak lanjut/kendala]\\n\\n### 2.2. [Nama Topik/Fitur/Modul 2]\\n- [Poin detail pembahasan]\\n- [Poin detail pembahasan]\\n\\n## 3. Keputusan yang Disepakati\\n- Keputusan 1...\\n- Keputusan 2...\\n\\n## 4. Checklist Tindak Lanjut & Agenda Rapat Berikutnya\\n- [ ] **[ACTION_ITEM]** Tugas ... (PIC: ..., Tenggat: ...)\\n- [ ] **[DEPENDENCY]** Tunggakan ... (PIC: ..., Tenggat: ...)\\n- [ ] **[OPEN_ISSUE]** Isu Terbuka ...\\n\\n## 5. Catatan Tambahan\\n...\\n"
 }}
 """,
 }
