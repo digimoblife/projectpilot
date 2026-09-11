@@ -1680,7 +1680,7 @@ export default function MoMGeneratorPage() {
                 type="button"
                 disabled={Object.values(selectedImportKeys).filter(Boolean).length === 0}
                 onClick={handleConfirmImport}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-xs transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-black rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>

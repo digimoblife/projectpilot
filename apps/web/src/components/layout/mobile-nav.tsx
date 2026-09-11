@@ -75,13 +75,13 @@ export function MobileNav() {
               key={item.name}
               href={item.href}
               aria-label={item.label}
-              className={`flex flex-col items-center justify-center min-w-[54px] min-h-[46px] px-2 rounded-xl text-[10px] font-medium transition-all focus:outline-hidden focus:ring-2 focus:ring-sky-500/20 active:scale-95 ${
+              className={`flex flex-col items-center justify-center min-w-[54px] min-h-[46px] px-2 rounded-xl text-[10px] font-medium transition-all focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 active:scale-95 ${
                 isActive
-                  ? "text-sky-600 font-bold bg-sky-50"
+                  ? "text-slate-900 font-bold bg-slate-100"
                   : "text-slate-500 hover:text-slate-900"
               }`}
             >
-              <Icon className={`w-5 h-5 mb-0.5 ${isActive ? "text-sky-600" : "text-slate-400"}`} />
+              <Icon className={`w-5 h-5 mb-0.5 ${isActive ? "text-slate-900" : "text-slate-400"}`} />
               <span>{item.name}</span>
             </Link>
           );
@@ -92,13 +92,13 @@ export function MobileNav() {
           type="button"
           onClick={() => setIsDrawerOpen(true)}
           aria-label="Buka Menu Lainnya"
-          className={`flex flex-col items-center justify-center min-w-[54px] min-h-[46px] px-2 rounded-xl text-[10px] font-medium transition-all focus:outline-hidden focus:ring-2 focus:ring-sky-500/20 active:scale-95 ${
+          className={`flex flex-col items-center justify-center min-w-[54px] min-h-[46px] px-2 rounded-xl text-[10px] font-medium transition-all focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 active:scale-95 ${
             isMoreActive || isDrawerOpen
-              ? "text-sky-600 font-bold bg-sky-50"
+              ? "text-slate-900 font-bold bg-slate-100"
               : "text-slate-500 hover:text-slate-900"
           }`}
         >
-          <Menu className={`w-5 h-5 mb-0.5 ${isMoreActive || isDrawerOpen ? "text-sky-600" : "text-slate-400"}`} />
+          <Menu className={`w-5 h-5 mb-0.5 ${isMoreActive || isDrawerOpen ? "text-slate-900" : "text-slate-400"}`} />
           <span>Menu</span>
         </button>
       </nav>
@@ -106,11 +106,11 @@ export function MobileNav() {
       {/* MOBILE MORE DRAWER SHEET */}
       {isDrawerOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end justify-center animate-fadeIn">
-          <div className="bg-white rounded-t-3xl border-t border-slate-200 shadow-2xl w-full max-h-[85vh] overflow-y-auto p-5 space-y-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
+          <div className="bg-white rounded-t-2xl border-t border-slate-200 shadow-2xl w-full max-h-[85vh] overflow-y-auto p-5 space-y-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs border border-sky-200">
+                <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs border border-slate-800 shadow-2xs">
                   {user?.full_name?.slice(0, 2).toUpperCase() || "PM"}
                 </div>
                 <div>
@@ -142,32 +142,32 @@ export function MobileNav() {
                     key={s.name}
                     href={s.href}
                     onClick={() => setIsDrawerOpen(false)}
-                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
                       isSubActive
-                        ? "bg-sky-50 text-sky-900 border-sky-200 shadow-2xs font-semibold"
+                        ? "bg-slate-900 text-white border-slate-900 shadow-xs font-semibold"
                         : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200/80"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl border ${isSubActive ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-600 border-slate-200"}`}>
+                      <div className={`p-2 rounded-xl border ${isSubActive ? "bg-slate-800 text-white border-slate-700" : "bg-white text-slate-600 border-slate-200"}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div>
                         <p className="text-xs font-bold">{s.name}</p>
-                        <p className="text-[10px] text-slate-500">{s.desc}</p>
+                        <p className={`text-[10px] ${isSubActive ? "text-slate-300" : "text-slate-500"}`}>{s.desc}</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className={`w-4 h-4 ${isSubActive ? "text-slate-300" : "text-slate-400"}`} />
                   </Link>
                 );
               })}
             </div>
 
             {/* AI Status Card */}
-            <div className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl text-white space-y-1.5 shadow-md">
+            <div className="p-3.5 bg-slate-900 rounded-2xl text-white space-y-1.5 shadow-md border border-slate-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-slate-300" />
                   <span className="text-xs font-bold">ProjectPilot AI</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />

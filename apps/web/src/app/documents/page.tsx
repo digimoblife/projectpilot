@@ -41,19 +41,19 @@ interface PortfolioDocumentItem {
 }
 
 const docTypeConfigs = {
-  FSD: { label: "FSD (Functional Spec)", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  USER_GUIDE: { label: "User Manual", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  ADMIN_GUIDE: { label: "Admin & Ops Guide", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  TECHNICAL_DOCUMENTATION: { label: "Technical Runbook", color: "bg-purple-50 text-purple-700 border-purple-200" },
-  USER_DOCUMENTATION: { label: "User Docs", color: "bg-teal-50 text-teal-700 border-teal-200" },
-  DESIGN_DOCUMENTATION: { label: "Design Docs", color: "bg-rose-50 text-rose-700 border-rose-200" },
+  FSD: { label: "FSD (Functional Spec)", color: "bg-slate-900 text-white border-slate-900 font-medium" },
+  USER_GUIDE: { label: "User Manual", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  ADMIN_GUIDE: { label: "Admin & Ops Guide", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  TECHNICAL_DOCUMENTATION: { label: "Technical Runbook", color: "bg-slate-900 text-white border-slate-900 font-medium" },
+  USER_DOCUMENTATION: { label: "User Docs", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  DESIGN_DOCUMENTATION: { label: "Design Docs", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
 };
 
 const docStatusConfigs = {
-  DRAFT: { label: "Draft", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  UNDER_REVIEW: { label: "Under Review", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  FINAL: { label: "Final (Resmi)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  SUPERSEDED: { label: "Superseded", color: "bg-slate-100 text-slate-500 border-slate-200" },
+  DRAFT: { label: "Draft", color: "bg-amber-50 text-amber-800 border-amber-200 font-medium" },
+  UNDER_REVIEW: { label: "Under Review", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  FINAL: { label: "Final (Resmi)", color: "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold" },
+  SUPERSEDED: { label: "Superseded", color: "bg-slate-100 text-slate-500 border-slate-200 font-normal" },
 };
 
 export default function DocumentsPage() {
@@ -109,7 +109,7 @@ export default function DocumentsPage() {
           type="button"
           onClick={fetchPortfolioDocuments}
           disabled={isLoading}
-          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 w-fit"
+          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all border border-slate-200 w-fit active:scale-[0.98]"
           title="Muat ulang"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -117,7 +117,7 @@ export default function DocumentsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -125,7 +125,7 @@ export default function DocumentsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari judul dokumen, proyek, atau kode DOC..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           />
         </div>
 
@@ -133,7 +133,7 @@ export default function DocumentsPage() {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            className="text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           >
             <option value="ALL">Semua Jenis Dokumen</option>
             {Object.keys(docTypeConfigs).map((k) => (
@@ -146,7 +146,7 @@ export default function DocumentsPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            className="text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           >
             <option value="ALL">Semua Status</option>
             {Object.keys(docStatusConfigs).map((k) => (
@@ -168,10 +168,10 @@ export default function DocumentsPage() {
           description="Dokumen spesifikasi atau manual pengguna yang digenerate di workspace masing-masing proyek akan terarsip otomatis di sini."
         />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700 min-w-[750px]">
-              <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+              <thead className="bg-slate-50 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3">Dokumen & Kode</th>
                   <th className="px-4 py-3">Proyek</th>
@@ -190,33 +190,33 @@ export default function DocumentsPage() {
                     <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-4 py-3 font-semibold text-slate-900">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800">
                             {d.document_key} v{d.version}
                           </span>
                           <span className="line-clamp-1">{d.title}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-slate-600">
-                        <span className="font-mono text-[10px] font-bold text-slate-400 mr-1">{d.project_code}</span>
-                        <span>{d.project_name}</span>
+                        <span className="font-mono text-[10px] font-bold text-slate-500 mr-1">{d.project_code}</span>
+                        <span className="font-medium text-slate-800">{d.project_name}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${typeCfg.color}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeCfg.color}`}>
                           {typeCfg.label}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${statusCfg.color}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
                           {statusCfg.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[11px] text-slate-500">
+                      <td className="px-4 py-3 text-[11px] text-slate-500 font-medium">
                         {new Date(d.created_at).toLocaleDateString("id-ID")}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link
                           href={`/projects/${d.project_id}/documents`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
                         >
                           <span>Buka</span>
                           <ChevronRight className="w-3.5 h-3.5" />

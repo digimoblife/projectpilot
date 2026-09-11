@@ -324,7 +324,7 @@ export default function LeadsPage() {
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl transition-all active:scale-[0.98] shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Lead Baru</span>
@@ -340,7 +340,7 @@ export default function LeadsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari lead berdasarkan nama peluang, perusahaan, atau PIC..."
-            className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-slate-800"
+            className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 text-slate-900 transition-colors"
           />
         </div>
 
@@ -355,7 +355,7 @@ export default function LeadsPage() {
                 onClick={() => setSelectedStatus(st)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                   isSelected
-                    ? "bg-slate-900 text-white shadow-xs"
+                    ? "bg-slate-900 text-white shadow-xs font-semibold"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
                 }`}
               >
@@ -408,7 +408,7 @@ export default function LeadsPage() {
 
                   <div>
                     <Link href={`/leads/${lead.id}`} className="block group">
-                      <h3 className="font-bold text-slate-900 group-hover:text-sky-600 text-base line-clamp-2 leading-snug transition-colors">
+                      <h3 className="font-bold text-slate-900 group-hover:text-black text-base line-clamp-2 leading-snug transition-colors">
                         {lead.name}
                       </h3>
                     </Link>
@@ -430,8 +430,8 @@ export default function LeadsPage() {
                   )}
 
                   {lead.client_references && lead.client_references.length > 0 && (
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-sky-700 bg-sky-50/80 px-2.5 py-1 rounded-md border border-sky-100">
-                      <Paperclip className="w-3 h-3 text-sky-500" />
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                      <Paperclip className="w-3 h-3 text-slate-500" />
                       <span>{lead.client_references.length} Referensi Klien</span>
                     </div>
                   )}
@@ -470,7 +470,7 @@ export default function LeadsPage() {
                   <button
                     type="button"
                     onClick={() => openStatusModal(lead)}
-                    className="text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 px-2.5 py-1 rounded-lg transition-colors"
+                    className="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 px-2.5 py-1 rounded-lg transition-colors active:scale-[0.98]"
                   >
                     Ubah Status
                   </button>
@@ -478,7 +478,7 @@ export default function LeadsPage() {
                   {isConverted && lead.converted_project_id ? (
                     <Link
                       href={`/projects/${lead.converted_project_id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-lg border border-teal-200 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-colors active:scale-[0.98]"
                     >
                       <span>Buka Proyek</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -487,9 +487,9 @@ export default function LeadsPage() {
                     <button
                       type="button"
                       onClick={() => openConvertModal(lead)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors shadow-2xs"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors shadow-2xs active:scale-[0.98]"
                     >
-                      <Sparkles className="w-3 h-3" />
+                      <Sparkles className="w-3 h-3 text-slate-500" />
                       <span>Konversi</span>
                     </button>
                   ) : null}
@@ -539,7 +539,7 @@ export default function LeadsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Contoh: E-Commerce Mobile App"
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
                   />
                 </div>
                 <div>
@@ -550,7 +550,7 @@ export default function LeadsPage() {
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="PT Retail Sukses Mandiri"
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
                   />
                 </div>
               </div>
@@ -564,21 +564,21 @@ export default function LeadsPage() {
                     value={picName}
                     onChange={(e) => setPicName(e.target.value)}
                     placeholder="Nama PIC"
-                    className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                    className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                   <input
                     type="email"
                     value={picEmail}
                     onChange={(e) => setPicEmail(e.target.value)}
                     placeholder="Email PIC"
-                    className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                    className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                   <input
                     type="text"
                     value={picPhone}
                     onChange={(e) => setPicPhone(e.target.value)}
                     placeholder="No. Telp / WA"
-                    className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                    className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                 </div>
               </div>
@@ -591,7 +591,7 @@ export default function LeadsPage() {
                     value={projectType}
                     onChange={(e) => setProjectType(e.target.value)}
                     placeholder="Web App / Mobile / Integrasi"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                 </div>
                 <div>
@@ -601,7 +601,7 @@ export default function LeadsPage() {
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
                     placeholder="Direct Inbound / Referral"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                 </div>
               </div>
@@ -613,7 +613,7 @@ export default function LeadsPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Ringkasan kebutuhan awal dari klien..."
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                 />
               </div>
 
@@ -624,16 +624,16 @@ export default function LeadsPage() {
                   value={briefNotes}
                   onChange={(e) => setBriefNotes(e.target.value)}
                   placeholder="Catatan diskusi atau kriteria khusus dari klien..."
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                 />
               </div>
 
               {/* Client References Section */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                      <Paperclip className="w-3.5 h-3.5 text-sky-600" />
+                    <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                      <Paperclip className="w-3.5 h-3.5 text-slate-700" />
                       Referensi dari Klien
                     </span>
                     <p className="text-[11px] text-slate-500">
@@ -644,7 +644,7 @@ export default function LeadsPage() {
                     <button
                       type="button"
                       onClick={() => setIsAddingRef(true)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-white hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Tambah</span>
@@ -654,7 +654,7 @@ export default function LeadsPage() {
 
                 {/* Form Add New Reference */}
                 {isAddingRef && (
-                  <div className="p-3 bg-white rounded-lg border border-sky-200 shadow-2xs space-y-2.5">
+                  <div className="p-3 bg-white rounded-xl border border-slate-300 shadow-2xs space-y-2.5">
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
@@ -662,9 +662,9 @@ export default function LeadsPage() {
                           setNewRefType("LINK");
                           setNewRefImagePreview(null);
                         }}
-                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                        className={`text-xs px-2.5 py-1 rounded-xl font-medium transition-all active:scale-[0.98] ${
                           newRefType === "LINK"
-                            ? "bg-sky-600 text-white"
+                            ? "bg-slate-900 text-white"
                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                       >
@@ -676,9 +676,9 @@ export default function LeadsPage() {
                           setNewRefType("TEXT");
                           setNewRefImagePreview(null);
                         }}
-                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                        className={`text-xs px-2.5 py-1 rounded-xl font-medium transition-all active:scale-[0.98] ${
                           newRefType === "TEXT"
-                            ? "bg-sky-600 text-white"
+                            ? "bg-slate-900 text-white"
                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                       >
@@ -687,9 +687,9 @@ export default function LeadsPage() {
                       <button
                         type="button"
                         onClick={() => setNewRefType("IMAGE")}
-                        className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                        className={`text-xs px-2.5 py-1 rounded-xl font-medium transition-all active:scale-[0.98] ${
                           newRefType === "IMAGE"
-                            ? "bg-sky-600 text-white"
+                            ? "bg-slate-900 text-white"
                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                       >
@@ -703,7 +703,7 @@ export default function LeadsPage() {
                         value={newRefTitle}
                         onChange={(e) => setNewRefTitle(e.target.value)}
                         placeholder="Judul Referensi (contoh: Mockup UI Figma / Screenshot Alur)"
-                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 text-slate-900"
                       />
                     </div>
 
@@ -713,7 +713,7 @@ export default function LeadsPage() {
                         value={newRefContent}
                         onChange={(e) => setNewRefContent(e.target.value)}
                         placeholder="https://figma.com/... atau https://contoh-web.com"
-                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 text-slate-900"
                       />
                     )}
 
@@ -723,7 +723,7 @@ export default function LeadsPage() {
                         value={newRefContent}
                         onChange={(e) => setNewRefContent(e.target.value)}
                         placeholder="Detail catatan atau spesifikasi acuan dari klien..."
-                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 text-slate-900"
                       />
                     )}
 
@@ -733,7 +733,7 @@ export default function LeadsPage() {
                           type="file"
                           accept="image/*"
                           onChange={handleImageFileChange}
-                          className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+                          className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200"
                         />
                         {newRefImagePreview && (
                           <div className="relative inline-block mt-1">
@@ -741,7 +741,7 @@ export default function LeadsPage() {
                             <img
                               src={newRefImagePreview}
                               alt="Preview"
-                              className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-2xs"
+                              className="w-24 h-24 object-cover rounded-xl border border-slate-200 shadow-2xs"
                             />
                           </div>
                         )}
@@ -757,7 +757,7 @@ export default function LeadsPage() {
                           setNewRefContent("");
                           setNewRefImagePreview(null);
                         }}
-                        className="text-xs text-slate-500 hover:text-slate-700 px-2.5 py-1"
+                        className="text-xs text-slate-500 hover:text-slate-900 px-2.5 py-1 rounded-xl"
                       >
                         Batal
                       </button>
@@ -768,7 +768,7 @@ export default function LeadsPage() {
                           !newRefTitle.trim() ||
                           (newRefType === "IMAGE" ? !newRefImagePreview : !newRefContent.trim())
                         }
-                        className="text-xs font-semibold bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white px-3 py-1 rounded-md transition-colors"
+                        className="text-xs font-semibold bg-slate-900 hover:bg-black disabled:opacity-50 text-white px-3 py-1.5 rounded-xl active:scale-[0.98] transition-all"
                       >
                         Simpan Referensi
                       </button>
@@ -782,7 +782,7 @@ export default function LeadsPage() {
                     {references.map((ref) => (
                       <div
                         key={ref.id}
-                        className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs text-xs"
+                        className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs text-xs"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           {ref.type === "IMAGE" ? (
@@ -790,21 +790,21 @@ export default function LeadsPage() {
                             <img
                               src={ref.content}
                               alt={ref.title}
-                              className="w-8 h-8 object-cover rounded border border-slate-200 shrink-0"
+                              className="w-8 h-8 object-cover rounded-lg border border-slate-200 shrink-0"
                             />
                           ) : ref.type === "LINK" ? (
-                            <div className="w-8 h-8 rounded bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
                               <Link2 className="w-4 h-4" />
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
                               <FileText className="w-4 h-4" />
                             </div>
                           )}
                           <div className="min-w-0">
-                            <span className="font-semibold text-slate-800 block truncate">{ref.title}</span>
+                            <span className="font-semibold text-slate-900 block truncate">{ref.title}</span>
                             {ref.type === "LINK" ? (
-                              <span className="text-[11px] text-sky-600 truncate block">{ref.content}</span>
+                              <span className="text-[11px] text-slate-600 truncate block font-medium">{ref.content}</span>
                             ) : ref.type === "TEXT" ? (
                               <span className="text-[11px] text-slate-500 truncate block">{ref.content}</span>
                             ) : (
@@ -816,7 +816,7 @@ export default function LeadsPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveReference(ref.id)}
-                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors shrink-0"
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors shrink-0"
                           title="Hapus referensi"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -841,14 +841,14 @@ export default function LeadsPage() {
                     setIsCreateModalOpen(false);
                     resetCreateForm();
                   }}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 rounded-xl transition-all"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 active:scale-[0.98] transition-all flex items-center gap-1.5"
                 >
                   {isSubmitting ? "Menyimpan..." : "Simpan Lead"}
                 </button>
@@ -860,25 +860,25 @@ export default function LeadsPage() {
 
       {/* Manage Status Modal */}
       {isStatusModalOpen && selectedLead && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-base">Kelola Status Lead</h3>
               <button
                 type="button"
                 onClick={() => setIsStatusModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <p className="text-xs text-slate-500">
-              Lead: <span className="font-semibold text-slate-800">{selectedLead.name}</span> ({selectedLead.company_name}).
+              Lead: <span className="font-semibold text-slate-900">{selectedLead.name}</span> ({selectedLead.company_name}).
             </p>
 
             {statusError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
                 <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>{statusError}</span>
               </div>
@@ -890,7 +890,7 @@ export default function LeadsPage() {
                 <select
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 font-medium text-slate-900 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                 >
                   {Object.entries(statusConfigs).map(([val, conf]) => (
                     <option key={val} value={val}>
@@ -909,7 +909,7 @@ export default function LeadsPage() {
                     value={lossReason}
                     onChange={(e) => setLossReason(e.target.value)}
                     placeholder="Tulis alasan pembatalan atau penolakan..."
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                 </div>
               )}
@@ -918,14 +918,14 @@ export default function LeadsPage() {
                 <button
                   type="button"
                   onClick={() => setIsStatusModalOpen(false)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-lg shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? "Menyimpan..." : "Update Status"}
                 </button>
@@ -937,30 +937,30 @@ export default function LeadsPage() {
 
       {/* Convert to Project Review Modal */}
       {isConvertModalOpen && selectedLead && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-sky-100 text-sky-700">
-                  <Sparkles className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-slate-900 text-white">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-base">Konversi Lead ke Proyek Aktif</h3>
-                  <p className="text-xs text-slate-500">Atomic Conversion: Lead $\rightarrow$ Client & Project</p>
+                  <p className="text-xs text-slate-500">Atomic Conversion: Lead ke Client & Project</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsConvertModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-3.5 bg-sky-50/70 border border-sky-100 rounded-xl text-xs text-sky-900 space-y-1">
-              <p className="font-semibold">Informasi yang akan dibawa otomatis:</p>
-              <ul className="list-disc list-inside space-y-0.5 text-sky-800 text-[11px]">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 space-y-1">
+              <p className="font-semibold text-slate-900">Informasi yang akan dibawa otomatis:</p>
+              <ul className="list-disc list-inside space-y-0.5 text-slate-600 text-[11px]">
                 <li>Entitas Klien & Stakeholder utama ({selectedLead.company_name})</li>
                 <li>Tahap awal proyek langsung berada di <strong>Discovery</strong></li>
                 <li>Seluruh deskripsi dan catatan brief awal akan ditautkan</li>
@@ -969,7 +969,7 @@ export default function LeadsPage() {
             </div>
 
             {convertError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs text-rose-700">
                 <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>{convertError}</span>
               </div>
@@ -985,7 +985,7 @@ export default function LeadsPage() {
                     value={projectCode}
                     onChange={(e) => setProjectCode(e.target.value.toUpperCase())}
                     placeholder="PRJ-001"
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg bg-slate-50 font-bold"
+                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl bg-slate-50 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -996,7 +996,7 @@ export default function LeadsPage() {
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
                     placeholder="Nama Proyek"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                   />
                 </div>
               </div>
@@ -1007,7 +1007,7 @@ export default function LeadsPage() {
                   type="date"
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                 />
               </div>
 
@@ -1015,16 +1015,16 @@ export default function LeadsPage() {
                 <button
                   type="button"
                   onClick={() => setIsConvertModalOpen(false)}
-                  className="px-3.5 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-lg shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   <span>{isSubmitting ? "Mengonversi..." : "Konversi & Buka Workspace"}</span>
                 </button>
               </div>

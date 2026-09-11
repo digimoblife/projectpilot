@@ -408,7 +408,7 @@ export default function ProjectTimelinePage({
                 resetMlsForm();
                 setIsCreateMlsOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Tambah Milestone</span>
@@ -424,7 +424,7 @@ export default function ProjectTimelinePage({
                 setDepError(null);
                 setIsCreateDepOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Tautkan Dependensi</span>
@@ -438,7 +438,7 @@ export default function ProjectTimelinePage({
                 resetMemberForm();
                 setIsAddMemberOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Tambah Anggota Tim</span>

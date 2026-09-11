@@ -276,10 +276,10 @@ export default function ProjectDocumentsPage({
         <button
           type="button"
           onClick={() => setIsGenerateModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
         >
-          <Sparkles className="w-4 h-4 text-sky-200" />
-          <span>✨ Generate Dokumen Baru</span>
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <span>Generate Dokumen Baru</span>
         </button>
       </div>
 
@@ -621,7 +621,7 @@ export default function ProjectDocumentsPage({
                 <button
                   type="submit"
                   disabled={isGenerating}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {isGenerating ? "Gemini sedang menyusun draft..." : "Generate Dokumen"}
                 </button>

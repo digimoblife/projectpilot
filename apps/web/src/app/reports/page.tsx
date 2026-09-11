@@ -39,17 +39,17 @@ interface PortfolioReportItem {
 }
 
 const reportTypeConfigs = {
-  WEEKLY_INTERNAL: { label: "Mingguan Internal", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  WEEKLY_CLIENT: { label: "Mingguan Klien", color: "bg-purple-50 text-purple-700 border-purple-200" },
-  MONTHLY_INTERNAL: { label: "Bulanan Internal", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  MONTHLY_CLIENT: { label: "Bulanan Klien", color: "bg-teal-50 text-teal-700 border-teal-200" },
+  WEEKLY_INTERNAL: { label: "Mingguan Internal", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  WEEKLY_CLIENT: { label: "Mingguan Klien", color: "bg-slate-900 text-white border-slate-900 font-medium" },
+  MONTHLY_INTERNAL: { label: "Bulanan Internal", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  MONTHLY_CLIENT: { label: "Bulanan Klien", color: "bg-slate-900 text-white border-slate-900 font-medium" },
 };
 
 const reportStatusConfigs = {
-  DRAFT: { label: "Draft", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  UNDER_REVIEW: { label: "Under Review", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  FINAL: { label: "Final (Resmi)", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  SUPERSEDED: { label: "Superseded", color: "bg-slate-100 text-slate-500 border-slate-200" },
+  DRAFT: { label: "Draft", color: "bg-amber-50 text-amber-800 border-amber-200 font-medium" },
+  UNDER_REVIEW: { label: "Under Review", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  FINAL: { label: "Final (Resmi)", color: "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold" },
+  SUPERSEDED: { label: "Superseded", color: "bg-slate-100 text-slate-500 border-slate-200 font-normal" },
 };
 
 export default function ReportsPage() {
@@ -105,7 +105,7 @@ export default function ReportsPage() {
           type="button"
           onClick={fetchPortfolioReports}
           disabled={isLoading}
-          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 w-fit"
+          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all border border-slate-200 w-fit active:scale-[0.98]"
           title="Muat ulang"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -113,7 +113,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -121,7 +121,7 @@ export default function ReportsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari judul laporan, proyek, atau kode REP..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           />
         </div>
 
@@ -129,7 +129,7 @@ export default function ReportsPage() {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            className="text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           >
             <option value="ALL">Semua Jenis Laporan</option>
             {Object.keys(reportTypeConfigs).map((k) => (
@@ -142,7 +142,7 @@ export default function ReportsPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            className="text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           >
             <option value="ALL">Semua Status</option>
             {Object.keys(reportStatusConfigs).map((k) => (
@@ -164,10 +164,10 @@ export default function ReportsPage() {
           description="Laporan mingguan atau bulanan yang digenerate di workspace masing-masing proyek akan terarsip otomatis di sini."
         />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700 min-w-[750px]">
-              <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+              <thead className="bg-slate-50 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3">Laporan & Kode</th>
                   <th className="px-4 py-3">Proyek</th>
@@ -186,33 +186,33 @@ export default function ReportsPage() {
                     <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-4 py-3 font-semibold text-slate-900">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800">
                             {r.report_key} v{r.version}
                           </span>
                           <span className="line-clamp-1">{r.title}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-slate-600">
-                        <span className="font-mono text-[10px] font-bold text-slate-400 mr-1">{r.project_code}</span>
-                        <span>{r.project_name}</span>
+                        <span className="font-mono text-[10px] font-bold text-slate-500 mr-1">{r.project_code}</span>
+                        <span className="font-medium text-slate-800">{r.project_name}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${typeCfg.color}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeCfg.color}`}>
                           {typeCfg.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[11px] text-slate-500">
+                      <td className="px-4 py-3 text-[11px] text-slate-500 font-medium">
                         {new Date(r.reporting_period_start).toLocaleDateString("id-ID")} - {new Date(r.reporting_period_end).toLocaleDateString("id-ID")}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${statusCfg.color}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
                           {statusCfg.label}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link
                           href={`/projects/${r.project_id}/reports`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
                         >
                           <span>Buka</span>
                           <ChevronRight className="w-3.5 h-3.5" />

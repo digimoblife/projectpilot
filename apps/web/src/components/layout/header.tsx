@@ -61,16 +61,16 @@ export interface NotificationItem {
 }
 
 const entityTypeColors: Record<string, string> = {
-  PROJECT: "bg-blue-50 text-blue-700 border-blue-200",
-  LEAD: "bg-purple-50 text-purple-700 border-purple-200",
-  CLIENT: "bg-amber-50 text-amber-700 border-amber-200",
-  TASK: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  REQUIREMENT: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  DECISION: "bg-teal-50 text-teal-700 border-teal-200",
-  BLOCKER: "bg-rose-50 text-rose-700 border-rose-200",
-  MEETING: "bg-orange-50 text-orange-700 border-orange-200",
-  REPORT: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  DOCUMENT: "bg-sky-50 text-sky-700 border-sky-200",
+  PROJECT: "bg-slate-100 text-slate-800 border-slate-200",
+  LEAD: "bg-slate-100 text-slate-800 border-slate-200",
+  CLIENT: "bg-amber-50 text-amber-800 border-amber-200",
+  TASK: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  REQUIREMENT: "bg-slate-100 text-slate-800 border-slate-200",
+  DECISION: "bg-slate-100 text-slate-800 border-slate-200",
+  BLOCKER: "bg-rose-50 text-rose-800 border-rose-200",
+  MEETING: "bg-slate-100 text-slate-800 border-slate-200",
+  REPORT: "bg-slate-100 text-slate-800 border-slate-200",
+  DOCUMENT: "bg-slate-100 text-slate-800 border-slate-200",
 };
 
 const categoryBadgeConfig: Record<
@@ -80,35 +80,35 @@ const categoryBadgeConfig: Record<
   BLOCKER: {
     label: "Blocker",
     bg: "bg-rose-50",
-    text: "text-rose-700",
+    text: "text-rose-800",
     border: "border-rose-200",
     icon: AlertTriangle,
   },
   OVERDUE: {
     label: "Terlambat",
     bg: "bg-amber-50",
-    text: "text-amber-700",
+    text: "text-amber-800",
     border: "border-amber-200",
     icon: Clock,
   },
   CLIENT: {
     label: "Akses Klien",
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-    border: "border-purple-200",
+    bg: "bg-slate-100",
+    text: "text-slate-800",
+    border: "border-slate-200",
     icon: ShieldAlert,
   },
   LEAD: {
     label: "Presales Lead",
-    bg: "bg-sky-50",
-    text: "text-sky-700",
-    border: "border-sky-200",
+    bg: "bg-slate-100",
+    text: "text-slate-800",
+    border: "border-slate-200",
     icon: UserCheck,
   },
   SYSTEM: {
     label: "Sistem",
-    bg: "bg-slate-50",
-    text: "text-slate-700",
+    bg: "bg-slate-100",
+    text: "text-slate-800",
     border: "border-slate-200",
     icon: Bell,
   },
@@ -359,7 +359,7 @@ export function Header() {
             onClick={() => setIsNotificationsOpen((prev) => !prev)}
             className={`p-2 rounded-xl transition-all relative ${
               isNotificationsOpen
-                ? "bg-slate-100 text-slate-900 ring-2 ring-sky-500/20"
+                ? "bg-slate-100 text-slate-900 ring-2 ring-slate-900/10"
                 : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
             }`}
             aria-label="Notifikasi Operasional"
@@ -375,7 +375,7 @@ export function Header() {
 
           {/* User Profile Info */}
           <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 ml-0.5 sm:ml-1 border-l border-slate-200">
-            <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-semibold text-xs border border-sky-200">
+            <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs border border-slate-800 shadow-2xs">
               {user?.full_name?.slice(0, 2).toUpperCase() || "PM"}
             </div>
             <div className="hidden lg:block text-left">
@@ -417,7 +417,7 @@ export function Header() {
                   <button
                     type="button"
                     onClick={handleMarkAllAsRead}
-                    className="text-[11px] font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1 hover:underline"
+                    className="text-[11px] font-semibold text-slate-900 hover:text-black flex items-center gap-1 hover:underline"
                   >
                     <Check className="w-3 h-3" />
                     <span>Tandai Semua Dibaca</span>
@@ -471,7 +471,7 @@ export function Header() {
                         className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 relative group ${
                           notif.is_read
                             ? "bg-white hover:bg-slate-50 text-slate-600"
-                            : "bg-sky-50/30 hover:bg-sky-50/60 text-slate-900"
+                            : "bg-slate-50/90 hover:bg-slate-100/80 text-slate-900"
                         }`}
                       >
                         {/* Left Category Icon */}
@@ -514,7 +514,7 @@ export function Header() {
 
                         {/* Unread dot */}
                         {!notif.is_read && (
-                          <span className="w-2 h-2 rounded-full bg-sky-600 shrink-0 mt-1" />
+                          <span className="w-2 h-2 rounded-full bg-slate-900 shrink-0 mt-1" />
                         )}
                       </div>
                     );
@@ -527,7 +527,7 @@ export function Header() {
                 <Link
                   href="/dashboard"
                   onClick={() => setIsNotificationsOpen(false)}
-                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700"
+                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-slate-900 hover:text-black"
                 >
                   <span>Buka PM Control Center</span>
                   <ChevronRight className="w-3.5 h-3.5" />

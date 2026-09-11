@@ -294,9 +294,9 @@ export default function ProjectWorkspaceLayout({
             <button
               type="button"
               onClick={() => setIsQADrawerOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer shrink-0"
             >
-              <Sparkles className="w-4 h-4 text-sky-200" />
+              <Sparkles className="w-4 h-4 text-slate-300" />
               <span>Tanya AI Asisten (Project Q&A)</span>
             </button>
           </div>
@@ -309,13 +309,13 @@ export default function ProjectWorkspaceLayout({
                 <span className="text-[11px] text-slate-500 font-medium">
                   Tahap {currentStageIndex + 1} dari {lifecycleStages.length}
                 </span>
-                <span className="font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200/60 text-[10px]">
+                <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 text-[10px]">
                   {lifecycleStages[currentStageIndex]?.label || "Discovery"}
                 </span>
               </div>
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-sky-600 rounded-full transition-all duration-300"
+                  className="h-full bg-slate-900 rounded-full transition-all duration-300"
                   style={{ width: `${((currentStageIndex + 1) / lifecycleStages.length) * 100}%` }}
                 />
               </div>
@@ -332,16 +332,16 @@ export default function ProjectWorkspaceLayout({
                     <div
                       className={`h-2 w-full rounded-full transition-colors ${
                         isCurrent
-                          ? "bg-sky-600 shadow-xs"
+                          ? "bg-slate-900 shadow-xs"
                           : isPast
-                          ? "bg-emerald-500"
+                          ? "bg-emerald-600"
                           : "bg-slate-200"
                       }`}
                     />
                     <span
                       className={`text-[10px] text-center font-medium line-clamp-1 ${
                         isCurrent
-                          ? "text-sky-700 font-bold"
+                          ? "text-slate-900 font-bold"
                           : isPast
                           ? "text-slate-700"
                           : "text-slate-400"
@@ -371,13 +371,13 @@ export default function ProjectWorkspaceLayout({
               <Link
                 key={pillar.id}
                 href={pillar.href}
-                className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 lg:shrink whitespace-nowrap ${
+                className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 lg:shrink whitespace-nowrap active:scale-[0.98] ${
                   isPillarActive
-                    ? "bg-white text-sky-700 shadow-xs border border-slate-200/80 font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                    ? "bg-white text-slate-900 shadow-xs border border-slate-300 font-bold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isPillarActive ? "text-sky-600" : "text-slate-400"}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${isPillarActive ? "text-slate-900" : "text-slate-400"}`} />
                 <span>{pillar.name}</span>
               </Link>
             );
@@ -399,18 +399,18 @@ export default function ProjectWorkspaceLayout({
                   <Link
                     key={sub.name}
                     href={sub.href}
-                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 whitespace-nowrap ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 whitespace-nowrap active:scale-[0.98] ${
                       isSubActive
-                        ? "bg-sky-50 text-sky-700 font-semibold border border-sky-200/80 shadow-2xs"
-                        : "text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60"
+                        ? "bg-slate-900 text-white font-semibold shadow-xs"
+                        : "text-slate-700 bg-slate-100 hover:bg-slate-200/80 hover:text-slate-900 border border-slate-200/60"
                     }`}
                   >
                     <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 ${
-                      isSubActive ? "bg-sky-600 text-white" : "bg-slate-200 text-slate-600"
+                      isSubActive ? "bg-slate-800 text-slate-200" : "bg-slate-200 text-slate-600"
                     }`}>
                       {sIdx + 1}
                     </span>
-                    <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? "text-sky-600" : "text-slate-400"}`} />
+                    <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? "text-slate-200" : "text-slate-500"}`} />
                     <span>{sub.name}</span>
                   </Link>
                 );
@@ -430,7 +430,7 @@ export default function ProjectWorkspaceLayout({
             {/* Header */}
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-sky-100 text-sky-700 rounded-lg">
+                <div className="p-1.5 bg-slate-900 text-white rounded-lg">
                   <Bot className="w-4 h-4" />
                 </div>
                 <div>
@@ -451,7 +451,7 @@ export default function ProjectWorkspaceLayout({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {qaMessages.length === 0 ? (
                 <div className="p-8 text-center space-y-3">
-                  <Sparkles className="w-8 h-8 text-sky-400 mx-auto" />
+                  <Sparkles className="w-8 h-8 text-slate-400 mx-auto" />
                   <h4 className="text-xs font-bold text-slate-800">Ajukan Pertanyaan tentang Proyek</h4>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
                     AI Asisten akan menjawab pertanyaan berdasarkan data resmi requirements, tasks, decisions (ADR), blocker, dan meeting notes.
@@ -479,9 +479,9 @@ export default function ProjectWorkspaceLayout({
                     <div key={idx} className="space-y-2">
                       {/* User Question */}
                       <div className="flex justify-end">
-                        <div className="bg-sky-600 text-white rounded-2xl rounded-br-xs px-3.5 py-2 text-xs max-w-[85%] shadow-2xs">
+                        <div className="bg-slate-900 text-white rounded-2xl rounded-br-xs px-3.5 py-2 text-xs max-w-[85%] shadow-2xs">
                           {msg.question}
-                          <span className="block text-[9px] text-sky-200 text-right mt-0.5">{msg.timestamp}</span>
+                          <span className="block text-[9px] text-slate-300 text-right mt-0.5">{msg.timestamp}</span>
                         </div>
                       </div>
 
@@ -501,7 +501,7 @@ export default function ProjectWorkspaceLayout({
                                   <Link
                                     key={cIdx}
                                     href={c.route}
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] text-sky-700 hover:bg-sky-50 transition-colors font-mono"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] text-slate-900 hover:bg-slate-100 transition-colors font-mono font-medium"
                                   >
                                     <span className="font-bold">[{c.key}]</span>
                                     <span className="font-sans line-clamp-1">{c.title}</span>
@@ -517,7 +517,7 @@ export default function ProjectWorkspaceLayout({
                   {isAsking && (
                     <div className="flex justify-start">
                       <div className="bg-slate-50 border border-slate-200 text-slate-500 rounded-2xl rounded-bl-xs p-3 text-xs flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 animate-spin text-sky-500" />
+                        <Sparkles className="w-3.5 h-3.5 animate-spin text-slate-900" />
                         <span>Menganalisis bukti proyek...</span>
                       </div>
                     </div>
@@ -534,12 +534,12 @@ export default function ProjectWorkspaceLayout({
                   value={questionInput}
                   onChange={(e) => setQuestionInput(e.target.value)}
                   placeholder="Ketik pertanyaan tentang proyek..."
-                  className="flex-1 px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden text-slate-900"
+                  className="flex-1 px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 text-slate-900"
                 />
                 <button
                   type="submit"
                   disabled={!questionInput.trim() || isAsking}
-                  className="p-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl shadow-xs transition-colors disabled:opacity-50"
+                  className="p-2 bg-slate-900 hover:bg-black text-white rounded-xl shadow-xs transition-all active:scale-[0.98] disabled:opacity-50"
                   aria-label="Kirim"
                 >
                   <Send className="w-4 h-4" />

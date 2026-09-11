@@ -38,18 +38,18 @@ interface MyWorkTask {
 
 const statusConfigs: Record<string, { label: string; color: string }> = {
   BACKLOG: { label: "Backlog", color: "bg-slate-100 text-slate-700 border-slate-200" },
-  READY: { label: "Ready", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  IN_PROGRESS: { label: "In Progress", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  IN_REVIEW: { label: "In Review", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  QA: { label: "QA Testing", color: "bg-purple-50 text-purple-700 border-purple-200" },
-  BLOCKED: { label: "Blocked", color: "bg-rose-50 text-rose-700 border-rose-200" },
-  DONE: { label: "Done", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  READY: { label: "Ready", color: "bg-slate-100 text-slate-800 border-slate-300" },
+  IN_PROGRESS: { label: "In Progress", color: "bg-amber-50 text-amber-800 border-amber-200" },
+  IN_REVIEW: { label: "In Review", color: "bg-slate-100 text-slate-800 border-slate-300" },
+  QA: { label: "QA Testing", color: "bg-slate-100 text-slate-800 border-slate-300" },
+  BLOCKED: { label: "Blocked", color: "bg-rose-50 text-rose-800 border-rose-200" },
+  DONE: { label: "Done", color: "bg-emerald-50 text-emerald-800 border-emerald-200" },
 };
 
 const priorityColors: Record<string, string> = {
-  CRITICAL: "text-rose-700 bg-rose-50 border-rose-200",
-  HIGH: "text-orange-700 bg-orange-50 border-orange-200",
-  MEDIUM: "text-blue-700 bg-blue-50 border-blue-200",
+  CRITICAL: "text-rose-800 bg-rose-50 border-rose-200 font-bold",
+  HIGH: "text-amber-800 bg-amber-50 border-amber-200 font-semibold",
+  MEDIUM: "text-slate-700 bg-slate-100 border-slate-200",
   LOW: "text-slate-600 bg-slate-100 border-slate-200",
 };
 
@@ -125,7 +125,7 @@ export default function MyWorkPage() {
       </div>
 
       {/* Search & Status Filters */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -133,7 +133,7 @@ export default function MyWorkPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari berdasarkan nama tugas, proyek, atau key..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           />
         </div>
 
@@ -146,10 +146,10 @@ export default function MyWorkPage() {
                 key={st}
                 type="button"
                 onClick={() => setSelectedStatus(st)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all whitespace-nowrap shrink-0 active:scale-[0.98] ${
                   isSelected
                     ? "bg-slate-900 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
                 }`}
               >
                 {label}
@@ -179,11 +179,11 @@ export default function MyWorkPage() {
             return (
               <div
                 key={task.id}
-                className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="space-y-1.5 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800">
                       {task.key}
                     </span>
                     <span className="text-xs font-medium text-slate-500">
@@ -206,22 +206,22 @@ export default function MyWorkPage() {
                   <h3 className="text-sm font-semibold text-slate-900">{task.title}</h3>
 
                   {task.blocker_reason && (
-                    <div className="p-2 rounded bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-1.5">
-                      <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-1.5">
+                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                       <span>Blocker: {task.blocker_reason}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
-                  <div className="text-xs text-slate-500 flex items-center gap-1">
+                  <div className="text-xs text-slate-500 flex items-center gap-1 font-medium">
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     <span>Tenggat: {task.due_date || "Fleksibel"}</span>
                   </div>
 
                   <Link
                     href={`/projects/${task.project_id}/tasks`}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg border border-sky-200 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
                   >
                     <span>Buka Task</span>
                     <ArrowRight className="w-3 h-3" />

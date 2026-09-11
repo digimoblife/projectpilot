@@ -139,10 +139,10 @@ const healthStatusConfigs = {
 };
 
 const categoryConfigs = {
-  OVERDUE_TASK: { label: "Tugas Terlambat", icon: Clock, color: "text-rose-600 bg-rose-50 border-rose-200" },
-  ACTIVE_BLOCKER: { label: "Blocker Aktif", icon: AlertTriangle, color: "text-amber-600 bg-amber-50 border-amber-200" },
-  CLIENT_DEPENDENCY: { label: "Menunggu Klien", icon: ShieldAlert, color: "text-sky-600 bg-sky-50 border-sky-200" },
-  HIGH_ISSUE: { label: "Isu Prioritas Tinggi", icon: AlertCircle, color: "text-purple-600 bg-purple-50 border-purple-200" },
+  OVERDUE_TASK: { label: "Tugas Terlambat", icon: Clock, color: "text-rose-800 bg-rose-50 border-rose-200" },
+  ACTIVE_BLOCKER: { label: "Blocker Aktif", icon: AlertTriangle, color: "text-amber-800 bg-amber-50 border-amber-200" },
+  CLIENT_DEPENDENCY: { label: "Menunggu Klien", icon: ShieldAlert, color: "text-slate-800 bg-slate-100 border-slate-200" },
+  HIGH_ISSUE: { label: "Isu Prioritas Tinggi", icon: AlertCircle, color: "text-rose-800 bg-rose-50 border-rose-200" },
 };
 
 export default function DashboardPage() {
@@ -253,10 +253,10 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={handleGenerateAIBriefing}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs transition-all active:scale-[0.98]"
           >
-            <Sparkles className="w-4 h-4 text-purple-200" />
-            <span>✨ AI Morning Briefing</span>
+            <Sparkles className="w-4 h-4 text-slate-300" />
+            <span>AI Morning Briefing</span>
           </button>
         </div>
       </div>
@@ -265,13 +265,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div
           onClick={() => setSelectedCategoryFilter("OVERDUE_TASK")}
-          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
-            selectedCategoryFilter === "OVERDUE_TASK" ? "border-rose-500 ring-2 ring-rose-500/10" : "border-slate-200"
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs active:scale-[0.98] ${
+            selectedCategoryFilter === "OVERDUE_TASK" ? "border-slate-900 ring-2 ring-slate-900/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-700">Tugas Terlambat</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 shrink-0">
+            <span className="text-xs font-semibold text-rose-800">Tugas Terlambat</span>
+            <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
               <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
@@ -283,13 +283,13 @@ export default function DashboardPage() {
 
         <div
           onClick={() => setSelectedCategoryFilter("ACTIVE_BLOCKER")}
-          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
-            selectedCategoryFilter === "ACTIVE_BLOCKER" ? "border-amber-500 ring-2 ring-amber-500/10" : "border-slate-200"
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs active:scale-[0.98] ${
+            selectedCategoryFilter === "ACTIVE_BLOCKER" ? "border-slate-900 ring-2 ring-slate-900/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700">Blocker Aktif</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
+            <span className="text-xs font-semibold text-amber-800">Blocker Aktif</span>
+            <div className="p-1 sm:p-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
               <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
@@ -301,13 +301,13 @@ export default function DashboardPage() {
 
         <div
           onClick={() => setSelectedCategoryFilter("CLIENT_DEPENDENCY")}
-          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
-            selectedCategoryFilter === "CLIENT_DEPENDENCY" ? "border-sky-500 ring-2 ring-sky-500/10" : "border-slate-200"
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs active:scale-[0.98] ${
+            selectedCategoryFilter === "CLIENT_DEPENDENCY" ? "border-slate-900 ring-2 ring-slate-900/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-sky-700">Menunggu Klien</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-200 shrink-0">
+            <span className="text-xs font-semibold text-slate-800">Menunggu Klien</span>
+            <div className="p-1 sm:p-1.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
               <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
@@ -319,13 +319,13 @@ export default function DashboardPage() {
 
         <div
           onClick={() => setSelectedCategoryFilter("HIGH_ISSUE")}
-          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs ${
-            selectedCategoryFilter === "HIGH_ISSUE" ? "border-purple-500 ring-2 ring-purple-500/10" : "border-slate-200"
+          className={`p-3.5 sm:p-4 bg-white rounded-xl sm:rounded-2xl border transition-all cursor-pointer hover:shadow-xs active:scale-[0.98] ${
+            selectedCategoryFilter === "HIGH_ISSUE" ? "border-slate-900 ring-2 ring-slate-900/10" : "border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-purple-700">Isu Prioritas Tinggi</span>
-            <div className="p-1 sm:p-1.5 rounded-lg bg-purple-50 text-purple-600 border border-purple-200 shrink-0">
+            <span className="text-xs font-semibold text-rose-800">Isu Prioritas Tinggi</span>
+            <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
               <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
@@ -342,7 +342,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-sky-50 text-sky-600 border border-sky-200/80">
+              <div className="p-2 rounded-xl bg-slate-100 text-slate-800 border border-slate-200">
                 <Users className="w-4 h-4" />
               </div>
               <div>
@@ -354,7 +354,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/leads"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50/60 hover:bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200/60 transition-colors shadow-2xs shrink-0"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors shadow-2xs shrink-0 active:scale-[0.98]"
             >
               <span>Lihat Leads</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -375,10 +375,10 @@ export default function DashboardPage() {
               <span className="text-xl font-black text-slate-900">{inDiscussionLeadsCount}</span>
             </div>
             <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200/70">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block mb-1">
                 Siap Dikonversi
               </span>
-              <span className="text-xl font-black text-emerald-700">{qualifiedLeadsCount}</span>
+              <span className="text-xl font-black text-emerald-800">{qualifiedLeadsCount}</span>
             </div>
           </div>
         </div>
@@ -387,7 +387,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/80">
+              <div className="p-2 rounded-xl bg-slate-100 text-slate-800 border border-slate-200">
                 <ListTodo className="w-4 h-4" />
               </div>
               <div>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/my-work"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50/60 hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200/60 transition-colors shadow-2xs shrink-0"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors shadow-2xs shrink-0 active:scale-[0.98]"
             >
               <span>Ruang Tugas</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -408,7 +408,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-3 gap-2.5 text-center">
             <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-1">
                 Sedang Dikerjakan
               </span>
               <span className="text-xl font-black text-amber-800">{inProgressMyTasks}</span>
@@ -419,11 +419,11 @@ export default function DashboardPage() {
               </span>
               <span className="text-xl font-black text-slate-900">{readyMyTasks}</span>
             </div>
-            <div className="p-3 bg-purple-50/60 rounded-xl border border-purple-200/70">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block mb-1">
+            <div className="p-3 bg-slate-100/70 rounded-xl border border-slate-200/80">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-800 block mb-1">
                 Review & QA
               </span>
-              <span className="text-xl font-black text-purple-800">{reviewOrQaMyTasks}</span>
+              <span className="text-xl font-black text-slate-800">{reviewOrQaMyTasks}</span>
             </div>
           </div>
         </div>
@@ -445,7 +445,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setSelectedCategoryFilter("ALL")}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md"
+                className="text-xs font-semibold text-slate-800 hover:text-black bg-slate-100 px-2 py-0.5 rounded-md"
               >
                 Reset Filter
               </button>
@@ -494,7 +494,7 @@ export default function DashboardPage() {
 
                     <Link
                       href={item.target_url}
-                      className="p-1.5 text-slate-400 group-hover:text-blue-600 bg-white rounded-lg border border-slate-200 shrink-0 transition-colors shadow-2xs"
+                      className="p-1.5 text-slate-400 group-hover:text-slate-900 bg-white rounded-lg border border-slate-200 shrink-0 transition-colors shadow-2xs"
                       title="Buka di Workspace"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -551,7 +551,7 @@ export default function DashboardPage() {
 
                       <Link
                         href={`/projects/${p.project_id}`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 hover:border-blue-200 transition-colors shrink-0 shadow-2xs"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-white hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors shrink-0 shadow-2xs active:scale-[0.98]"
                       >
                         <span>Workspace</span>
                         <ArrowRight className="w-3.5 h-3.5" />

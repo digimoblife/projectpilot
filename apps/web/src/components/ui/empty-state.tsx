@@ -22,10 +22,10 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`bg-white rounded-xl border border-slate-200 p-10 sm:p-14 text-center flex flex-col items-center justify-center space-y-3 ${className}`}
+      className={`bg-white rounded-2xl border border-slate-200 p-10 sm:p-14 text-center flex flex-col items-center justify-center space-y-3 shadow-2xs ${className}`}
     >
-      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-1 border border-slate-200/60 shadow-2xs">
-        <Icon className="w-6 h-6 text-slate-500" />
+      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-1 border border-slate-200 shadow-2xs">
+        <Icon className="w-6 h-6 text-slate-700" />
       </div>
       <div className="space-y-1 max-w-sm">
         <h3 className="text-sm font-bold text-slate-900">{title}</h3>
@@ -35,7 +35,7 @@ export function EmptyState({
         <button
           type="button"
           onClick={onAction}
-          className="mt-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+          className="mt-2 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
         >
           {actionLabel}
         </button>

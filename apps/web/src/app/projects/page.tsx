@@ -204,7 +204,7 @@ export default function ProjectsPage() {
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl transition-all active:scale-[0.98] shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Buat Proyek Baru</span>
@@ -220,7 +220,7 @@ export default function ProjectsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari berdasarkan kode, nama proyek, atau klien..."
-            className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-slate-800"
+            className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 text-slate-900 transition-colors"
           />
         </div>
 
@@ -235,7 +235,7 @@ export default function ProjectsPage() {
                 onClick={() => setSelectedStage(stage)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                   isSelected
-                    ? "bg-slate-900 text-white shadow-xs"
+                    ? "bg-slate-900 text-white shadow-xs font-semibold"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
                 }`}
               >
@@ -274,7 +274,7 @@ export default function ProjectsPage() {
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
-                className="group bg-white rounded-xl border border-slate-200 hover:border-sky-300 hover:shadow-md transition-all p-5 flex flex-col justify-between"
+                className="group bg-white rounded-xl border border-slate-200 hover:border-slate-400 hover:shadow-xs transition-all p-5 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2.5">
@@ -288,7 +288,7 @@ export default function ProjectsPage() {
                     </span>
                   </div>
 
-                  <h2 className="font-semibold text-slate-900 group-hover:text-sky-600 transition-colors text-base line-clamp-1">
+                  <h2 className="font-semibold text-slate-900 group-hover:text-black transition-colors text-base line-clamp-1">
                     {project.name}
                   </h2>
 
@@ -319,7 +319,7 @@ export default function ProjectsPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end text-xs font-medium text-sky-600 group-hover:translate-x-0.5 transition-transform">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end text-xs font-semibold text-slate-900 group-hover:text-black group-hover:translate-x-0.5 transition-all">
                   <span>Buka Workspace</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-1" />
                 </div>
@@ -371,7 +371,7 @@ export default function ProjectsPage() {
                       value={code}
                       onChange={(e) => setCode(e.target.value.toUpperCase())}
                       placeholder="PRJ-001"
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 bg-slate-50 text-slate-900 transition-colors"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -382,7 +382,7 @@ export default function ProjectsPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Contoh: Mobile Banking 2.0"
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 bg-slate-50 text-slate-900 transition-colors"
                     />
                   </div>
                 </div>
@@ -394,7 +394,7 @@ export default function ProjectsPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Ringkasan objektif bisnis dan ruang lingkup awal..."
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50 text-slate-800"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 bg-slate-50 text-slate-900 transition-colors"
                   />
                 </div>
 
@@ -405,7 +405,7 @@ export default function ProjectsPage() {
                     <button
                       type="button"
                       onClick={() => setIsNewClient(!isNewClient)}
-                      className="text-xs text-sky-600 hover:text-sky-700 font-medium"
+                      className="text-xs text-slate-800 hover:text-black font-semibold hover:underline"
                     >
                       {isNewClient ? "Pilih Klien Yang Ada" : "+ Tambah Klien Baru"}
                     </button>
@@ -420,7 +420,7 @@ export default function ProjectsPage() {
                           value={newClientName}
                           onChange={(e) => setNewClientName(e.target.value)}
                           placeholder="Nama Brand Klien (e.g. Maju Bank)"
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                         />
                       </div>
                       <div>
@@ -430,7 +430,7 @@ export default function ProjectsPage() {
                           value={newClientCompany}
                           onChange={(e) => setNewClientCompany(e.target.value)}
                           placeholder="Nama PT Resmi (e.g. PT Maju Bersama)"
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                         />
                       </div>
                     </div>
@@ -438,7 +438,7 @@ export default function ProjectsPage() {
                     <select
                       value={clientId}
                       onChange={(e) => setClientId(e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                     >
                       {clients.length === 0 && <option value="">Belum ada klien, pilih + Tambah Klien</option>}
                       {clients.map((c) => (
@@ -458,7 +458,7 @@ export default function ProjectsPage() {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-800"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                     />
                   </div>
                   <div>
@@ -467,7 +467,7 @@ export default function ProjectsPage() {
                       type="date"
                       value={targetDate}
                       onChange={(e) => setTargetDate(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-800"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                     />
                   </div>
                 </div>
@@ -481,16 +481,16 @@ export default function ProjectsPage() {
                     setIsCreateModalOpen(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl transition-colors active:scale-[0.98]"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 flex items-center gap-1.5 transition-all active:scale-[0.98]"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 text-slate-300" />
                   <span>{isSubmitting ? "Menyimpan..." : "Buat Proyek"}</span>
                 </button>
               </div>
