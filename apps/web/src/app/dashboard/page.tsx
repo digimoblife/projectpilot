@@ -102,13 +102,37 @@ interface DashboardOverview {
   rules_version: string;
 }
 
+interface CriticalHotspotItem {
+  project_code?: string;
+  project_name?: string;
+  status?: string;
+  reason?: string;
+  evidence_quality?: "COMPLETE" | "MISSING" | "AMBIGUOUS" | string;
+  title?: string;
+  description?: string;
+}
+
+interface KeyActionItem {
+  project_code?: string;
+  action?: string;
+  priority?: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | string;
+  evidence_quality?: "COMPLETE" | "MISSING" | "AMBIGUOUS" | string;
+  title?: string;
+  description?: string;
+  owner?: string;
+}
+
 interface AIPMBriefing {
+  briefing_date?: string;
   morning_headline?: string;
-  critical_hotspots?: string[];
-  key_actions_today?: string[];
+  critical_hotspots?: Array<CriticalHotspotItem | string>;
+  key_actions_today?: Array<KeyActionItem | string>;
   overall_readiness?: string;
+  unknowns?: string[];
   executive_summary?: string;
-  top_priorities?: string[];
+  top_priorities?: Array<string | { priority?: string; title?: string; description?: string }>;
+  client_action_needed?: string;
+  risk_outlook?: string;
 }
 
 const healthStatusConfigs = {
@@ -645,7 +669,14 @@ export default function DashboardPage() {
                 <div className="p-1.5 rounded-lg bg-purple-100 text-purple-700">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm">AI Portfolio Daily Morning Briefing</h3>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">AI Portfolio Daily Morning Briefing</h3>
+                  {aiBriefing?.briefing_date && aiBriefing.briefing_date !== "UNKNOWN" && (
+                    <p className="text-[10px] text-slate-500">
+                      Per {aiBriefing.briefing_date}
+                    </p>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
@@ -673,10 +704,52 @@ export default function DashboardPage() {
                 {aiBriefing.critical_hotspots && aiBriefing.critical_hotspots.length > 0 && (
                   <div className="space-y-1.5">
                     <span className="font-bold text-slate-900 block text-xs">Fokus Perhatian Kritis:</span>
-                    <ul className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-900 list-disc list-inside space-y-1">
-                      {aiBriefing.critical_hotspots.map((hotspot, idx) => (
-                        <li key={idx}>{hotspot}</li>
-                      ))}
+                    <ul className="bg-rose-50/70 border border-rose-200 rounded-xl p-3 text-rose-900 space-y-2">
+                      {aiBriefing.critical_hotspots.map((hotspot, idx) => {
+                        if (typeof hotspot === "object" && hotspot !== null) {
+                          const h = hotspot as CriticalHotspotItem;
+                          const code = h.project_code || "";
+                          const name = h.project_name || "";
+                          const status = h.status || "";
+                          const reason = h.reason || h.description || h.title || JSON.stringify(h);
+                          const quality = h.evidence_quality;
+
+                          return (
+                            <li key={idx} className="flex items-start gap-2 text-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                              <div className="space-y-0.5 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {code && (
+                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-white text-rose-950 border border-rose-300">
+                                      {code}
+                                    </span>
+                                  )}
+                                  {name && code !== name && (
+                                    <span className="font-semibold text-rose-950 text-[11px]">{name}</span>
+                                  )}
+                                  {status && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-200/80 text-rose-900">
+                                      {status}
+                                    </span>
+                                  )}
+                                  {quality && quality !== "COMPLETE" && (
+                                    <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                      {quality}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-rose-950 text-xs leading-snug">{reason}</p>
+                              </div>
+                            </li>
+                          );
+                        }
+                        return (
+                          <li key={idx} className="flex items-start gap-2 text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                            <span className="leading-snug">{String(hotspot)}</span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
@@ -684,9 +757,74 @@ export default function DashboardPage() {
                 {aiBriefing.key_actions_today && aiBriefing.key_actions_today.length > 0 && (
                   <div className="space-y-1.5">
                     <span className="font-bold text-slate-900 block text-xs">Prioritas Tindakan Hari Ini:</span>
-                    <ul className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 list-disc list-inside space-y-1">
-                      {aiBriefing.key_actions_today.map((action, idx) => (
-                        <li key={idx}>{action}</li>
+                    <ul className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 space-y-2">
+                      {aiBriefing.key_actions_today.map((action, idx) => {
+                        if (typeof action === "object" && action !== null) {
+                          const a = action as KeyActionItem;
+                          const code = a.project_code || "";
+                          const priority = a.priority || "";
+                          const text = a.action || a.title || a.description || JSON.stringify(a);
+                          const quality = a.evidence_quality;
+
+                          const priorityBadge =
+                            priority === "CRITICAL"
+                              ? "bg-rose-100 text-rose-800 border-rose-200"
+                              : priority === "HIGH"
+                              ? "bg-orange-100 text-orange-800 border-orange-200"
+                              : priority === "MEDIUM"
+                              ? "bg-amber-100 text-amber-800 border-amber-200"
+                              : "bg-slate-200 text-slate-800 border-slate-300";
+
+                          return (
+                            <li key={idx} className="flex items-start gap-2 text-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-1.5 shrink-0" />
+                              <div className="space-y-0.5 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {code && (
+                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-white text-slate-700 border border-slate-200">
+                                      {code}
+                                    </span>
+                                  )}
+                                  {priority && (
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${priorityBadge}`}>
+                                      {priority}
+                                    </span>
+                                  )}
+                                  {a.owner && (
+                                    <span className="text-[10px] text-slate-500 font-medium">
+                                      PIC: {a.owner}
+                                    </span>
+                                  )}
+                                  {quality && quality !== "COMPLETE" && (
+                                    <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                      {quality}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-slate-900 text-xs leading-snug">{text}</p>
+                              </div>
+                            </li>
+                          );
+                        }
+                        return (
+                          <li key={idx} className="flex items-start gap-2 text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-1.5 shrink-0" />
+                            <span className="leading-snug">{String(action)}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
+                {aiBriefing.unknowns && aiBriefing.unknowns.length > 0 && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-amber-800 block">
+                      Catatan Ketidakpastian / Unknowns:
+                    </span>
+                    <ul className="text-amber-950 list-disc list-inside space-y-1 text-xs">
+                      {aiBriefing.unknowns.map((u, idx) => (
+                        <li key={idx}>{u}</li>
                       ))}
                     </ul>
                   </div>
@@ -697,7 +835,25 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
                       Kesiapan & Stabilitas Delivery:
                     </span>
-                    <p className="text-slate-700">{aiBriefing.overall_readiness}</p>
+                    <p className="text-slate-700 leading-relaxed">{aiBriefing.overall_readiness}</p>
+                  </div>
+                )}
+
+                {aiBriefing.client_action_needed && (
+                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl">
+                    <span className="text-[10px] font-bold uppercase text-amber-800 block mb-1">
+                      Aksi Follow-up Klien Diperlukan:
+                    </span>
+                    <p className="text-amber-950">{aiBriefing.client_action_needed}</p>
+                  </div>
+                )}
+
+                {aiBriefing.risk_outlook && (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                      Prospek Risiko:
+                    </span>
+                    <p className="text-slate-700">{aiBriefing.risk_outlook}</p>
                   </div>
                 )}
               </div>

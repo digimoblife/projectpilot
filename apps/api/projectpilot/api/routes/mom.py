@@ -14,6 +14,8 @@ from projectpilot.api.schemas.mom import (
     MoMDocumentResponse,
     MoMGenerateRequest,
     MoMListItemResponse,
+    MoMPublicShareResponse,
+    MoMShareToggleRequest,
     MoMUpdateRequest,
     PendingMoMItemResponse,
 )
@@ -21,12 +23,18 @@ from projectpilot.persistence.base import utc_now
 from projectpilot.persistence.models.activity import ActivityEvent
 from projectpilot.persistence.models.mom import MoMDocument
 from projectpilot.persistence.models.project import Project
+from projectpilot.persistence.models.share import SharedLink
 from projectpilot.persistence.models.user import User
+from projectpilot.services.share_service import share_service
 
 router = APIRouter(prefix="/mom", tags=["Minutes of Meeting (MoM) Generator"])
 
 
-def _map_mom_response(doc: MoMDocument) -> MoMDocumentResponse:
+def _map_mom_response(
+    doc: MoMDocument,
+    share_token: Optional[str] = None,
+    is_shared: bool = True,
+) -> MoMDocumentResponse:
     project_name = doc.project.name if doc.project else doc.project_name
     project_code = doc.project.code if doc.project else None
 
@@ -45,6 +53,8 @@ def _map_mom_response(doc: MoMDocument) -> MoMDocumentResponse:
         action_items=doc.action_items or [],
         decisions=doc.decisions or [],
         created_by_user_id=doc.created_by_user_id,
+        share_token=share_token,
+        is_shared=is_shared,
         created_at=doc.created_at,
         updated_at=doc.updated_at,
     )
@@ -152,11 +162,13 @@ async def generate_mom(
             status_val = "PENDING"
         normalized_action_items.append({
             "id": item_id,
-            "title": act.get("title") or "Tindak lanjut rapat",
-            "owner": act.get("owner") or act.get("owner_name") or "Tim Terkait",
-            "due_date": act.get("due_date"),
+            "title": act.get("title") or act.get("action_item") or "Tindak lanjut rapat",
+            "owner": act.get("owner") or act.get("owner_name") or "TBD",
+            "due_date": act.get("due_date") or "TBD",
             "category": category,
             "status": status_val,
+            "module": act.get("module") or act.get("module_area") or "Umum",
+            "priority": act.get("priority") or "Not specified",
         })
 
     doc = MoMDocument(
@@ -176,6 +188,14 @@ async def generate_mom(
     db.add(doc)
     await db.flush()
 
+    shared_link = await share_service.get_or_create_shared_link(
+        db=db,
+        resource_type="MOM",
+        resource_id=doc.id,
+        title=doc.title,
+        user_id=current_user.id,
+    )
+
     if matched_project_id:
         activity = ActivityEvent(
             project_id=matched_project_id,
@@ -192,7 +212,7 @@ async def generate_mom(
     res = await db.execute(query)
     saved_doc = res.scalar_one()
 
-    return _map_mom_response(saved_doc)
+    return _map_mom_response(saved_doc, share_token=shared_link.token, is_shared=shared_link.is_active)
 
 
 # =========================================================================
@@ -228,9 +248,22 @@ async def list_mom_documents(
     res = await db.execute(query)
     docs = res.scalars().all()
 
+    doc_ids = [d.id for d in docs]
+    shares_map = {}
+    if doc_ids:
+        s_res = await db.execute(
+            select(SharedLink).where(
+                SharedLink.resource_type == "MOM",
+                SharedLink.resource_id.in_(doc_ids),
+            )
+        )
+        for s in s_res.scalars().all():
+            shares_map[s.resource_id] = (s.token, s.is_active)
+
     items: List[MoMListItemResponse] = []
     for d in docs:
         action_count = len(d.action_items) if d.action_items else 0
+        s_info = shares_map.get(d.id)
         items.append(
             MoMListItemResponse(
                 id=d.id,
@@ -242,6 +275,8 @@ async def list_mom_documents(
                 project_code=d.project.code if d.project else None,
                 summary=d.summary,
                 action_items_count=action_count,
+                share_token=s_info[0] if s_info else None,
+                is_shared=s_info[1] if s_info else False,
                 created_at=d.created_at,
             )
         )
@@ -292,7 +327,47 @@ async def get_pending_mom_items(
 
 
 # =========================================================================
-# 4. GET MOM DETAIL
+# 4. PUBLIC SHARE ENDPOINT (NO AUTH REQUIRED)
+# =========================================================================
+@router.get("/share/{token}", response_model=MoMPublicShareResponse)
+async def get_public_shared_mom(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+):
+    shared_link = await share_service.get_shared_link_by_token(db, token=token, increment_view=True)
+    if not shared_link or shared_link.resource_type != "MOM":
+        raise HTTPException(status_code=404, detail="Tautan dokumen MoM tidak valid atau sudah dinonaktifkan.")
+
+    query = select(MoMDocument).where(MoMDocument.id == shared_link.resource_id).options(selectinload(MoMDocument.project))
+    res = await db.execute(query)
+    doc = res.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen MoM tidak ditemukan.")
+
+    await db.commit()
+
+    project_name = doc.project.name if doc.project else doc.project_name
+    project_code = doc.project.code if doc.project else None
+
+    return MoMPublicShareResponse(
+        mom_key=doc.mom_key,
+        title=doc.title,
+        meeting_date=doc.meeting_date,
+        project_name=project_name,
+        project_code=project_code,
+        summary=doc.summary,
+        attendees=doc.attendees or [],
+        decisions=doc.decisions or [],
+        action_items=doc.action_items or [],
+        content_md=doc.content_md,
+        created_at=doc.created_at,
+        share_token=shared_link.token,
+        view_count=shared_link.view_count,
+    )
+
+
+# =========================================================================
+# 5. GET MOM DETAIL
 # =========================================================================
 @router.get("/{mom_id}", response_model=MoMDocumentResponse)
 async def get_mom_detail(
@@ -307,7 +382,53 @@ async def get_mom_detail(
     if not doc:
         raise HTTPException(status_code=404, detail="Dokumen MoM tidak ditemukan.")
 
-    return _map_mom_response(doc)
+    shared_link = await share_service.get_or_create_shared_link(
+        db=db,
+        resource_type="MOM",
+        resource_id=doc.id,
+        title=doc.title,
+        user_id=current_user.id,
+    )
+    await db.commit()
+
+    return _map_mom_response(doc, share_token=shared_link.token, is_shared=shared_link.is_active)
+
+
+# =========================================================================
+# 6. TOGGLE MOM SHARE
+# =========================================================================
+@router.post("/{mom_id}/share", response_model=MoMDocumentResponse)
+async def toggle_mom_share(
+    mom_id: uuid.UUID,
+    req: MoMShareToggleRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = select(MoMDocument).where(MoMDocument.id == mom_id).options(selectinload(MoMDocument.project))
+    res = await db.execute(query)
+    doc = res.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen MoM tidak ditemukan.")
+
+    shared_link = await share_service.get_or_create_shared_link(
+        db=db,
+        resource_type="MOM",
+        resource_id=doc.id,
+        title=doc.title,
+        user_id=current_user.id,
+    )
+    if shared_link.is_active != req.is_active:
+        await share_service.toggle_shared_link(
+            db=db,
+            resource_type="MOM",
+            resource_id=doc.id,
+            is_active=req.is_active,
+        )
+        shared_link.is_active = req.is_active
+
+    await db.commit()
+    return _map_mom_response(doc, share_token=shared_link.token, is_shared=shared_link.is_active)
+
 
 
 # =========================================================================

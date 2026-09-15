@@ -25,7 +25,8 @@ export function AppShell({ children }: AppShellProps) {
     isAuthenticated,
   } = useAuth();
 
-  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
+  const isShareRoute = pathname.startsWith("/share/") || pathname.startsWith("/mom/share/");
+  const isPublicRoute = PUBLIC_ROUTES.has(pathname) || isShareRoute;
 
   useEffect(() => {
     if (isLoading) {
@@ -67,10 +68,9 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   /*
-   * Anonymous users may only render public routes.
-   * Protected children are deliberately not mounted while redirecting.
+   * Anonymous users and visitors viewing shared resources render the standalone public view.
    */
-  if (!isAuthenticated) {
+  if (!isAuthenticated || isShareRoute) {
     if (!isPublicRoute) {
       return null;
     }

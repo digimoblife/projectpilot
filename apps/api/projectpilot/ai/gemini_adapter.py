@@ -235,15 +235,33 @@ class GeminiAdapter:
 
         if cap == "PORTFOLIO_PM_SUMMARY" or (not cap and ("portfolio" in prompt_lower or "headline" in prompt_lower)):
             return {
+                "briefing_date": "2026-09-15",
                 "morning_headline": "Portfolio secara umum stabil dengan 1 proyek berstatus Watch dan seluruh milestone utama masih dalam koridor waktu yang aman.",
                 "critical_hotspots": [
-                    "Proyek Payment Gateway Integration: Menunggu konfirmasi credential klien untuk mencegah blocker sprint 2."
+                    {
+                        "project_code": "CBI",
+                        "project_name": "Core Banking Integration",
+                        "status": "WATCH",
+                        "reason": "Terdapat 2 tugas overdue dan 1 blocker aktif terkait kredensial API sandbox.",
+                        "evidence_quality": "COMPLETE",
+                    }
                 ],
                 "key_actions_today": [
-                    "Follow up 2 pending client dependencies",
-                    "Monitoring penyelesaian 1 tugas berprioritas tinggi",
+                    {
+                        "project_code": "CBI",
+                        "action": "Konfirmasi Whitelist IP Staging dan kredensial sandbox perbankan",
+                        "priority": "CRITICAL",
+                        "evidence_quality": "COMPLETE",
+                    },
+                    {
+                        "project_code": "ECM",
+                        "action": "Slicing Form Pembayaran QRIS Dinamis",
+                        "priority": "HIGH",
+                        "evidence_quality": "COMPLETE",
+                    },
                 ],
-                "overall_readiness": "Kesiapan tim 88%, tidak ada blocker kritikal yang menghentikan sprint saat ini.",
+                "overall_readiness": "Rata-rata kesehatan portfolio berada di skor 86.5/100. Delivery berjalan lancar dengan 1 blocker dalam proses mitigasi aktif.",
+                "unknowns": [],
             }
 
         if cap and cap.startswith("REPORT_"):
@@ -375,7 +393,9 @@ Sistem berbasis FastAPI dengan asynchronous PostgreSQL, didukung worker backgrou
                     {
                         "id": "ACT-1",
                         "title": "Menyiapkan endpoint staging dan verifikasi payload",
+                        "module": "Backend",
                         "owner": "Lead Developer",
+                        "priority": "HIGH",
                         "due_date": "2026-09-01",
                         "category": "ACTION_ITEM",
                         "status": "PENDING",
@@ -383,7 +403,9 @@ Sistem berbasis FastAPI dengan asynchronous PostgreSQL, didukung worker backgrou
                     {
                         "id": "ACT-2",
                         "title": "Finalisasi prototype antarmuka pengguna (UI/UX) di Figma",
+                        "module": "UI/UX",
                         "owner": "UI/UX Designer",
+                        "priority": "MEDIUM",
                         "due_date": "2026-08-30",
                         "category": "ACTION_ITEM",
                         "status": "PENDING",
@@ -391,68 +413,76 @@ Sistem berbasis FastAPI dengan asynchronous PostgreSQL, didukung worker backgrou
                     {
                         "id": "ACT-3",
                         "title": "Menunggu pembukaan IP whitelist & API sandbox dari tim IT klien",
+                        "module": "API / Integration",
                         "owner": "Stakeholder Klien",
+                        "priority": "CRITICAL",
                         "due_date": "2026-08-28",
                         "category": "DEPENDENCY",
                         "status": "PENDING",
                     },
                     {
                         "id": "ACT-4",
-                        "title": "Kajian kebutuhan modul multi-currency (Parking Lot)",
+                        "title": "Kajian kebutuhan modul multi-currency",
+                        "module": "Product / Business",
                         "owner": "Project Manager",
-                        "due_date": "Rapat Teknis Berikutnya",
+                        "priority": "LOW",
+                        "due_date": "TBD",
                         "category": "OPEN_ISSUE",
                         "status": "PENDING",
                     },
                 ],
-                "content_md": """# Minutes of Meeting (MoM)
+                "content_md": """# Minutes of Meeting
 
-**Topik / Judul:** Notulensi Rapat Pembahasan Teknis & Koordinasi Proyek  
-**Tanggal Pelaksanaan:** 26 Agustus 2026  
-**Pencatat / Fasilitator:** Project Manager Lead  
+## 1. Meeting Overview
+- Title: Notulensi Rapat Pembahasan Teknis & Koordinasi Proyek
+- Agenda: Penyelarasan Integrasi API, Pengujian, dan Tanggung Jawab Sprint
+- Date: 26 Agustus 2026
+- Participants: Project Manager Lead, Lead Developer, UI/UX Designer, Stakeholder Klien
 
----
+## 2. Discussion Summary
 
-## 👥 1. Daftar Hadir Peserta
-- **Project Manager (PM Lead)** - Pimpinan Rapat / Moderator
-- **Lead Developer** - Engineering Tim
-- **UI/UX Designer** - Product Design Tim
-- **Stakeholder Klien** - PIC Klien
+### Integrasi Backend & API
+#### Discussion / Context
+- Tim teknis telah menyelesaikan 80% modul inti dan siap memulai tahap integrasi backend.
+- Kredensial API dan IP whitelist staging environment diperlukan dari tim IT klien untuk simulasi transaksi.
 
----
+#### Decision
+- Arsitektur integrasi modul utama disepakati menggunakan REST API dengan autentikasi berbasis JWT & HMAC webhook.
 
-## 📌 2. Ringkasan Eksekutif
-Rapat koordinasi teknis telah terlaksana dengan lancar untuk menyelaraskan pemahaman ruang lingkup, jadwal pengujian, dan pembagian tanggung jawab tindak lanjut. Seluruh pihak telah menyepakati alur kerja utama dan target penyelesaian sprint.
+#### Action / Follow-up
+- Menyiapkan endpoint staging dan verifikasi payload (Lead Developer).
 
----
+#### Open Question
+- Not specified
 
-## 📝 3. Poin Diskusi & Pembahasan Utama
-1. **Status Kemajuan Pengerjaan**: Tim teknis telah menyelesaikan 80% modul inti dan siap memulai tahap integrasi backend.
-2. **Kebutuhan Akses Staging**: Diperlukan kredensial API dan IP whitelist staging environment dari pihak klien untuk keperluan simulasi transaksi.
-3. **Standarisasi Pelaporan**: Seluruh catatan dan dokumentasi notulensi rapat akan diarsipkan secara digital dalam format Markdown terstruktur.
+### Prototype UI/UX & Pengujian
+#### Discussion / Context
+- Desain prototype antarmuka pengguna sedang dalam tahap finalisasi sebelum implementasi slicing.
 
----
+#### Decision
+- Sesi demo antarmuka dan uji fungsi (UAT internal) dijadwalkan pada hari Jumat pukul 14:00 WIB.
 
-## ⚖️ 4. Keputusan yang Disepakati (Key Decisions)
-- **Keputusan 1**: Arsitektur integrasi modul utama disepakati menggunakan REST API dengan autentikasi berbasis token JWT & HMAC webhook.
-- **Keputusan 2**: Sesi demo antarmuka dan uji fungsi (UAT internal) dijadwalkan pada hari Jumat pukul 14:00 WIB.
-- **Keputusan 3**: Format MoM Markdown diadopsi sebagai dokumen acuan resmi tim proyek.
+#### Action / Follow-up
+- Finalisasi prototype antarmuka pengguna (UI/UX) di Figma (UI/UX Designer).
 
----
+#### Open Question
+- Kajian kebutuhan modul multi-currency ditunda untuk sesi berikutnya.
 
-## 📋 5. Checklist Tindak Lanjut & Agenda Rapat Berikutnya
-- [ ] **[ACTION_ITEM]** Menyiapkan endpoint staging dan verifikasi payload (PIC: Lead Developer, Tenggat: 2026-09-01)
-- [ ] **[ACTION_ITEM]** Finalisasi prototype antarmuka pengguna (UI/UX) di Figma (PIC: UI/UX Designer, Tenggat: 2026-08-30)
-- [ ] **[DEPENDENCY]** Menunggu pembukaan IP whitelist & API sandbox dari tim IT klien (PIC: Stakeholder Klien, Tenggat: 2026-08-28)
-- [ ] **[OPEN_ISSUE]** Kajian kebutuhan modul multi-currency (Parking Lot) (PIC: Project Manager, Tenggat: Rapat Teknis Berikutnya)
+## 3. Technical Dependencies & Flow
+- Klien membuka whitelist IP staging sebelum pengujian webhook end-to-end dapat dijalankan.
+  - Penyiapan API sandbox -> Whitelist IP staging -> Pengujian callback webhook.
 
----
+## 4. Action Items Matrix
 
-## 📅 6. Catatan Tambahan & Agenda Rapat Berikutnya
-- Rapat evaluasi mingguan berikutnya (*Weekly Sync*) akan diadakan pada hari Senin pekan depan melalui video conference.
+| No. | Action Item | Module / Area | Owner | Priority | Due Date | Status |
+|---|---|---|---|---|---|---|
+| 1 | Menyiapkan endpoint staging dan verifikasi payload | Backend | Lead Developer | HIGH | 2026-09-01 | PENDING |
+| 2 | Finalisasi prototype antarmuka pengguna (UI/UX) di Figma | UI/UX | UI/UX Designer | MEDIUM | 2026-08-30 | PENDING |
+| 3 | Menunggu pembukaan IP whitelist & API sandbox dari tim IT klien | API / Integration | Stakeholder Klien | CRITICAL | 2026-08-28 | PENDING |
+| 4 | Kajian kebutuhan modul multi-currency | Product / Business | Project Manager | LOW | TBD | PENDING |
 
----
-*Dokumen ini digenerate secara otomatis oleh ProjectPilot pada 26 Agustus 2026.*
+## 5. Open Questions / Pending Decisions
+- Kepastian kebutuhan dan skema modul multi-currency (Pending decision).
 """,
             }
 

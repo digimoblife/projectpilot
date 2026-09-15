@@ -49,6 +49,28 @@ class MoMUpdateRequest(BaseModel):
     action_items: Optional[List[Dict[str, Any]]] = None
 
 
+class MoMShareToggleRequest(BaseModel):
+    is_active: bool = True
+
+
+class MoMPublicShareResponse(BaseModel):
+    mom_key: str
+    title: str
+    meeting_date: Optional[datetime] = None
+    project_name: Optional[str] = None
+    project_code: Optional[str] = None
+    summary: Optional[str] = None
+    attendees: List[str] = []
+    decisions: List[str] = []
+    action_items: List[Dict[str, Any]] = []
+    content_md: str
+    created_at: datetime
+    share_token: str
+    view_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class MoMDocumentResponse(BaseModel):
     id: uuid.UUID
     mom_key: str
@@ -64,6 +86,8 @@ class MoMDocumentResponse(BaseModel):
     action_items: Optional[List[Dict[str, Any]]] = None
     decisions: Optional[List[str]] = None
     created_by_user_id: Optional[uuid.UUID] = None
+    share_token: Optional[str] = None
+    is_shared: bool = True
     created_at: datetime
     updated_at: datetime
 
@@ -80,6 +104,9 @@ class MoMListItemResponse(BaseModel):
     project_code: Optional[str] = None
     summary: Optional[str] = None
     action_items_count: int = 0
+    share_token: Optional[str] = None
+    is_shared: bool = True
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+

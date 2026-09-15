@@ -80,6 +80,45 @@ async def test_mom_generation_and_history_workflow(client: AsyncClient):
     assert "content_md" in mom_data
     assert len(mom_data["content_md"]) > 20
     assert len(mom_data["action_items"]) > 0
+    assert mom_data.get("share_token") is not None
+    share_token = mom_data["share_token"]
+
+    # Public Access Verification (NO Auth header)
+    pub_res = await client.get(f"/api/v1/mom/share/{share_token}")
+    assert pub_res.status_code == 200
+    pub_data = pub_res.json()
+    assert pub_data["mom_key"] == mom_data["mom_key"]
+    assert pub_data["title"] == mom_data["title"]
+    assert pub_data["share_token"] == share_token
+    assert pub_data["view_count"] >= 1
+    assert "content_md" in pub_data
+
+    # Invalid share token test
+    invalid_share_res = await client.get("/api/v1/mom/share/invalid_token_99999")
+    assert invalid_share_res.status_code == 404
+
+    # Toggle share link active state
+    toggle_res = await client.post(
+        f"/api/v1/mom/{mom_id}/share",
+        json={"is_active": False},
+        headers=headers,
+    )
+    assert toggle_res.status_code == 200
+    assert toggle_res.json()["is_shared"] is False
+
+    # Once deactivated, public access is 404
+    inactive_pub_res = await client.get(f"/api/v1/mom/share/{share_token}")
+    assert inactive_pub_res.status_code == 404
+
+    # Re-enable share
+    re_enable_res = await client.post(
+        f"/api/v1/mom/{mom_id}/share",
+        json={"is_active": True},
+        headers=headers,
+    )
+    assert re_enable_res.status_code == 200
+    assert re_enable_res.json()["is_shared"] is True
+
 
     # 4. Test Generate Standalone MoM (Without Project)
     gen_standalone_res = await client.post(

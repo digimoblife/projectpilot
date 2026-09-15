@@ -37,7 +37,7 @@ from projectpilot.persistence.models.meeting import (
     MeetingParticipant,
     MeetingStatus,
 )
-from projectpilot.persistence.models.planning_tasks import Task, TaskStatus
+from projectpilot.persistence.models.planning_tasks import Feature, Task, TaskStatus
 from projectpilot.persistence.models.requirements_scope import Decision, DecisionStatus
 from projectpilot.persistence.models.user import User
 
@@ -309,11 +309,13 @@ async def convert_action_item(
         raise HTTPException(status_code=404, detail="Action item not found.")
 
     if convert_in.target_entity == ConvertedEntityType.TASK:
-        # Check feature or default feature
         feature_id = convert_in.feature_id
-        if not feature_id:
-            # Look up or require feature
-            raise HTTPException(status_code=400, detail="feature_id is required to convert action item to Task.")
+        epic_id = None
+        if feature_id:
+            feat_res = await db.execute(select(Feature).where(Feature.id == feature_id))
+            feat = feat_res.scalar_one_or_none()
+            if feat:
+                epic_id = feat.epic_id
 
         task_count_res = await db.execute(select(Task).where(Task.project_id == project_id))
         task_count = len(task_count_res.scalars().all())
@@ -322,6 +324,7 @@ async def convert_action_item(
         new_task = Task(
             project_id=project_id,
             feature_id=feature_id,
+            epic_id=epic_id,
             key=task_key,
             title=item.title,
             description=item.description or f"Tindak lanjut dari rapat (Action Item ID: {item.id})",

@@ -117,6 +117,27 @@ async def test_meeting_management_ai_analysis_and_action_item_conversion(client:
     assert tasks_res.status_code == 200
     assert len(tasks_res.json()) >= 1
 
+    # 6b. Create and Convert Action Item -> Task WITHOUT feature_id (Optional Feature Test)
+    action_opt_res = await client.post(
+        f"/api/v1/projects/{project_id}/meetings/{meeting_id}/action-items",
+        json={
+            "title": "Tindak lanjut umum tanpa feature",
+            "owner_name": "Project Manager",
+        },
+        headers=headers,
+    )
+    assert action_opt_res.status_code == 201
+    action_opt_id = action_opt_res.json()["id"]
+
+    convert_opt_res = await client.post(
+        f"/api/v1/projects/{project_id}/meetings/{meeting_id}/action-items/{action_opt_id}/convert",
+        json={"target_entity": "TASK", "feature_id": None},
+        headers=headers,
+    )
+    assert convert_opt_res.status_code == 200
+    assert convert_opt_res.json()["status"] == "CONVERTED"
+    assert convert_opt_res.json()["converted_entity_type"] == "TASK"
+
     # 7. Create another Action Item and convert to Client Dependency
     dep_action_res = await client.post(
         f"/api/v1/projects/{project_id}/meetings/{meeting_id}/action-items",

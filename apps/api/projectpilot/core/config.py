@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
 
     # CORS
-    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000"]
+    CORS_ORIGINS: Union[List[str], str] = [
+        "http://localhost:3000",
+        "http://localhost:3010",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3010",
+    ]
 
     @field_validator("CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
@@ -23,7 +28,12 @@ class Settings(BaseSettings):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, list):
             return v
-        return ["http://localhost:3000"]
+        return [
+            "http://localhost:3000",
+            "http://localhost:3010",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3010",
+        ]
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://projectpilot:projectpilot_secret@localhost:5432/projectpilot_db"

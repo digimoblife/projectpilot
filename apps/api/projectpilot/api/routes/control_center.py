@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import uuid
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
@@ -122,25 +123,35 @@ async def generate_portfolio_pm_summary(
     p_res = await db.execute(select(Project))
     projects = p_res.scalars().all()
 
+    now_iso = datetime.now(timezone.utc).isoformat()
+
     health_summaries = []
     for p in projects:
         try:
             h = await compute_project_health(p.id, db)
             health_summaries.append(
-                f"- {h['project_name']} ({h['project_code']}): Status {h['health_status']}, Score {h['health_score']}, Overdue: {h['metrics']['overdue_tasks']}, Blockers: {h['metrics']['active_blockers']}"
+                f"- Project Code: {h['project_code']} | Name: {h['project_name']} | Status: {h['health_status']} | Score: {h['health_score']} | Overdue: {h['metrics']['overdue_tasks']} | Blockers: {h['metrics']['active_blockers']}"
             )
         except Exception:
             continue
 
     attention_raw = await get_cross_project_attention_items(db)
+    attention_lines = []
+    for a in attention_raw[:10]:
+        code = a.get("project_code") or "UNKNOWN"
+        attention_lines.append(
+            f"- Project Code: {code} | Item: {a['title']} | Priority: {a['severity']}"
+        )
 
     evidence_text = f"""=== PORTFOLIO OPERATIONAL EVIDENCE ===
+Generated At: {now_iso}
 Total Projects: {len(projects)}
+
 Project Summaries:
-{chr(10).join(health_summaries) if health_summaries else "Belum ada proyek aktif."}
+{chr(10).join(health_summaries) if health_summaries else "- Tidak ada data proyek aktif."}
 
 Urgent Attention Items ({len(attention_raw)} items):
-{chr(10).join(['- ' + a['title'] + ' [' + a['severity'] + ']' for a in attention_raw[:10]]) if attention_raw else "Tidak ada attention item mendesak."}
+{chr(10).join(attention_lines) if attention_lines else "- Tidak ada attention item mendesak."}
 """
 
     prompt = get_prompt("PORTFOLIO_PM_SUMMARY", evidence=evidence_text)

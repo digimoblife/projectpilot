@@ -321,7 +321,7 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
           headers,
           body: JSON.stringify({
             target_entity: targetEntity,
-            feature_id: targetEntity === "TASK" ? selectedFeatureId : null,
+            feature_id: targetEntity === "TASK" && selectedFeatureId ? selectedFeatureId : null,
           }),
         }
       );
@@ -1032,13 +1032,15 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
 
               {targetEntity === "TASK" && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Hubungkan ke Feature *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Hubungkan ke Feature <span className="text-slate-400 font-normal">(opsional)</span>
+                  </label>
                   <select
-                    required
                     value={selectedFeatureId}
                     onChange={(e) => setSelectedFeatureId(e.target.value)}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                   >
+                    <option value="">-- Tanpa Feature (Umum) --</option>
                     {features.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.key} - {f.title}

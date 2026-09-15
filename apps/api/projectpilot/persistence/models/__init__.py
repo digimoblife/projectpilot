@@ -48,6 +48,7 @@ from projectpilot.persistence.models.meeting import (
     ParticipantType,
 )
 from projectpilot.persistence.models.mom import MoMDocument
+from projectpilot.persistence.models.share import SharedLink
 from projectpilot.persistence.models.planning_tasks import (
     Epic,
     Feature,
@@ -145,6 +146,7 @@ __all__ = [
     "DocumentStatus",
     "DocumentEvidence",
     "MoMDocument",
+    "SharedLink",
     "Handover",
     "HandoverStatus",
     "HandoverItem",

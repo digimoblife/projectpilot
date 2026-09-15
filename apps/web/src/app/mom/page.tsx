@@ -27,6 +27,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Share2,
   Sparkles,
   Square,
   Tag,
@@ -34,6 +35,7 @@ import {
   User,
   Users,
   X,
+  Link2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
@@ -85,6 +87,8 @@ interface MoMDocument {
   attendees: string[];
   action_items: ActionItem[];
   decisions: string[];
+  share_token?: string | null;
+  is_shared?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -99,6 +103,8 @@ interface MoMListItem {
   project_code?: string | null;
   summary: string | null;
   action_items_count: number;
+  share_token?: string | null;
+  is_shared?: boolean;
   created_at: string;
 }
 
@@ -140,6 +146,8 @@ export default function MoMGeneratorPage() {
   const [editedContentMd, setEditedContentMd] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+  const [copiedShareToken, setCopiedShareToken] = useState<string | null>(null);
   const [checklistFilter, setChecklistFilter] = useState<"ALL" | "ACTION_ITEM" | "DEPENDENCY" | "OPEN_ISSUE" | "PENDING_ONLY">("ALL");
   const [updatingItemIndex, setUpdatingItemIndex] = useState<number | null>(null);
 
@@ -511,6 +519,19 @@ export default function MoMGeneratorPage() {
     setTimeout(() => setCopySuccess(false), 2000);
   }
 
+  function handleCopyShareLink(token?: string | null) {
+    if (!token) return;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const shareUrl = `${origin}/mom/share/${token}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedShareToken(token);
+    setShareSuccess(true);
+    setTimeout(() => {
+      setShareSuccess(false);
+      setCopiedShareToken(null);
+    }, 2500);
+  }
+
   function handleUseSampleTemplate() {
     setRawText(SAMPLE_RAW_TEXT);
     setMeetingTitle("Rapat Evaluasi Sprint & Rencana Integrasi Gateway");
@@ -774,6 +795,31 @@ export default function MoMGeneratorPage() {
 
                   {/* Actions Header Bar */}
                   <div className="flex items-center gap-2 flex-wrap">
+                    {currentMoM.share_token && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyShareLink(currentMoM.share_token)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                          shareSuccess
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                            : "bg-white hover:bg-purple-50 text-purple-700 border-purple-200 shadow-2xs"
+                        }`}
+                        title="Salin tautan publik untuk dibagikan ke orang lain tanpa login"
+                      >
+                        {shareSuccess ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Link Tersalin!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-3.5 h-3.5 text-purple-600" />
+                            <span>Salin Link</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => handleDownloadMarkdown(currentMoM)}
@@ -1278,6 +1324,29 @@ export default function MoMGeneratorPage() {
 
                         <td className="px-4 py-3 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1.5">
+                            {item.share_token && (
+                              <button
+                                type="button"
+                                onClick={() => handleCopyShareLink(item.share_token)}
+                                className={`p-1.5 rounded-lg border transition-colors ${
+                                  copiedShareToken === item.share_token
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-300"
+                                    : "text-slate-400 hover:text-purple-600 hover:bg-purple-50 border-slate-200"
+                                }`}
+                                title={
+                                  copiedShareToken === item.share_token
+                                    ? "Link publik disalin ke clipboard!"
+                                    : "Salin link publik dokumen ini"
+                                }
+                              >
+                                {copiedShareToken === item.share_token ? (
+                                  <Check className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Share2 className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               onClick={() => handleOpenHistoryDetail(item.id)}
@@ -1469,6 +1538,31 @@ export default function MoMGeneratorPage() {
               </button>
 
               <div className="flex items-center gap-2">
+                {selectedHistoryMoM.share_token && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopyShareLink(selectedHistoryMoM.share_token)}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                      shareSuccess && copiedShareToken === selectedHistoryMoM.share_token
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                        : "bg-white hover:bg-purple-50 text-purple-700 border-purple-200"
+                    }`}
+                    title="Salin link publik dokumen ini"
+                  >
+                    {shareSuccess && copiedShareToken === selectedHistoryMoM.share_token ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Link Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-3.5 h-3.5 text-purple-600" />
+                        <span>Salin Link</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => handleCopyMarkdown(selectedHistoryMoM.content_md)}
