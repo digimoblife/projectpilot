@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { Suspense, useEffect, useState, use } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   AlertTriangle,
@@ -103,15 +104,16 @@ const riskStatusConfigs: Record<string, { label: string; color: string }> = {
   CLOSED: { label: "Selesai / Ditutup", color: "bg-slate-100 text-slate-500 border-slate-200" },
 };
 
-export default function ProjectIssuesRisksPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id: projectId } = use(params);
+function ProjectIssuesContent({ projectId }: { projectId: string }) {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<"issues" | "risks" | "blockers" | "client_deps">("issues");
+  const tabParam = searchParams.get("tab") as "issues" | "risks" | "blockers" | "client_deps" | null;
+  const activeTab: "issues" | "risks" | "blockers" | "client_deps" =
+    tabParam && ["issues", "risks", "blockers", "client_deps"].includes(tabParam)
+      ? tabParam
+      : "issues";
   const [issues, setIssues] = useState<Issue[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
   const [blockers, setBlockers] = useState<Blocker[]>([]);
@@ -256,7 +258,7 @@ export default function ProjectIssuesRisksPage({
         headers,
       });
       fetchIssuesRisksData();
-      setActiveTab("issues");
+      router.push(`/projects/${projectId}/issues?tab=issues`);
     } catch {
       // Handle error
     }
@@ -415,65 +417,16 @@ export default function ProjectIssuesRisksPage({
         </div>
       )}
 
-      {/* Sub-Tab Navigation & Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        {/* Segmented Sub-Tab Control (Constrained horizontal scroll on mobile) */}
-        <div className="w-full sm:w-auto overflow-x-auto scrollbar-none max-w-full pb-1 sm:pb-0">
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-max">
-            <button
-              type="button"
-              onClick={() => setActiveTab("issues")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === "issues"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Bug className="w-3.5 h-3.5" />
-              <span>Log Issue ({issues.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("risks")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === "risks"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Matriks Risiko ({risks.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("blockers")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === "blockers"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Active Blockers ({blockers.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("client_deps")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === "client_deps"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Hourglass className="w-3.5 h-3.5" />
-              <span>Waiting Matrix ({clientDeps.length})</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-start sm:justify-end">
-          {activeTab === "issues" && (
+      {/* TAB 1: ISSUES LOG */}
+      {activeTab === "issues" && (
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Daftar Kendala & Bug Aktif (Issue Tracking)</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Mencatat masalah operasional/teknis yang sedang berlangsung yang membutuhkan perbaikan dan investigasi.
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -484,63 +437,11 @@ export default function ProjectIssuesRisksPage({
                 setModalError(null);
                 setIsIssueModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer self-start sm:self-center active:scale-[0.98]"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Lapor Issue</span>
             </button>
-          )}
-
-          {activeTab === "risks" && (
-            <button
-              type="button"
-              onClick={() => {
-                setRiskKey(`RSK-${risks.length + 1}`.padStart(7, "0"));
-                setRiskTitle("");
-                setRiskDesc("");
-                setRiskProb("MEDIUM");
-                setRiskImpact("MEDIUM");
-                setRiskMitigation("");
-                setModalError(null);
-                setIsRiskModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Identifikasi Risiko</span>
-            </button>
-          )}
-
-          {activeTab === "client_deps" && (
-            <button
-              type="button"
-              onClick={() => {
-                setCdpKey(`CDP-${clientDeps.length + 1}`.padStart(7, "0"));
-                setCdpTitle("");
-                setCdpType("CREDENTIALS");
-                setCdpReqDate(new Date().toISOString().split("T")[0]);
-                setCdpExpDate(new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
-                setCdpImpact("");
-                setModalError(null);
-                setIsClientDepModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Ajukan Dependensi Klien</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* TAB 1: ISSUES LOG */}
-      {activeTab === "issues" && (
-        <div className="space-y-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-            <h3 className="text-sm font-bold text-slate-900">Daftar Kendala & Bug Aktif (Issue Tracking)</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Mencatat masalah operasional/teknis yang sedang berlangsung yang membutuhkan perbaikan dan investigasi.
-            </p>
           </div>
 
           {issues.length === 0 ? (
@@ -617,11 +518,30 @@ export default function ProjectIssuesRisksPage({
       {/* TAB 2: RISKS REGISTRY & MATRIX */}
       {activeTab === "risks" && (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-            <h3 className="text-sm font-bold text-slate-900">Manajemen Risiko & Rencana Mitigasi (Risk Register)</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Antisipasi potensi kegagalan delivery sebelum menjadi issue. Risiko dapat dimaterialisasi secara otomatis menjadi Issue.
-            </p>
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Manajemen Risiko & Rencana Mitigasi (Risk Register)</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Antisipasi potensi kegagalan delivery sebelum menjadi issue. Risiko dapat dimaterialisasi secara otomatis menjadi Issue.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setRiskKey(`RSK-${risks.length + 1}`.padStart(7, "0"));
+                setRiskTitle("");
+                setRiskDesc("");
+                setRiskProb("MEDIUM");
+                setRiskImpact("MEDIUM");
+                setRiskMitigation("");
+                setModalError(null);
+                setIsRiskModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer self-start sm:self-center active:scale-[0.98]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Identifikasi Risiko</span>
+            </button>
           </div>
 
           {risks.length === 0 ? (
@@ -805,11 +725,30 @@ export default function ProjectIssuesRisksPage({
       {/* TAB 4: CLIENT DEPENDENCIES (WAITING MATRIX) */}
       {activeTab === "client_deps" && (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-            <h3 className="text-sm font-bold text-slate-900">Matriks Dependensi & Kebutuhan Klien (Waiting Matrix)</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Melacak durasi penantian (waiting duration) atas aset, kredensial, atau persetujuan yang dibutuhkan dari pihak klien.
-            </p>
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Matriks Dependensi & Kebutuhan Klien (Waiting Matrix)</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Melacak durasi penantian (waiting duration) atas aset, kredensial, atau persetujuan yang dibutuhkan dari pihak klien.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCdpKey(`CDP-${clientDeps.length + 1}`.padStart(7, "0"));
+                setCdpTitle("");
+                setCdpType("CREDENTIALS");
+                setCdpReqDate(new Date().toISOString().split("T")[0]);
+                setCdpExpDate(new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
+                setCdpImpact("");
+                setModalError(null);
+                setIsClientDepModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer self-start sm:self-center active:scale-[0.98]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Ajukan Dependensi Klien</span>
+            </button>
           </div>
 
           {clientDeps.length === 0 ? (
@@ -1299,5 +1238,19 @@ export default function ProjectIssuesRisksPage({
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProjectIssuesRisksPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: projectId } = use(params);
+
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Memuat workspace Issues & Risks...</div>}>
+      <ProjectIssuesContent projectId={projectId} />
+    </Suspense>
   );
 }

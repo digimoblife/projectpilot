@@ -1,25 +1,34 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { Suspense, useEffect, useState, use } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
+  AlertTriangle,
+  Archive,
   ArrowLeft,
   BookOpen,
   Bot,
+  Bug,
   Building2,
   Calendar,
   Compass,
+  FileCheck2,
   FileText,
   Files,
+  FolderTree,
+  Hourglass,
   Layers,
   LayoutList,
+  Link2,
   MessageSquare,
+  Milestone as MilestoneIcon,
   Send,
   ShieldAlert,
   ShieldCheck,
   Sliders,
   Sparkles,
+  Users,
   X,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
@@ -68,6 +77,84 @@ const lifecycleStages = [
   { key: "HANDOVER", label: "Handover" },
   { key: "COMPLETED", label: "Completed" },
 ];
+
+interface NavigationSubRoute {
+  name: string;
+  href: string;
+  sublabel?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tabKey?: string;
+}
+
+interface NavigationPillar {
+  id: string;
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exactMatchOnly?: boolean;
+  subRoutes: NavigationSubRoute[];
+}
+
+function Tier2SubTabsContent({
+  activePillar,
+  pathname,
+}: {
+  activePillar: NavigationPillar;
+  pathname: string;
+}) {
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("tab");
+
+  return (
+    <div className="p-2 sm:p-2.5 bg-white overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1.5 pb-0.5 scrollbar-none">
+        {activePillar.subRoutes.map((sub) => {
+          let isSubActive = false;
+
+          if (sub.tabKey) {
+            if (activePillar.id === "work") {
+              isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "board";
+            } else if (activePillar.id === "communication") {
+              isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "meetings";
+            } else if (activePillar.id === "resources") {
+              isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "files";
+            } else if (activePillar.id === "issues") {
+              isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "issues";
+            } else {
+              isSubActive = currentTab === sub.tabKey;
+            }
+          } else {
+            isSubActive = pathname.startsWith(sub.href);
+          }
+
+          const SubIcon = sub.icon;
+
+          return (
+            <Link
+              key={sub.name}
+              href={sub.href}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer active:scale-[0.98] ${
+                isSubActive
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60"
+              }`}
+            >
+              <SubIcon className={`w-4 h-4 ${isSubActive ? "text-white" : "text-slate-500"}`} />
+              <div className="flex flex-col items-start leading-tight">
+                <span>{sub.name}</span>
+                {sub.sublabel && (
+                  <span className={`text-[10px] font-normal ${isSubActive ? "text-slate-300" : "text-slate-400"}`}>
+                    {sub.sublabel}
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function ProjectWorkspaceLayout({
   children,
@@ -163,7 +250,7 @@ export default function ProjectWorkspaceLayout({
   // =========================================================================
   // 8 ARCHITECTURAL PILLARS (Clean, No-Scroll Navigation)
   // =========================================================================
-  const navigationPillars = [
+  const navigationPillars: NavigationPillar[] = [
     {
       id: "overview",
       name: "Overview",
@@ -178,9 +265,9 @@ export default function ProjectWorkspaceLayout({
       href: `/projects/${id}/discovery`,
       icon: Compass,
       subRoutes: [
-        { name: "Brief & Discovery", href: `/projects/${id}/discovery`, icon: Compass },
-        { name: "Requirements & ADR", href: `/projects/${id}/requirements`, icon: FileText },
-        { name: "Scope Baseline", href: `/projects/${id}/scope`, icon: Layers },
+        { name: "Brief & Discovery", href: `/projects/${id}/discovery`, sublabel: "Kuesioner & Brief", icon: Compass },
+        { name: "Requirements & ADR", href: `/projects/${id}/requirements`, sublabel: "Spesifikasi & Keputusan", icon: FileText },
+        { name: "Scope Baseline", href: `/projects/${id}/scope`, sublabel: "Batasan & Perubahan", icon: Layers },
       ],
     },
     {
@@ -195,28 +282,46 @@ export default function ProjectWorkspaceLayout({
       name: "Work",
       href: `/projects/${id}/work`,
       icon: Sliders,
-      subRoutes: [],
+      subRoutes: [
+        { name: "Board", href: `/projects/${id}/work?tab=board`, sublabel: "Kanban & Tasks", icon: Sliders, tabKey: "board" },
+        { name: "Timeline", href: `/projects/${id}/work?tab=timeline`, sublabel: "Jadwal & Dependensi", icon: Calendar, tabKey: "timeline" },
+        { name: "Milestones", href: `/projects/${id}/work?tab=milestones`, sublabel: "Gate Pengiriman", icon: MilestoneIcon, tabKey: "milestones" },
+        { name: "WBS", href: `/projects/${id}/work?tab=wbs`, sublabel: "Epics & Features", icon: FolderTree, tabKey: "wbs" },
+        { name: "Team & Capacity", href: `/projects/${id}/work?tab=team`, sublabel: "Alokasi Personel", icon: Users, tabKey: "team" },
+      ],
     },
     {
       id: "issues",
       name: "Issues",
       href: `/projects/${id}/issues`,
       icon: ShieldAlert,
-      subRoutes: [],
+      subRoutes: [
+        { name: "Log Issue", href: `/projects/${id}/issues?tab=issues`, sublabel: "Pelacak Isu Teknis", icon: Bug, tabKey: "issues" },
+        { name: "Matriks Risiko", href: `/projects/${id}/issues?tab=risks`, sublabel: "Peta Probabilitas & Dampak", icon: AlertTriangle, tabKey: "risks" },
+        { name: "Active Blockers", href: `/projects/${id}/issues?tab=blockers`, sublabel: "Eskalasi & Hambatan", icon: ShieldAlert, tabKey: "blockers" },
+        { name: "Waiting Matrix", href: `/projects/${id}/issues?tab=client_deps`, sublabel: "Ketergantungan Klien", icon: Hourglass, tabKey: "client_deps" },
+      ],
     },
     {
       id: "communication",
       name: "Communication",
       href: `/projects/${id}/communication`,
       icon: MessageSquare,
-      subRoutes: [],
+      subRoutes: [
+        { name: "Notulensi Rapat", href: `/projects/${id}/communication?tab=meetings`, sublabel: "Catatan & Action Items", icon: MessageSquare, tabKey: "meetings" },
+        { name: "Laporan Status", href: `/projects/${id}/communication?tab=reports`, sublabel: "Mingguan & Bulanan", icon: FileCheck2, tabKey: "reports" },
+      ],
     },
     {
       id: "resources",
       name: "Resources",
       href: `/projects/${id}/resources`,
       icon: Files,
-      subRoutes: [],
+      subRoutes: [
+        { name: "Berkas Proyek", href: `/projects/${id}/resources?tab=files`, sublabel: "PDF, Dokumen & Aset", icon: Files, tabKey: "files" },
+        { name: "Tautan Referensi", href: `/projects/${id}/resources?tab=links`, sublabel: "Figma, Git & Deployment", icon: Link2, tabKey: "links" },
+        { name: "Arsip Deliverable", href: `/projects/${id}/resources?tab=deliverables`, sublabel: "Artefak Ekspor & Rilis", icon: Archive, tabKey: "deliverables" },
+      ],
     },
     {
       id: "delivery",
@@ -415,39 +520,11 @@ export default function ProjectWorkspaceLayout({
           })}
         </div>
 
-        {/* Tier 2: Contextual Sub-Tabs (Rendered only when category has genuine multi-route sub-modules) */}
-        {activePillar && activePillar.subRoutes.length > 1 && (
-          <div className="px-3 sm:px-4 py-2 bg-white flex items-center gap-2 overflow-x-auto scrollbar-none">
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-0.5">
-              Sub-Modul:
-            </span>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {activePillar.subRoutes.map((sub, sIdx) => {
-                const isSubActive = pathname.startsWith(sub.href);
-                const SubIcon = sub.icon;
-
-                return (
-                  <Link
-                    key={sub.name}
-                    href={sub.href}
-                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 whitespace-nowrap active:scale-[0.98] ${
-                      isSubActive
-                        ? "bg-slate-900 text-white font-semibold shadow-xs"
-                        : "text-slate-700 bg-slate-100 hover:bg-slate-200/80 hover:text-slate-900 border border-slate-200/60"
-                    }`}
-                  >
-                    <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 ${
-                      isSubActive ? "bg-slate-800 text-slate-200" : "bg-slate-200 text-slate-600"
-                    }`}>
-                      {sIdx + 1}
-                    </span>
-                    <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? "text-slate-200" : "text-slate-500"}`} />
-                    <span>{sub.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+        {/* Tier 2: Contextual Sub-Tabs (Rendered when category has sub-modules) */}
+        {activePillar && activePillar.subRoutes.length > 0 && (
+          <Suspense fallback={<div className="h-12 bg-white" />}>
+            <Tier2SubTabsContent activePillar={activePillar} pathname={pathname} />
+          </Suspense>
         )}
       </div>
 
