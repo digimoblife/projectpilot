@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, use } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   AlertTriangle,
@@ -12,6 +13,7 @@ import {
   ExternalLink,
   Flame,
   Hourglass,
+  Info,
   Layers,
   Plus,
   RefreshCw,
@@ -141,6 +143,19 @@ export default function ProjectIssuesRisksPage({
 
   const [modalError, setModalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Blocker Resolution Modal & Notice States
+  const [isResolveBlockerModalOpen, setIsResolveBlockerModalOpen] = useState(false);
+  const [selectedBlockerForResolve, setSelectedBlockerForResolve] = useState<Blocker | null>(null);
+  const [blockerResolutionNotes, setBlockerResolutionNotes] = useState("");
+  const [resolveBlockerError, setResolveBlockerError] = useState<string | null>(null);
+
+  // Post-Resolution Informational Feedback Banner/Toast
+  const [resolutionFeedback, setResolutionFeedback] = useState<{
+    blockerKey: string;
+    blockerTitle: string;
+    isTaskLinked: boolean;
+  } | null>(null);
 
   useEffect(() => {
     fetchIssuesRisksData();
@@ -308,8 +323,98 @@ export default function ProjectIssuesRisksPage({
     }
   }
 
+  function openResolveBlockerModal(blocker: Blocker) {
+    setSelectedBlockerForResolve(blocker);
+    setBlockerResolutionNotes("");
+    setResolveBlockerError(null);
+    setIsResolveBlockerModalOpen(true);
+  }
+
+  async function handleConfirmResolveBlocker(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedBlockerForResolve) return;
+
+    setResolveBlockerError(null);
+    setIsSubmitting(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      const res = await apiClient<Blocker>(
+        `/projects/${projectId}/blockers/${selectedBlockerForResolve.id}/status`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            target_status: "RESOLVED",
+            resolution_notes: blockerResolutionNotes || null,
+          }),
+        }
+      );
+
+      if (res.data) {
+        const resolvedBlk = selectedBlockerForResolve;
+        setIsResolveBlockerModalOpen(false);
+        setSelectedBlockerForResolve(null);
+        setBlockerResolutionNotes("");
+        setResolutionFeedback({
+          blockerKey: resolvedBlk.key,
+          blockerTitle: resolvedBlk.title,
+          isTaskLinked: Boolean(resolvedBlk.task_id),
+        });
+        fetchIssuesRisksData();
+      } else {
+        setResolveBlockerError(res.error || "Gagal menyelesaikan blocker.");
+      }
+    } catch {
+      setResolveBlockerError("Terjadi kesalahan jaringan saat menyelesaikan blocker.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* Blocker Resolution Informational Feedback Banner */}
+      {resolutionFeedback && (
+        <div className="p-4 rounded-xl bg-slate-900 text-white shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-slate-800 animate-in fade-in duration-200">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0 mt-0.5 sm:mt-0">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-xs font-bold text-emerald-400">{resolutionFeedback.blockerKey}</span>
+                <span className="text-xs font-bold text-slate-100">Blocker Berhasil Diselesaikan</span>
+              </div>
+              <p className="text-xs text-slate-300">
+                {resolutionFeedback.isTaskLinked
+                  ? "Blocker telah diselesaikan. Task terkait di Kanban Board tetap berstatus BLOCKED dan memerlukan pemindahan status secara manual oleh tim."
+                  : "Blocker tingkat proyek telah berhasil diselesaikan."}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+            {resolutionFeedback.isTaskLinked && (
+              <Link
+                href={`/projects/${projectId}/work?tab=board`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                <span>Buka Board Tugas</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setResolutionFeedback(null)}
+              className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition-colors"
+              title="Tutup notifikasi"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sub-Tab Navigation & Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         {/* Segmented Sub-Tab Control (Constrained horizontal scroll on mobile) */}
@@ -606,22 +711,92 @@ export default function ProjectIssuesRisksPage({
             </div>
           ) : (
             <div className="space-y-3">
-              {blockers.map((blk) => (
-                <div key={blk.id} className="bg-white rounded-xl border border-rose-200 p-4 shadow-xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">
-                        {blk.key}
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-900">{blk.title}</h4>
+              {blockers.map((blk) => {
+                const isResolved = blk.status === "RESOLVED";
+                const isEscalated = blk.status === "ESCALATED";
+
+                return (
+                  <div
+                    key={blk.id}
+                    className={`bg-white rounded-xl border p-4 shadow-xs space-y-3 transition-colors ${
+                      isResolved
+                        ? "border-emerald-200 bg-emerald-50/20"
+                        : isEscalated
+                        ? "border-amber-200"
+                        : "border-rose-200"
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${
+                            isResolved
+                              ? "bg-emerald-100 text-emerald-800"
+                              : isEscalated
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-rose-100 text-rose-800"
+                          }`}
+                        >
+                          {blk.key}
+                        </span>
+                        <h4 className="text-sm font-bold text-slate-900">{blk.title}</h4>
+                        {blk.task_id && (
+                          <span className="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                            Terhubung ke Task
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                            isResolved
+                              ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                              : isEscalated
+                              ? "text-amber-700 bg-amber-50 border-amber-200"
+                              : "text-rose-700 bg-rose-50 border-rose-200"
+                          }`}
+                        >
+                          {blk.status}
+                        </span>
+
+                        {!isResolved && (
+                          <button
+                            type="button"
+                            onClick={() => openResolveBlockerModal(blk)}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Selesaikan</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                      {blk.status}
-                    </span>
+
+                    {blk.description && <p className="text-xs text-slate-600">{blk.description}</p>}
+
+                    {blk.resolution_notes && (
+                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-0.5">
+                        <strong className="block text-[10px] uppercase font-bold text-emerald-700">Catatan Solusi:</strong>
+                        <p>{blk.resolution_notes}</p>
+                      </div>
+                    )}
+
+                    <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[10px] text-slate-400">
+                      <span>Dibuat: {new Date(blk.created_at).toLocaleDateString("id-ID")}</span>
+                      {blk.task_id && (
+                        <Link
+                          href={`/projects/${projectId}/work?tab=board`}
+                          className="text-sky-700 hover:text-sky-900 font-semibold hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Buka Board Tugas</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                  {blk.description && <p className="text-xs text-slate-600">{blk.description}</p>}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1010,6 +1185,113 @@ export default function ProjectIssuesRisksPage({
                   className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-lg shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? "Menyimpan..." : "Simpan Dependensi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Resolve Blocker Modal with Explanatory Notice */}
+      {isResolveBlockerModalOpen && selectedBlockerForResolve && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">Selesaikan Blocker</h3>
+                  <span className="font-mono text-[11px] font-bold text-slate-500">{selectedBlockerForResolve.key}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsResolveBlockerModalOpen(false);
+                  setSelectedBlockerForResolve(null);
+                }}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {resolveBlockerError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{resolveBlockerError}</span>
+              </div>
+            )}
+
+            <div className="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+              <span className="text-[10px] font-semibold text-slate-400 block uppercase">Judul Roadblock:</span>
+              <p className="font-semibold text-slate-800">{selectedBlockerForResolve.title}</p>
+              {selectedBlockerForResolve.description && (
+                <p className="text-slate-500 mt-1 text-[11px]">{selectedBlockerForResolve.description}</p>
+              )}
+            </div>
+
+            {/* Informational Callout for Task-Linked Blockers */}
+            {selectedBlockerForResolve.task_id && (
+              <div className="p-3.5 bg-blue-50/70 border border-blue-200/90 rounded-xl text-xs space-y-2">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-blue-900 text-xs">Catatan Sinkronisasi Alur Kerja</h4>
+                    <p className="text-blue-800 leading-relaxed text-[11px]">
+                      Menyelesaikan blocker ini tidak otomatis memindahkan task terkait di Kanban Board. Task tetap berstatus BLOCKED sampai tim memindahkannya secara manual ke status kerja berikutnya.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-1 flex justify-end">
+                  <Link
+                    href={`/projects/${projectId}/work?tab=board`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] rounded-lg shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <span>Buka Board Tugas</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmResolveBlocker} className="space-y-3 pt-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Catatan Solusi / Penyelesaian (Opsional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={blockerResolutionNotes}
+                  onChange={(e) => setBlockerResolutionNotes(e.target.value)}
+                  placeholder="Jelaskan bagaimana hambatan ini diselesaikan atau kesepakatan yang dicapai..."
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-slate-900"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsResolveBlockerModalOpen(false);
+                    setSelectedBlockerForResolve(null);
+                  }}
+                  className="px-3.5 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{isSubmitting ? "Menyimpan..." : "Konfirmasi Selesai"}</span>
                 </button>
               </div>
             </form>

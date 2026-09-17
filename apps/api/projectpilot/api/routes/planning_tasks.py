@@ -21,6 +21,7 @@ from projectpilot.persistence.models.activity import ActivityEvent
 from projectpilot.persistence.models.planning_tasks import Epic, Feature, Task, TaskStatus
 from projectpilot.persistence.models.project import Project
 from projectpilot.persistence.models.user import User
+from projectpilot.services.task_service import TaskService
 
 router = APIRouter(prefix="/projects/{project_id}", tags=["Planning & Tasks"])
 
@@ -308,38 +309,13 @@ async def update_task_status(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_pm),
 ):
-    query = select(Task).where(Task.id == task_id, Task.project_id == project_id)
-    res = await db.execute(query)
-    task = res.scalar_one_or_none()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found.")
-
-    is_valid, message = is_valid_task_transition(
-        current_status=task.status,
-        target_status=status_in.target_status,
-        blocker_reason=status_in.blocker_reason,
-    )
-    if not is_valid:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-
-    task.status = status_in.target_status
-    if status_in.target_status == TaskStatus.BLOCKED:
-        task.blocker_reason = status_in.blocker_reason
-    elif status_in.target_status in [TaskStatus.IN_PROGRESS, TaskStatus.DONE, TaskStatus.READY]:
-        task.blocker_reason = None  # Clear blocker once unblocked
-
-    activity = ActivityEvent(
+    return await TaskService.update_task_status(
         project_id=project_id,
-        actor_id=current_user.id,
-        event_type="TASK_STATUS_CHANGED",
-        description=f"Task '{task.key}: {task.title}' status diubah menjadi {task.status.value}.",
-        event_metadata={"key": task.key, "new_status": task.status.value},
+        task_id=task_id,
+        status_in=status_in,
+        db=db,
+        current_user_id=current_user.id,
     )
-    db.add(activity)
-
-    await db.commit()
-    await db.refresh(task)
-    return task
 
 
 @router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)

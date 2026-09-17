@@ -259,7 +259,7 @@ export default function ProjectHandoverPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-900">Serah Terima & Penutupan Proyek</h2>
+            <h2 className="text-base font-bold text-slate-900">Delivery</h2>
             <span
               className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
                 handoverStatusConfigs[handover.status]?.color
@@ -269,7 +269,7 @@ export default function ProjectHandoverPage({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Verifikasi kelayakan delivery, persetujuan UAT klien, serah terima kredensial, dan penutupan resmi proyek.
+            Persiapan handover dan pemeriksaan akhir sebelum proyek ditutup.
           </p>
         </div>
 

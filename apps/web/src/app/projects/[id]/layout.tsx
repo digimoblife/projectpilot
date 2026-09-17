@@ -4,30 +4,22 @@ import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  AlertCircle,
   ArrowLeft,
+  BookOpen,
   Bot,
   Building2,
   Calendar,
-  CheckCircle2,
-  ChevronRight,
   Compass,
-  FileCheck2,
   FileText,
   Files,
-  FolderKanban,
-  HelpCircle,
   Layers,
   LayoutList,
   MessageSquare,
-  Milestone,
   Send,
-  Shield,
   ShieldAlert,
   ShieldCheck,
   Sliders,
   Sparkles,
-  Users,
   X,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
@@ -169,7 +161,7 @@ export default function ProjectWorkspaceLayout({
   const currentStageIndex = project ? lifecycleStages.findIndex((s) => s.key === project.lifecycle_stage) : 0;
 
   // =========================================================================
-  // 6 MAIN WORKFLOW PILLARS (Clean, No-Scroll Navigation)
+  // 8 ARCHITECTURAL PILLARS (Clean, No-Scroll Navigation)
   // =========================================================================
   const navigationPillars = [
     {
@@ -181,55 +173,57 @@ export default function ProjectWorkspaceLayout({
       subRoutes: [],
     },
     {
-      id: "scope",
-      name: "Scope & Specs",
+      id: "discovery-scope",
+      name: "Discovery & Scope",
       href: `/projects/${id}/discovery`,
       icon: Compass,
       subRoutes: [
-        { name: "Discovery & PRD", href: `/projects/${id}/discovery`, icon: Compass },
+        { name: "Brief & Discovery", href: `/projects/${id}/discovery`, icon: Compass },
         { name: "Requirements & ADR", href: `/projects/${id}/requirements`, icon: FileText },
         { name: "Scope Baseline", href: `/projects/${id}/scope`, icon: Layers },
       ],
     },
     {
-      id: "planning",
-      name: "Planning & Team",
-      href: `/projects/${id}/timeline`,
-      icon: Milestone,
-      subRoutes: [
-        { name: "Alokasi Tim & Workload", href: `/projects/${id}/timeline`, icon: Users },
-        { name: "Epics & Features", href: `/projects/${id}/planning`, icon: FolderKanban },
-      ],
+      id: "prd",
+      name: "PRD",
+      href: `/projects/${id}/prd`,
+      icon: BookOpen,
+      subRoutes: [],
     },
     {
-      id: "execution",
-      name: "Execution",
-      href: `/projects/${id}/tasks`,
+      id: "work",
+      name: "Work",
+      href: `/projects/${id}/work`,
       icon: Sliders,
-      subRoutes: [
-        { name: "Kanban & Tasks", href: `/projects/${id}/tasks`, icon: Sliders },
-        { name: "Issues & Risks", href: `/projects/${id}/issues`, icon: ShieldAlert },
-      ],
+      subRoutes: [],
     },
     {
-      id: "governance",
-      name: "Governance",
-      href: `/projects/${id}/meetings`,
-      icon: Users,
-      subRoutes: [
-        { name: "Notulensi Rapat", href: `/projects/${id}/meetings`, icon: MessageSquare },
-        { name: "Laporan & Status", href: `/projects/${id}/reports`, icon: FileCheck2 },
-      ],
+      id: "issues",
+      name: "Issues",
+      href: `/projects/${id}/issues`,
+      icon: ShieldAlert,
+      subRoutes: [],
+    },
+    {
+      id: "communication",
+      name: "Communication",
+      href: `/projects/${id}/communication`,
+      icon: MessageSquare,
+      subRoutes: [],
+    },
+    {
+      id: "resources",
+      name: "Resources",
+      href: `/projects/${id}/resources`,
+      icon: Files,
+      subRoutes: [],
     },
     {
       id: "delivery",
-      name: "Delivery & Closing",
-      href: `/projects/${id}/documents`,
+      name: "Delivery",
+      href: `/projects/${id}/handover`,
       icon: ShieldCheck,
-      subRoutes: [
-        { name: "Dokumen Final", href: `/projects/${id}/documents`, icon: Files },
-        { name: "Handover Checklist", href: `/projects/${id}/handover`, icon: ShieldCheck },
-      ],
+      subRoutes: [],
     },
   ];
 
@@ -238,13 +232,50 @@ export default function ProjectWorkspaceLayout({
     if (pillar.id === "overview") {
       return pathname === `/projects/${id}`;
     }
+    if (pillar.id === "discovery-scope") {
+      return (
+        pathname.startsWith(`/projects/${id}/discovery`) ||
+        pathname.startsWith(`/projects/${id}/requirements`) ||
+        pathname.startsWith(`/projects/${id}/scope`)
+      );
+    }
+    if (pillar.id === "prd") {
+      return pathname.startsWith(`/projects/${id}/prd`);
+    }
+    if (pillar.id === "work") {
+      return (
+        pathname.startsWith(`/projects/${id}/work`) ||
+        pathname.startsWith(`/projects/${id}/tasks`) ||
+        pathname.startsWith(`/projects/${id}/timeline`) ||
+        pathname.startsWith(`/projects/${id}/planning`)
+      );
+    }
+    if (pillar.id === "issues") {
+      return pathname.startsWith(`/projects/${id}/issues`);
+    }
+    if (pillar.id === "communication") {
+      return (
+        pathname.startsWith(`/projects/${id}/communication`) ||
+        pathname.startsWith(`/projects/${id}/meetings`) ||
+        pathname.startsWith(`/projects/${id}/reports`)
+      );
+    }
+    if (pillar.id === "resources") {
+      return pathname.startsWith(`/projects/${id}/resources`);
+    }
+    if (pillar.id === "delivery") {
+      return (
+        pathname.startsWith(`/projects/${id}/delivery`) ||
+        pathname.startsWith(`/projects/${id}/handover`)
+      );
+    }
     return pillar.subRoutes.some((sub) => pathname.startsWith(sub.href));
-  }) || navigationPillars[0];
+  });
 
   return (
-    <div className="space-y-4 max-w-full min-w-0 overflow-x-clip">
+    <div className="space-y-3 sm:space-y-3.5 max-w-full min-w-0 overflow-x-clip">
       {/* Back Link & Project Top Bar */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Link
             href="/projects"
@@ -256,34 +287,34 @@ export default function ProjectWorkspaceLayout({
         </div>
 
         {/* Project Header Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-xs space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                   {project?.code || "PRJ-..."}
                 </span>
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                   {project?.name || "Memuat Proyek..."}
                 </h1>
                 <div
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${currentHealth.bg} ${currentHealth.text}`}
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold border ${currentHealth.bg} ${currentHealth.text}`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${currentHealth.dot}`} />
                   <span>{currentHealth.label}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-xs text-slate-500 pt-1">
+              <div className="flex items-center gap-3 sm:gap-4 text-xs text-slate-500 pt-0.5">
                 {project?.client && (
                   <div className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{project.client.company_name || project.client.name}</span>
+                    <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">{project.client.company_name || project.client.name}</span>
                   </div>
                 )}
                 {project?.target_completion_date && (
                   <div className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>Target Selesai: {new Date(project.target_completion_date).toLocaleDateString("id-ID")}</span>
                   </div>
                 )}
@@ -294,9 +325,9 @@ export default function ProjectWorkspaceLayout({
             <button
               type="button"
               onClick={() => setIsQADrawerOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer shrink-0 self-start md:self-auto"
             >
-              <Sparkles className="w-4 h-4 text-slate-300" />
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
               <span>Tanya AI Asisten (Project Q&A)</span>
             </button>
           </div>
@@ -304,16 +335,16 @@ export default function ProjectWorkspaceLayout({
           {/* Project Lifecycle Progress Bar */}
           <div className="pt-2 border-t border-slate-100">
             {/* Mobile View: Compact Stage Indicator */}
-            <div className="sm:hidden space-y-1.5">
+            <div className="sm:hidden space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[11px] text-slate-500 font-medium">
+                <span className="text-[10px] text-slate-500 font-medium">
                   Tahap {currentStageIndex + 1} dari {lifecycleStages.length}
                 </span>
                 <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 text-[10px]">
                   {lifecycleStages[currentStageIndex]?.label || "Discovery"}
                 </span>
               </div>
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-slate-900 rounded-full transition-all duration-300"
                   style={{ width: `${((currentStageIndex + 1) / lifecycleStages.length) * 100}%` }}
@@ -330,7 +361,7 @@ export default function ProjectWorkspaceLayout({
                 return (
                   <div key={stage.key} className="flex flex-col items-center gap-1">
                     <div
-                      className={`h-2 w-full rounded-full transition-colors ${
+                      className={`h-1.5 w-full rounded-full transition-colors ${
                         isCurrent
                           ? "bg-slate-900 shadow-xs"
                           : isPast
@@ -361,10 +392,10 @@ export default function ProjectWorkspaceLayout({
       {/* 2-TIER CLEAN NAVIGATION CONTAINER                                       */}
       {/* ======================================================================= */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-        {/* Tier 1: Main Category Pillars (Scrollable on mobile, grid on desktop) */}
-        <div className="flex items-center overflow-x-auto lg:grid lg:grid-cols-6 border-b border-slate-100 bg-slate-50/50 p-1.5 gap-1 scrollbar-none">
+        {/* Tier 1: Main Category Pillars (Scrollable on mobile, responsive grid on desktop) */}
+        <div className="flex items-center overflow-x-auto lg:grid lg:grid-cols-4 xl:grid-cols-8 border-b border-slate-100 bg-slate-50/50 p-1.5 gap-1 scrollbar-none">
           {navigationPillars.map((pillar) => {
-            const isPillarActive = activePillar.id === pillar.id;
+            const isPillarActive = activePillar?.id === pillar.id;
             const Icon = pillar.icon;
 
             return (
@@ -384,8 +415,8 @@ export default function ProjectWorkspaceLayout({
           })}
         </div>
 
-        {/* Tier 2: Contextual Sub-Tabs (Rendered when category has sub-modules) */}
-        {activePillar.subRoutes.length > 0 && (
+        {/* Tier 2: Contextual Sub-Tabs (Rendered only when category has genuine multi-route sub-modules) */}
+        {activePillar && activePillar.subRoutes.length > 1 && (
           <div className="px-3 sm:px-4 py-2 bg-white flex items-center gap-2 overflow-x-auto scrollbar-none">
             <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-0.5">
               Sub-Modul:

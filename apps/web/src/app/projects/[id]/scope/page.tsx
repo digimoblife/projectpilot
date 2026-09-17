@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, use } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   ArrowRight,
+  BookOpen,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -424,6 +426,28 @@ export default function ProjectScopePage({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Contextual PRD Handoff Card */}
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 shrink-0 shadow-2xs mt-0.5 sm:mt-0">
+                <BookOpen className="w-5 h-5 text-slate-700" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold text-slate-900">Siap memformalkan spesifikasi?</h4>
+                <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+                  Gunakan PRD Workspace untuk menyusun spesifikasi proyek yang lebih terstruktur berdasarkan scope dan requirements yang telah disepakati.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/projects/${projectId}/prd`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer self-start sm:self-center"
+            >
+              <span>Buka PRD Workspace</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       )}

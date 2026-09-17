@@ -6,17 +6,14 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
-  Bot,
   Building2,
   Calendar,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
   Compass,
   FileCheck2,
   FileEdit,
-  FolderKanban,
   History,
   Milestone as MilestoneIcon,
   MoveRight,
@@ -91,13 +88,6 @@ interface TeamMember {
   capacity_hours_per_week: number;
 }
 
-interface EpicItem {
-  id: string;
-  key: string;
-  title: string;
-  status: string;
-}
-
 const stageOptions = [
   { value: "DISCOVERY", label: "Discovery" },
   { value: "REQUIREMENT_DEFINITION", label: "Requirements Definition" },
@@ -121,7 +111,6 @@ export default function ProjectOverviewPage({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [epics, setEpics] = useState<EpicItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Pagination for Activity Events (5 items per page)
@@ -144,12 +133,11 @@ export default function ProjectOverviewPage({
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
-      const [projRes, taskRes, mileRes, memRes, epicRes] = await Promise.all([
+      const [projRes, taskRes, mileRes, memRes] = await Promise.all([
         apiClient<ProjectDetail>(`/projects/${id}`, { headers }),
         apiClient<Task[]>(`/projects/${id}/tasks`, { headers }),
         apiClient<MilestoneItem[]>(`/projects/${id}/milestones`, { headers }),
         apiClient<TeamMember[]>(`/projects/${id}/members`, { headers }),
-        apiClient<EpicItem[]>(`/projects/${id}/epics`, { headers }),
       ]);
 
       if (projRes.data) {
@@ -159,7 +147,6 @@ export default function ProjectOverviewPage({
       if (taskRes.data) setTasks(taskRes.data);
       if (mileRes.data) setMilestones(mileRes.data);
       if (memRes.data) setMembers(memRes.data);
-      if (epicRes.data) setEpics(epicRes.data);
     } catch {
       // Handled
     } finally {
@@ -346,7 +333,7 @@ export default function ProjectOverviewPage({
           </div>
         </div>
         <Link
-          href={`/projects/${id}/tasks`}
+          href={`/projects/${id}/work?tab=board`}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
         >
           <span>Buka Kanban Board</span>
@@ -360,49 +347,6 @@ export default function ProjectOverviewPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* LEFT COLUMN: ACTION ITEMS & ROADMAP (2 COLS) */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Active Blockers Widget */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className={`w-4 h-4 ${blockedTasks.length > 0 ? "text-rose-500" : "text-emerald-500"}`} />
-                <h3 className="text-sm font-bold text-slate-900">Pusat Perhatian & Kendala Aktif (Blockers)</h3>
-              </div>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                blockedTasks.length > 0 ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              }`}>
-                {blockedTasks.length} Terblokir
-              </span>
-            </div>
-
-            {blockedTasks.length === 0 ? (
-              <div className="py-5 text-center rounded-xl bg-emerald-50/40 border border-dashed border-emerald-200/80 space-y-1">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
-                <h4 className="text-xs font-bold text-emerald-900">Alur Pengerjaan Lancar</h4>
-                <p className="text-[11px] text-emerald-700">Tidak ada kendala blocker aktif yang dilaporkan tim.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {blockedTasks.map((t) => (
-                  <div key={t.id} className="p-3 rounded-xl bg-rose-50/60 border border-rose-200 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white text-rose-800 border border-rose-200">
-                          {t.key}
-                        </span>
-                        <span className="font-semibold text-slate-900">{t.title}</span>
-                      </div>
-                      <span className="text-[10px] text-slate-500">PIC: {t.assignee_name || "Unassigned"}</span>
-                    </div>
-                    {t.blocker_reason && (
-                      <p className="text-[11px] text-rose-800 bg-white/80 p-2 rounded-lg border border-rose-100 italic">
-                        Kendala: &quot;{t.blocker_reason}&quot;
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Upcoming Milestones Radar */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
@@ -411,7 +355,7 @@ export default function ProjectOverviewPage({
                 <MilestoneIcon className="w-4 h-4 text-slate-700" />
                 <h3 className="text-sm font-bold text-slate-900">Target Rilis & Milestone Terdekat</h3>
               </div>
-              <Link href={`/projects/${id}/timeline`} className="text-xs text-slate-900 hover:text-black font-semibold hover:underline">
+              <Link href={`/projects/${id}/work?tab=milestones`} className="text-xs text-slate-900 hover:text-black font-semibold hover:underline">
                 Lihat Jadwal Lengkap &rarr;
               </Link>
             </div>
@@ -455,43 +399,6 @@ export default function ProjectOverviewPage({
             )}
           </div>
 
-          {/* Epics / Module Decomposition Progress */}
-          {epics.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <FolderKanban className="w-4 h-4 text-slate-700" />
-                  <h3 className="text-sm font-bold text-slate-900">Kemajuan per Modul (Epics WBS)</h3>
-                </div>
-                <Link href={`/projects/${id}/planning`} className="text-xs text-slate-900 hover:text-black font-semibold hover:underline">
-                  Detail Epics &rarr;
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {epics.map((epic) => {
-                  const epicTasks = tasks.filter((t) => t.epic_id === epic.id);
-                  const epicDone = epicTasks.filter((t) => t.status === "DONE");
-                  const epicPct = epicTasks.length > 0 ? Math.round((epicDone.length / epicTasks.length) * 100) : 0;
-
-                  return (
-                    <div key={epic.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white text-slate-800 border border-slate-200">
-                          {epic.key}
-                        </span>
-                        <span className="text-[11px] font-bold text-slate-800">{epicPct}%</span>
-                      </div>
-                      <h4 className="text-xs font-semibold text-slate-900 truncate">{epic.title}</h4>
-                      <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-slate-900 rounded-full" style={{ width: `${epicPct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* RIGHT COLUMN: TEAM & STAKEHOLDERS (1 COL) */}
@@ -503,7 +410,7 @@ export default function ProjectOverviewPage({
                 <Users className="w-4 h-4 text-slate-700" />
                 <h3 className="text-sm font-bold text-slate-900">Tim Proyek ({members.length})</h3>
               </div>
-              <Link href={`/projects/${id}/timeline`} className="text-xs text-slate-900 hover:text-black font-semibold hover:underline">
+              <Link href={`/projects/${id}/work?tab=team`} className="text-xs text-slate-900 hover:text-black font-semibold hover:underline">
                 Kelola Tim &rarr;
               </Link>
             </div>

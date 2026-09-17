@@ -36,6 +36,7 @@ from projectpilot.persistence.models.issues_risks import (
 )
 from projectpilot.persistence.models.planning_tasks import Task, TaskStatus
 from projectpilot.persistence.models.user import User
+from projectpilot.services.task_service import TaskService
 
 router = APIRouter(prefix="/projects/{project_id}", tags=["Issues, Risks & Blockers"])
 
@@ -315,38 +316,12 @@ async def create_blocker(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_pm),
 ):
-    blocker = Blocker(
+    return await TaskService.create_blocker(
         project_id=project_id,
-        task_id=blocker_in.task_id,
-        key=blocker_in.key,
-        title=blocker_in.title,
-        description=blocker_in.description,
-        blocker_type=blocker_in.blocker_type or "TECHNICAL",
-        status=BlockerStatus.ACTIVE,
+        blocker_in=blocker_in,
+        db=db,
+        current_user_id=current_user.id,
     )
-    db.add(blocker)
-
-    # If linked to a task, set task status to BLOCKED
-    if blocker_in.task_id:
-        task_query = select(Task).where(Task.id == blocker_in.task_id, Task.project_id == project_id)
-        task_res = await db.execute(task_query)
-        task = task_res.scalar_one_or_none()
-        if task:
-            task.status = TaskStatus.BLOCKED
-            task.blocker_reason = f"[{blocker.key}] {blocker.title}"
-
-    activity = ActivityEvent(
-        project_id=project_id,
-        actor_id=current_user.id,
-        event_type="BLOCKER_CREATED",
-        description=f"Blocker '{blocker.key}: {blocker.title}' tercatat.",
-        event_metadata={"key": blocker.key},
-    )
-    db.add(activity)
-
-    await db.commit()
-    await db.refresh(blocker)
-    return blocker
 
 
 @router.post("/blockers/{blocker_id}/status", response_model=BlockerResponse)

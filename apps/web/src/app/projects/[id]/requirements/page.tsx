@@ -128,13 +128,6 @@ export default function ProjectRequirementsPage({
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
 
-  // Project Q&A Drawer States
-  const [isQAModalOpen, setIsQAModalOpen] = useState(false);
-  const [qaQuestion, setQaQuestion] = useState("");
-  const [qaAnswer, setQaAnswer] = useState<string | null>(null);
-  const [qaCitations, setQaCitations] = useState<string[]>([]);
-  const [isQALoading, setIsQALoading] = useState(false);
-  const [qaError, setQaError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -193,33 +186,6 @@ export default function ProjectRequirementsPage({
     fetchData();
   }
 
-  async function handleAskAI(e: React.FormEvent) {
-    e.preventDefault();
-    if (!qaQuestion.trim()) return;
-    setIsQALoading(true);
-    setQaError(null);
-    setQaAnswer(null);
-    setQaCitations([]);
-    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-    try {
-      const res = await apiClient<{ answer: string; citations?: string[] }>(`/projects/${projectId}/ai/qa`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ question: qaQuestion }),
-      });
-      if (res.data) {
-        setQaAnswer(res.data.answer);
-        setQaCitations(res.data.citations || []);
-      } else {
-        setQaError(res.error || "Gagal mendapatkan jawaban dari AI.");
-      }
-    } catch {
-      setQaError("Terjadi kesalahan sistem saat menghubungi AI.");
-    } finally {
-      setIsQALoading(false);
-    }
-  }
 
   async function fetchData() {
     setIsLoading(true);
@@ -1049,81 +1015,6 @@ export default function ProjectRequirementsPage({
         </div>
       )}
 
-      {/* Project Q&A Modal */}
-      {isQAModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-purple-100 text-purple-700">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <h3 className="font-bold text-slate-900 text-sm">Tanya AI (Project Copilot)</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsQAModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAskAI} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Pertanyaan Anda seputar proyek:
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    value={qaQuestion}
-                    onChange={(e) => setQaQuestion(e.target.value)}
-                    placeholder="e.g. Apa target rilis MVP dan integrasi payment apa saja?"
-                    className="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isQALoading}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors disabled:opacity-50"
-                  >
-                    {isQALoading ? "Menjawab..." : "Kirim"}
-                  </button>
-                </div>
-              </div>
-
-              {qaError && (
-                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
-                  {qaError}
-                </div>
-              )}
-
-              {qaAnswer && (
-                <div className="p-3 bg-purple-50/50 border border-purple-200 rounded-xl space-y-2">
-                  <span className="font-bold text-[10px] uppercase text-purple-700 block tracking-wider">
-                    Jawaban Berdasarkan Bukti Proyek:
-                  </span>
-                  <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap">{qaAnswer}</p>
-
-                  {qaCitations.length > 0 && (
-                    <div className="pt-2 border-t border-purple-200/60">
-                      <span className="text-[10px] font-semibold text-slate-500 block mb-1">
-                        Sumber Rujukan (Citations):
-                      </span>
-                      <ul className="text-[11px] text-purple-800 list-disc list-inside space-y-0.5">
-                        {qaCitations.map((cit, idx) => (
-                          <li key={idx}>{cit}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* AI Suggestion Review Modal */}
       <AISuggestionReviewModal
