@@ -8,6 +8,71 @@ Sistem ini mengadopsi prinsip **Evidence-Grounded AI** — integrasi AI (Google 
 
 ---
 
+## 🏛️ Arsitektur 8 Pilar Project Details (The 8 Pillars)
+
+Halaman utama workspace proyek (`/projects/[id]`) mengadopsi arsitektur terpadu **8 Pilar Kanonik** yang menghilangkan fragmentasi navigasi, memperjelas batas domain (*domain boundaries*), dan menyediakan navigasi tab internal yang bersih:
+
+```
+Project Details (/projects/[id])
+├── 1. Overview         -> Ringkasan eksekutif, status kesehatan, aktivitas, & 7-stage lifecycle stepper
+├── 2. Discovery & Scope-> Analisis brief klien, kuesioner klarifikasi, & baseline scope
+├── 3. PRD              -> Workspace dokumen PRD interaktif dengan asistensi AI Copilot
+├── 4. Work             -> Hub eksekusi tugas (Board, Timeline, Milestones, WBS, Tim & Kapasitas)
+├── 5. Issues           -> Manajemen blocker, matriks risiko 5x5, & SLA eskalasi
+├── 6. Communication    -> Notulensi rapat (MoM & AI action items) & laporan status mingguan/bulanan
+├── 7. Resources        -> Berkas proyek, tautan referensi, & arsip deliverable
+└── 8. Delivery         -> Checklist serah-terima operasional, completion gate, & sign-off formal
+```
+
+### 1. **Overview** (`/projects/[id]`)
+- **Executive Identity & Health**: Kartu metrik kesehatan proyek deterministik (Budget, Schedule, Risk, Quality, Stakeholder) dan 7-stage lifecycle progress indicator.
+- **Activity Stream**: Jejak audit komprehensif seluruh aktivitas mutasi entitas proyek secara kronologis.
+- **Slide-over AI Q&A Drawer**: Panel asisten AI kontekstual yang dapat dibuka dari mana saja (`Cmd+K` atau trigger drawer) dengan sitasi faktual.
+
+### 2. **Discovery & Scope** (`/projects/[id]/discovery`, `/scope`, `/requirements`)
+- **Client Briefing & Clarification**: Pengumpulan brief kebutuhan awal dan kuesioner klarifikasi terstruktur.
+- **Scope Baseline & Change Requests**: Penegasan batasan in-scope/out-of-scope dan pencatatan riwayat perubahan ruang lingkup.
+- **Scope-to-PRD Handoff**: Banner dan CTA kontekstual yang memandu alur kerja transisi saat pendefinisian ruang lingkup telah matang.
+
+### 3. **PRD (Product Requirement Document)** (`/projects/[id]/prd`)
+- **Dedicated PRD Workspace**: Workspace terdedikasi untuk perumusan dokumen spesifikasi produk.
+- **AI PRD Copilot**: Generator draf PRD terstruktur berbasis brief dan requirements faktual.
+- **Live Markdown Editor & Export**: Penyuntingan dokumen interaktif dengan ekspor multi-format (Markdown, HTML, & PDF).
+
+### 4. **Work (Unified Work Execution Hub)** (`/projects/[id]/work`)
+Workspace eksekusi tugas terpadu dengan 5 tab internal:
+- **`?tab=board` (Kanban Board)**: 5 kolom kanonik (`Backlog`, `In Progress`, `In Review`, `Blocked`, `Done`), kalkulasi otomatis durasi kerja, inline member quick-add, dan visual scroll cue responsif untuk perangkat mobile.
+- **`?tab=timeline` (Timeline & Gantt)**: Visualisasi jadwal, dependensi tugas bebas siklus (DAG), dan peringatan keterlambatan.
+- **`?tab=milestones` (Milestones)**: Pelacak target capaian kritis (`Direncanakan`, `Tercapai`, `Terlewat`, `Dibatalkan`).
+- **`?tab=wbs` (Work Breakdown Structure)**: Dekomposisi hierarki fungsional (*Epics* dan *Features*) serta auto-breakdown AI.
+- **`?tab=team` (Team & Capacity)**: Alokasi beban kerja anggota tim, visualisasi kapasitas mingguan, dan daftar tiket aktif.
+
+### 5. **Issues & Blockers** (`/projects/[id]/issues`)
+- **Dual-Write Transactional Synchronization**: Sinkronisasi transaksional otomatis antara status tugas `BLOCKED` dan entitas `Blocker` formal.
+- **Decoupled Task Unblocking**: Penyelesaian (*resolve*) Blocker tidak secara otomatis mengubah status Task menjadi status lain — pembukaan blokir tugas tetap berada di bawah kendali workflow eksplisit tim.
+- **Explanatory Notice**: Edukasi UI kontekstual yang menjelaskan pemisahan tanggung jawab antara mitigasi blocker dan mutasi status task.
+- **5x5 Risk Matrix**: Peta visual probabilitas vs dampak risiko proyek.
+
+### 6. **Communication** (`/projects/[id]/communication`)
+Hub komunikasi dan pelaporan tim:
+- **`?tab=meetings` (Notulensi Rapat - MoM)**: Pencatatan agenda, transkripsi, ekstraksi AI action items, konversi atomik menjadi task/issue, serta tautan publik MoM terenkapsulasi token.
+- **`?tab=reports` (Laporan Status)**: Generator draf laporan mingguan dan bulanan dengan filter otomatis *client-safe* (menyaring isu sensitif internal sebelum dipublikasikan ke klien).
+
+### 7. **Resources** (`/projects/[id]/resources`)
+Manajemen aset dan referensi proyek:
+- **`?tab=files` (Berkas Proyek)**: Daftar dokumen spesifikasi, panduan, dan aset digital.
+- **`?tab=links` (Tautan Referensi)**: Repositori tautan eksternal (Figma, repository, staging, drive).
+- **`?tab=deliverables` (Arsip Deliverable)**: Bukti serah terima dan artefak rilis proyek.
+
+### 8. **Delivery & Handover** (`/projects/[id]/handover`)
+- **Operational Handover Checklist**: Verifikasi seluruh item serah terima wajib (kode sumber, kredensial, dokumentasi, deployment, pelatihan).
+- **Completion Gate Enforcement**: Pencegahan otomatis perubahan status proyek menjadi `COMPLETED` apabila masih terdapat *active blocker* yang belum terselesaikan.
+- **Formal Sign-off**: Pencatatan tanda tangan digital persetujuan serah terima oleh Project Manager dan perwakilan Klien.
+
+> **Zero Broken Links**: Seluruh rute historis (`/tasks`, `/planning`, `/timeline`, `/meetings`, `/reports`, `/documents`, `/handover`) dipertahankan melalui *compatibility wrappers* yang otomatis mengarahkan ke pilar dan tab yang sesuai.
+
+---
+
 ## 🏗️ Architecture & Tech Stack
 
 ProjectPilot dirancang dengan arsitektur monorepo modular berkinerja tinggi:
@@ -15,38 +80,39 @@ ProjectPilot dirancang dengan arsitektur monorepo modular berkinerja tinggi:
 ```text
 projectpilot/
 ├── apps/
-│   ├── api/          # FastAPI REST API Backend (Python 3.12+ / 3.14)
+│   ├── api/          # FastAPI REST API Backend (Python 3.11+ / 3.14)
 │   └── web/          # Next.js 15 App Router Frontend (React 19 + Tailwind CSS v4)
 ├── infra/
 │   └── nginx/        # Reverse Proxy Gateway & Hardened Security Headers (CSP, HSTS)
-├── scripts/          # Backup & Disaster Recovery Automation Scripts
+├── scripts/          # Backup, Disaster Recovery, & Idempotent Database Seeding Scripts
 └── docs/             # Authoritative Architectural & Operational Documents
 ```
 
 ### **Backend (`apps/api`)**
-- **Framework**: FastAPI (Python 3.12+ / 3.14) dengan arsitektur domain-driven & modular router
+- **Framework**: FastAPI dengan arsitektur *domain-driven* & modular router
 - **Database & ORM**: PostgreSQL dengan SQLAlchemy 2.0 (AsyncIO) & asyncpg driver
 - **Database Migrations**: Alembic
-- **AI Core Engine**: Google Gemini API (`gemini-2.5-flash`) dengan fallback parser terstruktur, rate limiter, sitasi bukti faktual, dan Human Approval Gate
-- **Testing & Verification**: Pytest & pytest-asyncio (18 test suites, 25 test functions, 100% pass)
+- **Transactional Engine**: Dual-Write Blocker & Task Synchronization di `TaskService`
+- **AI Core Engine**: Google Gemini API (`gemini-2.5-flash`) dengan structured parser, rate limiter, sitasi bukti faktual, dan Human Approval Gate
+- **Testing & Verification**: Pytest & pytest-asyncio (19 test suites, 28 test cases, 100% pass)
 
 ### **Frontend (`apps/web`)**
 - **Framework**: Next.js 15 (App Router) & React 19
-- **Styling**: Tailwind CSS v4
+- **Styling**: Tailwind CSS v4 & Corporate Monochrome Design System (kontras tinggi, tipografi bersih)
 - **Icons**: Lucide React
-- **UX & Accessibility**: Mobile-first responsive touch targets (min. 44px), semantic ARIA landmarks, keyboard navigation (`Cmd+K` Command Palette, drawer dialogs)
-- **Features**: Realtime Task Kanban, Dynamic Timeline/Gantt, Scoped Search & AI Q&A Assistant Drawer, Interactive Split Markdown Editor & Live Preview
+- **Print Isolation**: Iframe-isolated print styling untuk ekspor multi-halaman PDF dokumen markdown yang rapi
+- **UX & Accessibility**: Mobile-first touch targets ($\ge 44\text{px}$), horizontal scroll cues pada kanban board, semantic ARIA landmarks, keyboard navigation (`Cmd+K` Command Palette, drawer dialogs)
 
 ### **Infrastructure & Security (`infra/`, `compose.prod.yml`)**
 - **Orchestration**: Docker Compose (Production multi-container orchestration)
 - **Reverse Proxy**: NGINX dengan enkapsulasi jaringan internal (PostgreSQL terisolasi private)
 - **Security Headers**: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
 - **Diagnostics**: Health liveness (`/api/v1/health`) & Readiness probes (`/api/v1/ready`)
-- **Automated DR**: Script backup & restore basis data terverifikasi (`backup_db.sh`, `restore_db.sh`)
+- **Automated DR & Seeding**: Script backup & restore basis data (`backup_db.sh`, `restore_db.sh`) serta *idempotent seed script* (`seed_db.sh`)
 
 ---
 
-## 📦 Completed Implementation Phases (18/18 Phases)
+## 📦 Completed Implementation Phases (18/18 Phases + Project Details Remodel)
 
 | Phase | Modul & Cakupan Fitur | Status |
 |---|---|---|
@@ -60,44 +126,23 @@ projectpilot/
 | **Phase 7** | **Risks & Blockers**: Issues Tracker, 5x5 Risk Matrix, Blocker Escalation Engine, Client Dependencies with SLAs | ✅ Selesai |
 | **Phase 8** | **AI Core Infrastructure**: Prompt Registry, Token Usage Tracking, Schema Validator, Robust JSON Sanitizer | ✅ Selesai |
 | **Phase 9** | **AI Discovery Intelligence**: AI Brief Analysis, Question Generation, Requirement Extraction & PRD Copilot | ✅ Selesai |
-| **Phase 10** | **Meeting Management & AI**: Meeting Logs, AI Action Items Extraction, Atomic Task & Issue Conversion | ✅ Selesai |
+| **Phase 10** | **Meeting Management & AI**: Meeting Logs, AI Action Items Extraction, Atomic Task & Issue Conversion, Public MoM Links | ✅ Selesai |
 | **Phase 11** | **PM Control Center**: Deterministic Project Health Rules Engine v1.0.0, Portfolio Morning Briefing & Diagnostics | ✅ Selesai |
 | **Phase 12** | **Evidence-Grounded Reporting**: Weekly & Monthly Reports, Client-Safe Sanitization, Status History Snapshots | ✅ Selesai |
 | **Phase 13** | **Document Generation**: FSD, Technical Architecture Runbook, User Manual, Admin Guide Markdown & HTML Export | ✅ Selesai |
 | **Phase 14** | **Handover & Project Completion**: Handover Workspace, Deliverables Checklist, Blocker Gates, Formal Project Sign-off | ✅ Selesai |
 | **Phase 15** | **Global Search & Grounded AI Q&A**: Global & Project-Scoped Multi-Entity Search, Citation-Backed Project Q&A Drawer | ✅ Selesai |
-| **Phase 16** | **Mobile UX & Accessibility Hardening**: Touch Target Audits (>=44px), Mobile Task Switchers, ARIA Dialog Focus Traps | ✅ Selesai |
+| **Phase 16** | **Mobile UX & Accessibility Hardening**: Touch Target Audits ($\ge 44\text{px}$), Mobile Task Switchers, ARIA Dialog Focus Traps | ✅ Selesai |
 | **Phase 17** | **Production Hardening & Deployment**: Production Compose, NGINX Gateway, Automated Backup/Restore, Production Runbook | ✅ Selesai |
 | **Phase 18** | **Final Verification Gate & System Acceptance**: End-to-End Acceptance Suite, Isolation Integrity, Release Certification | ✅ Selesai |
-
----
-
-## ✨ Key Feature Highlights & Operational Workflows
-
-### 1. 🔍 Discovery & AI PRD Assistant
-* **Brief Analysis**: Analisis kebutuhan awal klien berbasis bukti faktual (*evidence-grounded*).
-* **PRD Generator**: Menghasilkan dokumen PRD (*Product Requirement Document*) terstruktur dengan fitur peninjauan dan penyuntingan langsung.
-
-### 2. 📋 Planning, Epics & Features
-* **WBS Decomposition**: Pembagian sistem menjadi modul-modul fungsional (*Epics*) dan fitur teknis detail (*Features*).
-* **AI Task Auto-Breakdown**: AI Copilot untuk memecah fitur menjadi tiket pengerjaan teknis developer.
-
-### 3. 📊 5-Column Kanban Board & Smart Task Management
-* **Kanban Alur Terstruktur**: 5 kolom kanonik (`Backlog`, `In Progress`, `In Review`, `Blocked`, `Done`) yang bersih dan responsif.
-* **Auto-Calculate Estimasi Hari**: Menghitung durasi hari kerja secara instan dari rentang **Tanggal Mulai (*Start Date*)** dan **Tenggat Selesai (*Due Date*)**.
-* **Inline Quick-Add Member**: Mendaftarkan anggota tim baru langsung dari dalam modal task tanpa perlu berpindah halaman (*Zero Friction*).
-
-### 4. ⏱️ Timeline, Dependencies & Team Allocation
-* **Milestones Tracking**: Pengelolaan target pencapaian proyek dengan status interaktif (`Direncanakan`, `Tercapai`, `Terlewat`, `Dibatalkan`).
-* **Task Dependencies Graph**: Menghubungkan tugas prasyarat (*Predecessor*) dan penerus (*Successor*) dengan validasi DAG bebas siklus (*cycle-free*).
-* **Real-time Team Workload Dashboard**: Kartu personil tim dengan metrik kapasitas harian mingguan, progress bar tugas, daftar tiket aktif (maks. 5 + auto-scroll), dan peringatan blocker otomatis.
+| **Pillar Remodel** | **Project Details 8-Pillar Architecture & Option A Blocker Dual-Write**: Navigasi 8 pilar, PRD workspace mandiri, dual-write blocker sync, corporate monochrome theme | ✅ Selesai |
 
 ---
 
 ## 🚀 Quickstart Guide
 
 ### 1. Prasyarat Sistem
-- Python 3.12+ (disarankan menggunakan virtualenv)
+- Python 3.11+ (disarankan menggunakan virtualenv)
 - Node.js 20+ & npm
 - Docker & Docker Compose (opsional, untuk deployment kontainer)
 - Google Gemini API Key (dari [Google AI Studio](https://aistudio.google.com/))
@@ -126,12 +171,17 @@ GEMINI_MODEL=gemini-2.5-flash
 cd apps/api
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"
 
 # Jalankan migrasi basis data
 alembic upgrade head
 
+# (Opsional) Jalankan data seeding lokal untuk demonstrasi & development
+cd ../..
+./scripts/seed_db.sh
+
 # Jalankan development server
+cd apps/api
 uvicorn projectpilot.main:app --reload --port 8000
 ```
 * Interactive API Documentation (Swagger): `http://localhost:8000/docs`
@@ -171,15 +221,18 @@ Container yang berjalan:
 
 ## 🧪 Pengujian & Verifikasi Kualitas (Quality Gates)
 
-ProjectPilot dilengkapi pengujian otomatis end-to-end yang mencakup 18 fase implementasi.
+ProjectPilot dilengkapi pengujian otomatis end-to-end yang mencakup seluruh domain backend dan frontend:
 
-### **Backend Pytest Suite (25 Tests / 18 Suites)**
+### **Backend Pytest Suite (28 Tests / 19 Suites — 100% Pass)**
 ```bash
 apps/api/.venv/bin/pytest apps/api/tests -v
 ```
 
 Hasil verifikasi:
 ```text
+apps/api/tests/test_blocker_dual_write.py PASSED (Dual-Write Comprehensive & Transitions)
+apps/api/tests/test_health.py PASSED
+apps/api/tests/test_mom_generator.py PASSED
 apps/api/tests/test_phase1.py PASSED
 apps/api/tests/test_phase2_leads.py PASSED
 apps/api/tests/test_phase3_discovery.py PASSED
@@ -199,12 +252,14 @@ apps/api/tests/test_phase16_quality_hardening.py PASSED
 apps/api/tests/test_phase17_production_hardening.py PASSED
 apps/api/tests/test_phase18_e2e_acceptance.py PASSED (5 Gate Tests)
 
-======================= 25 passed in ~12s =======================
+======================= 28 passed in ~14s =======================
 ```
 
-### **Frontend Next.js Build Integrity**
+### **Frontend Next.js Build & Typecheck Integrity**
 ```bash
-npm --prefix apps/web run build
+cd apps/web
+npx tsc --noEmit
+npm run build
 ```
 
 ---
@@ -214,14 +269,21 @@ npm --prefix apps/web run build
 1. **Strict Project Isolation**: Entitas antar-proyek (Brief, Requirement, Task, Blocker, Meeting, Document, Handover) terisolasi penuh secara kriptografis & query-level. Proyek A tidak dapat membaca atau memutasi entitas Proyek B.
 2. **Evidence-Grounded AI & Zero Hallucination**: Seluruh respons dan analisis AI selalu diverifikasi terhadap database proyek dan menyertakan sitasi id entitas sebagai bukti.
 3. **Human-in-the-Loop Approval Gate**: Rekomendasi AI (seperti ekstraksi requirement dari meeting/brief) memerlukan konfirmasi eksplisit dari Project Manager sebelum menjadi data resmi.
-4. **Completion Gating**: Status proyek tidak dapat diubah menjadi `COMPLETED` apabila masih terdapat *active blocker* yang belum terselesaikan atau item *handover* wajib yang belum disetujui/di-waive.
-5. **Client-Safe Reporting**: Filter otomatis menyaring isu internal dan risiko teknis sensitif saat mempublikasikan laporan untuk pihak klien.
+4. **Option A Decoupled Blocker Unblocking**: Penyelesaian blocker dicatat sebagai mitigasi risiko tanpa memutasi status tiket secara terburu-buru, memastikan tim pengembang secara sadar memindahkan status tiket ke kolom kerja berikutnya.
+5. **Completion Gating**: Status proyek tidak dapat diubah menjadi `COMPLETED` apabila masih terdapat *active blocker* yang belum terselesaikan atau item *handover* wajib yang belum disetujui/di-waive.
+6. **Client-Safe Reporting**: Filter otomatis menyaring isu internal dan risiko teknis sensitif saat mempublikasikan laporan untuk pihak klien.
 
 ---
 
-## 🗄️ Backup & Disaster Recovery
+## 🗄️ Backup, Disaster Recovery & Seeding
 
 Script otomatisasi tersedia di folder `scripts/`:
+
+- **Seed Basis Data Lokal**:
+  ```bash
+  ./scripts/seed_db.sh
+  ```
+  Menginisialisasi basis data lokal secara idempoten dengan proyek lengkap, leads, WBS, kanban tasks, blockers, meetings, dan laporan contoh.
 
 - **Backup Database**:
   ```bash
