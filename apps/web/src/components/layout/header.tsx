@@ -58,6 +58,7 @@ export interface NotificationItem {
   time_ago: string;
   target_url: string;
   is_read: boolean;
+  created_at?: string | null;
 }
 
 const entityTypeColors: Record<string, string> = {
@@ -126,6 +127,7 @@ interface AttentionItemApi {
   severity: string;
   due_date?: string | null;
   target_url?: string;
+  created_at?: string | null;
 }
 
 interface DashboardOverviewApi {
@@ -210,9 +212,17 @@ export function Header() {
               time_ago: item.due_date ? `Tenggat: ${item.due_date}` : "Operasional",
               target_url: item.target_url || `/projects/${item.project_id}`,
               is_read: readIds.has(notifId),
+              created_at: item.created_at || null,
             });
           }
         }
+
+        // Sort descending so the newest notifications are strictly at the top
+        items.sort((a, b) => {
+          const timeA = a.created_at || a.time_ago || "";
+          const timeB = b.created_at || b.time_ago || "";
+          return timeB.localeCompare(timeA);
+        });
 
         setNotifications(items);
       } catch {

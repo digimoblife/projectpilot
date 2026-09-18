@@ -199,6 +199,7 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
             Task.due_date < today,
             Task.status.not_in([TaskStatus.DONE, TaskStatus.CANCELLED]),
         )
+        .order_by(Task.created_at.desc())
     )
     for t in overdue_res.scalars().all():
         attention_items.append({
@@ -211,6 +212,7 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
             "severity": "HIGH",
             "due_date": t.due_date.isoformat() if t.due_date else None,
             "target_url": f"/projects/{t.project_id}/tasks",
+            "created_at": t.created_at.isoformat() if getattr(t, "created_at", None) else None,
         })
 
     # 2. Active Blockers
@@ -218,6 +220,7 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
         select(Blocker)
         .options(selectinload(Blocker.project))
         .where(Blocker.status == BlockerStatus.ACTIVE)
+        .order_by(Blocker.created_at.desc())
     )
     for b in blocker_res.scalars().all():
         attention_items.append({
@@ -229,6 +232,7 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
             "title": f"Blocker Aktif: {b.title} ({b.key})",
             "severity": "CRITICAL",
             "target_url": f"/projects/{b.project_id}/issues",
+            "created_at": b.created_at.isoformat() if getattr(b, "created_at", None) else None,
         })
 
     # 3. Pending / Overdue Client Dependencies
@@ -242,6 +246,7 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
                 ClientDependencyStatus.OVERDUE,
             ])
         )
+        .order_by(ClientDependency.created_at.desc())
     )
     for d in dep_res.scalars().all():
         is_overdue = d.expected_date and d.expected_date < today
@@ -255,6 +260,7 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
             "severity": "CRITICAL" if is_overdue else "MEDIUM",
             "due_date": d.expected_date.isoformat() if d.expected_date else None,
             "target_url": f"/projects/{d.project_id}/issues",
+            "created_at": d.created_at.isoformat() if getattr(d, "created_at", None) else None,
         })
 
     # 4. Critical & High Issues
@@ -262,6 +268,7 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
         select(Issue)
         .options(selectinload(Issue.project))
         .where(Issue.status.in_([IssueStatus.OPEN, IssueStatus.IN_INVESTIGATION]))
+        .order_by(Issue.created_at.desc())
     )
     for i in issue_res.scalars().all():
         sev = getattr(i, "severity", "MEDIUM").upper()
@@ -275,6 +282,15 @@ async def get_cross_project_attention_items(db: AsyncSession) -> List[Dict[str, 
                 "title": f"Isu {sev}: {i.title} ({i.key})",
                 "severity": sev,
                 "target_url": f"/projects/{i.project_id}/issues",
+                "created_at": i.created_at.isoformat() if getattr(i, "created_at", None) else None,
             })
+
+    # Sort so newest notifications appear at the very top
+    attention_items.sort(
+        key=lambda x: (
+            x.get("created_at") or x.get("due_date") or ""
+        ),
+        reverse=True,
+    )
 
     return attention_items

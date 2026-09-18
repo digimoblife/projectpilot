@@ -41,6 +41,7 @@ class AttentionItemResponse(BaseModel):
     severity: str  # CRITICAL, HIGH, MEDIUM
     due_date: Optional[str] = None
     target_url: str
+    created_at: Optional[str] = None
 
 
 class DashboardOverviewResponse(BaseModel):
