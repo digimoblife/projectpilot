@@ -121,7 +121,7 @@ export function WorkBoardView({
   const [taskStartDate, setTaskStartDate] = useState("");
   const [taskDueDate, setTaskDueDate] = useState("");
   const [taskEstHours, setTaskEstHours] = useState("0");
-  const [taskEpicId, setTaskEpicId] = useState("");
+  const [taskEpicName, setTaskEpicName] = useState("");
   const [taskModalError, setTaskModalError] = useState<string | null>(null);
 
   // Edit Task Modal
@@ -135,7 +135,7 @@ export function WorkBoardView({
   const [editTaskStartDate, setEditTaskStartDate] = useState("");
   const [editTaskDueDate, setEditTaskDueDate] = useState("");
   const [editTaskEstHours, setEditTaskEstHours] = useState("0");
-  const [editTaskEpicId, setEditFeatEpicId] = useState("");
+  const [editTaskEpicName, setEditTaskEpicName] = useState("");
   const [editTaskError, setEditTaskError] = useState<string | null>(null);
 
   // Blocker Modal
@@ -250,6 +250,47 @@ export function WorkBoardView({
     }
   }
 
+  async function resolveEpicId(name: string): Promise<string | null> {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+
+    const found = epics.find(
+      (e) =>
+        e.title.toLowerCase() === trimmed.toLowerCase() ||
+        e.key.toLowerCase() === trimmed.toLowerCase() ||
+        e.id === trimmed
+    );
+    if (found) return found.id;
+
+    try {
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const maxKeyNum = epics.reduce((max, ep) => {
+        const match = ep.key.match(/\d+/);
+        return match ? Math.max(max, parseInt(match[0], 10)) : max;
+      }, 0);
+      const newKey = `EPIC-${String(maxKeyNum + 1).padStart(2, "0")}`;
+
+      const res = await apiClient<Epic>(`/projects/${projectId}/epics`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          key: newKey,
+          title: trimmed,
+          description: null,
+          status: "PLANNED",
+        }),
+      });
+
+      if (res.data) {
+        setEpics((prev) => [...prev, res.data!]);
+        return res.data.id;
+      }
+    } catch {
+      // Abaikan jika gagal create epic otomatis
+    }
+    return null;
+  }
+
   async function handleCreateFullTask(e: React.FormEvent) {
     e.preventDefault();
     setTaskModalError(null);
@@ -257,6 +298,8 @@ export function WorkBoardView({
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
+      const resolvedEpicId = await resolveEpicId(taskEpicName);
+
       const res = await apiClient<Task>(`/projects/${projectId}/tasks`, {
         method: "POST",
         headers,
@@ -269,7 +312,7 @@ export function WorkBoardView({
           start_date: taskStartDate || null,
           due_date: taskDueDate || null,
           estimated_hours: taskEstHours ? parseFloat(taskEstHours) : 0.0,
-          epic_id: taskEpicId || null,
+          epic_id: resolvedEpicId,
           status: "BACKLOG",
         }),
       });
@@ -301,7 +344,8 @@ export function WorkBoardView({
     setEditTaskStartDate(task.start_date || "");
     setEditTaskDueDate(task.due_date || "");
     setEditTaskEstHours(task.estimated_hours?.toString() || "0");
-    setEditFeatEpicId(task.epic_id || "");
+    const matchedEpic = epics.find((e) => e.id === task.epic_id);
+    setEditTaskEpicName(matchedEpic ? matchedEpic.title : "");
     setEditTaskError(null);
     setIsEditModalOpen(true);
   }
@@ -314,6 +358,8 @@ export function WorkBoardView({
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
+      const resolvedEpicId = await resolveEpicId(editTaskEpicName);
+
       const res = await apiClient<Task>(`/projects/${projectId}/tasks/${editingTaskId}`, {
         method: "PUT",
         headers,
@@ -326,7 +372,7 @@ export function WorkBoardView({
           start_date: editTaskStartDate || null,
           due_date: editTaskDueDate || null,
           estimated_hours: editTaskEstHours ? parseFloat(editTaskEstHours) : 0.0,
-          epic_id: editTaskEpicId || null,
+          epic_id: resolvedEpicId,
         }),
       });
 
@@ -472,7 +518,7 @@ export function WorkBoardView({
     setTaskStartDate("");
     setTaskDueDate("");
     setTaskEstHours("0");
-    setTaskEpicId(epics[0]?.id || "");
+    setTaskEpicName("");
     setTaskModalError(null);
   }
 
@@ -624,6 +670,17 @@ export function WorkBoardView({
                             <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
                               {task.key}
                             </span>
+                            {(() => {
+                              const epic = epics.find((e) => e.id === task.epic_id);
+                              return epic ? (
+                                <span
+                                  className="text-[9px] font-medium text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded truncate max-w-[110px]"
+                                  title={`Epic: ${epic.title}`}
+                                >
+                                  {epic.title}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                           <div
                             className="flex items-center gap-1 shrink-0 whitespace-nowrap"
@@ -752,7 +809,17 @@ export function WorkBoardView({
               {filteredTasks.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50/70 transition-colors">
                   <td className="py-2.5 px-4 font-mono font-bold text-slate-700 whitespace-nowrap">{t.key}</td>
-                  <td className="py-2.5 px-4 font-medium text-slate-900">{t.title}</td>
+                  <td className="py-2.5 px-4 font-medium text-slate-900">
+                    <div>{t.title}</div>
+                    {(() => {
+                      const ep = epics.find((e) => e.id === t.epic_id);
+                      return ep ? (
+                        <div className="text-[10px] text-slate-500 font-normal mt-0.5">
+                          Epic: {ep.title}
+                        </div>
+                      ) : null;
+                    })()}
+                  </td>
                   <td className="py-2.5 px-4 whitespace-nowrap">
                     <select
                       value={t.status}
@@ -875,19 +942,20 @@ export function WorkBoardView({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Epic Induk</label>
-                  <select
-                    value={taskEpicId}
-                    onChange={(e) => setTaskEpicId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg"
-                  >
-                    <option value="">Tanpa Epic</option>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Epic Induk (Opsional)</label>
+                  <input
+                    type="text"
+                    list="create-task-epic-list"
+                    value={taskEpicName}
+                    onChange={(e) => setTaskEpicName(e.target.value)}
+                    placeholder="Ketik atau pilih epic"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                  <datalist id="create-task-epic-list">
                     {epics.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.key}: {e.title}
-                      </option>
+                      <option key={e.id} value={e.title} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
               </div>
 
@@ -1064,19 +1132,20 @@ export function WorkBoardView({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Epic Induk</label>
-                  <select
-                    value={editTaskEpicId}
-                    onChange={(e) => setEditFeatEpicId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg"
-                  >
-                    <option value="">Tanpa Epic</option>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Epic Induk (Opsional)</label>
+                  <input
+                    type="text"
+                    list="edit-task-epic-list"
+                    value={editTaskEpicName}
+                    onChange={(e) => setEditTaskEpicName(e.target.value)}
+                    placeholder="Ketik atau pilih epic"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                  <datalist id="edit-task-epic-list">
                     {epics.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.key}: {e.title}
-                      </option>
+                      <option key={e.id} value={e.title} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
               </div>
 
