@@ -12,6 +12,7 @@ import {
   Bug,
   Building2,
   Calendar,
+  Check,
   Compass,
   FileCheck2,
   FileText,
@@ -23,6 +24,7 @@ import {
   Link2,
   MessageSquare,
   Milestone as MilestoneIcon,
+  PauseCircle,
   Send,
   ShieldAlert,
   ShieldCheck,
@@ -30,6 +32,7 @@ import {
   Sparkles,
   Users,
   X,
+  XCircle,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
@@ -38,12 +41,15 @@ interface ProjectDetail {
   id: string;
   code: string;
   name: string;
-  description: string | null;
   lifecycle_stage: string;
   health: string;
-  start_date: string | null;
-  target_completion_date: string | null;
-  client: { name: string; company_name: string } | null;
+  health_status?: string;
+  client?: {
+    id: string;
+    name: string;
+    company_name: string;
+  } | null;
+  target_completion_date?: string | null;
 }
 
 interface EvidenceCitation {
@@ -70,10 +76,10 @@ interface ProjectQAResponse {
 
 const lifecycleStages = [
   { key: "DISCOVERY", label: "Discovery" },
-  { key: "REQUIREMENT_DEFINITION", label: "Requirements" },
+  { key: "REQUIREMENT_DEFINITION", label: "Requirements Definition" },
   { key: "PLANNING", label: "Planning" },
-  { key: "AWAITING_CLIENT_APPROVAL", label: "Menunggu Persetujuan" },
-  { key: "ACTIVE_DELIVERY", label: "Delivery Aktif" },
+  { key: "AWAITING_CLIENT_APPROVAL", label: "In Progress" },
+  { key: "ACTIVE_DELIVERY", label: "Client Review" },
   { key: "HANDOVER", label: "Handover" },
   { key: "COMPLETED", label: "Completed" },
 ];
@@ -250,6 +256,9 @@ export default function ProjectWorkspaceLayout({
 
   const currentHealth = project ? healthColors[project.health] || healthColors.HEALTHY : healthColors.HEALTHY;
   const currentStageIndex = project ? lifecycleStages.findIndex((s) => s.key === project.lifecycle_stage) : 0;
+  const isSpecialState = project?.lifecycle_stage === "ON_HOLD" || project?.lifecycle_stage === "CANCELLED";
+  const safeIndex = currentStageIndex >= 0 ? currentStageIndex : 0;
+  const progressPercent = Math.round(((safeIndex + 1) / lifecycleStages.length) * 100);
 
   // =========================================================================
   // 8 ARCHITECTURAL PILLARS (Clean, No-Scroll Navigation)
@@ -438,58 +447,153 @@ export default function ProjectWorkspaceLayout({
             </button>
           </div>
 
-          {/* Project Lifecycle Progress Bar */}
-          <div className="pt-2 border-t border-slate-100">
-            {/* Mobile View: Compact Stage Indicator */}
-            <div className="sm:hidden space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[10px] text-slate-500 font-medium">
-                  Tahap {currentStageIndex + 1} dari {lifecycleStages.length}
-                </span>
-                <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 text-[10px]">
-                  {lifecycleStages[currentStageIndex]?.label || "Discovery"}
-                </span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-slate-900 rounded-full transition-all duration-300"
-                  style={{ width: `${((currentStageIndex + 1) / lifecycleStages.length) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Desktop View: Full 7-Column Grid */}
-            <div className="hidden sm:grid grid-cols-7 gap-1">
-              {lifecycleStages.map((stage, idx) => {
-                const isPast = currentStageIndex > idx;
-                const isCurrent = currentStageIndex === idx;
-
-                return (
-                  <div key={stage.key} className="flex flex-col items-center gap-1">
-                    <div
-                      className={`h-1.5 w-full rounded-full transition-colors ${
-                        isCurrent
-                          ? "bg-slate-900 shadow-xs"
-                          : isPast
-                          ? "bg-emerald-600"
-                          : "bg-slate-200"
-                      }`}
-                    />
-                    <span
-                      className={`text-[10px] text-center font-medium line-clamp-1 ${
-                        isCurrent
-                          ? "text-slate-900 font-bold"
-                          : isPast
-                          ? "text-slate-700"
-                          : "text-slate-400"
-                      }`}
-                    >
-                      {stage.label}
-                    </span>
+          {/* Project Lifecycle Progress Pipeline */}
+          <div className="pt-3 border-t border-slate-100">
+            {isSpecialState ? (
+              project?.lifecycle_stage === "ON_HOLD" ? (
+                <div className="p-3 bg-amber-50/90 border border-amber-200/90 rounded-xl flex items-center justify-between gap-3 text-xs shadow-2xs">
+                  <div className="flex items-center gap-2.5 text-amber-900 font-semibold">
+                    <PauseCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div>
+                      <span>Proyek Sedang Ditahan (On Hold)</span>
+                      <p className="text-[11px] font-normal text-amber-700 mt-0.5">
+                        Aktivitas pengerjaan dijeda sementara. Anda dapat melanjutkan tahapan melalui menu Transisi Tahapan.
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  <span className="px-2.5 py-1 bg-amber-100/80 text-amber-800 rounded-lg font-bold text-[10px] border border-amber-300 shrink-0">
+                    ON HOLD
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 bg-rose-50/90 border border-rose-200/90 rounded-xl flex items-center justify-between gap-3 text-xs shadow-2xs">
+                  <div className="flex items-center gap-2.5 text-rose-900 font-semibold">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <div>
+                      <span>Proyek Dibatalkan (Cancelled)</span>
+                      <p className="text-[11px] font-normal text-rose-700 mt-0.5">
+                        Proyek ini telah ditutup atau dibatalkan secara resmi.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 bg-rose-100/80 text-rose-800 rounded-lg font-bold text-[10px] border border-rose-300 shrink-0">
+                    CANCELLED
+                  </span>
+                </div>
+              )
+            ) : (
+              <div className="space-y-3">
+                {/* Status Header Bar */}
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Tahapan
+                    </span>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-semibold text-xs shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>{lifecycleStages[safeIndex]?.label || "Discovery"}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                    <span className="font-semibold text-slate-700">{progressPercent}%</span>
+                    <span>•</span>
+                    <span>Langkah {safeIndex + 1} dari {lifecycleStages.length}</span>
+                  </div>
+                </div>
+
+                {/* Mobile View: Compact Progress Bar */}
+                <div className="md:hidden space-y-1.5">
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-slate-900 rounded-full transition-all duration-500 shadow-2xs"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-500">
+                    <span>Mulai: Discovery</span>
+                    <span>Target: Completed</span>
+                  </div>
+                </div>
+
+                {/* Desktop View: Interactive Connected Stepper Track */}
+                <div className="hidden md:block">
+                  <div className="grid grid-cols-7 gap-0 relative">
+                    {lifecycleStages.map((stage, idx) => {
+                      const isPast = safeIndex > idx;
+                      const isCurrent = safeIndex === idx;
+
+                      return (
+                        <div key={stage.key} className="relative flex flex-col items-center group">
+                          {/* Connector line left */}
+                          {idx > 0 && (
+                            <div
+                              className={`absolute top-3 right-1/2 left-0 h-0.5 transition-colors duration-300 ${
+                                isPast || isCurrent ? "bg-emerald-500" : "bg-slate-200"
+                              }`}
+                            />
+                          )}
+
+                          {/* Connector line right */}
+                          {idx < lifecycleStages.length - 1 && (
+                            <div
+                              className={`absolute top-3 left-1/2 right-0 h-0.5 transition-colors duration-300 ${
+                                isPast ? "bg-emerald-500" : "bg-slate-200"
+                              }`}
+                            />
+                          )}
+
+                          {/* Node Icon Circle */}
+                          <div className="relative z-10">
+                            {isPast ? (
+                              <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs transition-transform duration-200 group-hover:scale-110">
+                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                              </div>
+                            ) : isCurrent ? (
+                              <div className="relative flex items-center justify-center">
+                                <span className="absolute -inset-1 rounded-full bg-blue-500/25 animate-ping" />
+                                <div className="relative w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold shadow-xs ring-2 ring-blue-500/80 ring-offset-2 ring-offset-white">
+                                  {idx + 1}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-white text-slate-400 border border-slate-200 flex items-center justify-center text-[10px] font-semibold transition-colors group-hover:border-slate-300 group-hover:text-slate-600">
+                                {idx + 1}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Step Label & Subtitle */}
+                          <div className="mt-2 flex flex-col items-center text-center px-1">
+                            <span
+                              className={`text-[11px] leading-tight transition-colors ${
+                                isCurrent
+                                  ? "text-slate-900 font-bold"
+                                  : isPast
+                                  ? "text-slate-700 font-semibold"
+                                  : "text-slate-400 font-medium"
+                              }`}
+                            >
+                              {stage.label}
+                            </span>
+                            <span
+                              className={`text-[9px] mt-0.5 tracking-tight font-medium ${
+                                isCurrent
+                                  ? "text-blue-600 font-bold"
+                                  : isPast
+                                  ? "text-emerald-600"
+                                  : "text-slate-400"
+                              }`}
+                            >
+                              {isCurrent ? "Sedang Aktif" : isPast ? "Selesai" : "Akan Datang"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

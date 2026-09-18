@@ -39,10 +39,10 @@ interface Project {
 
 const stageLabels: Record<string, { label: string; color: string }> = {
   DISCOVERY: { label: "Discovery", color: "bg-purple-50 text-purple-700 border-purple-200" },
-  REQUIREMENT_DEFINITION: { label: "Requirements", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  REQUIREMENT_DEFINITION: { label: "Requirements Definition", color: "bg-blue-50 text-blue-700 border-blue-200" },
   PLANNING: { label: "Planning", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  AWAITING_CLIENT_APPROVAL: { label: "Menunggu Persetujuan", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  ACTIVE_DELIVERY: { label: "Delivery Aktif", color: "bg-amber-50 text-amber-700 border-amber-200" },
+  AWAITING_CLIENT_APPROVAL: { label: "In Progress", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  ACTIVE_DELIVERY: { label: "Client Review", color: "bg-amber-50 text-amber-700 border-amber-200" },
   HANDOVER: { label: "Handover", color: "bg-teal-50 text-teal-700 border-teal-200" },
   COMPLETED: { label: "Completed", color: "bg-slate-100 text-slate-700 border-slate-200" },
   ON_HOLD: { label: "On Hold", color: "bg-orange-50 text-orange-700 border-orange-200" },
@@ -225,7 +225,7 @@ export default function ProjectsPage() {
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
-          {["ALL", "DISCOVERY", "REQUIREMENT_DEFINITION", "PLANNING", "ACTIVE_DELIVERY", "HANDOVER", "COMPLETED"].map((stage) => {
+          {["ALL", "DISCOVERY", "REQUIREMENT_DEFINITION", "PLANNING", "AWAITING_CLIENT_APPROVAL", "ACTIVE_DELIVERY", "HANDOVER", "COMPLETED"].map((stage) => {
             const isSelected = selectedStage === stage;
             const label = stage === "ALL" ? "Semua Tahap" : stageLabels[stage]?.label || stage;
             return (
