@@ -104,6 +104,32 @@ class GeminiAdapter:
                     if "candidate_requirements" in parsed_json and "requirements" not in parsed_json:
                         parsed_json["requirements"] = parsed_json["candidate_requirements"]
 
+                    # Normalization for document generation (PRD, FSD, etc.)
+                    if "content" not in parsed_json:
+                        for candidate_key in ["prd_content", "fsd_content", "markdown_content", "document_content", "doc_content", "body", "markdown"]:
+                            if candidate_key in parsed_json and isinstance(parsed_json[candidate_key], str):
+                                parsed_json["content"] = parsed_json[candidate_key]
+                                break
+
+                    if "content" not in parsed_json:
+                        for top_key in ["product_requirement_document", "prd", "fsd", "document", "documentation"]:
+                            if top_key in parsed_json and isinstance(parsed_json[top_key], dict):
+                                nested = parsed_json[top_key]
+                                if "content" in nested and isinstance(nested["content"], str):
+                                    parsed_json["content"] = nested["content"]
+                                elif "sections" in nested and isinstance(nested["sections"], dict):
+                                    doc_title = nested.get("title") or parsed_json.get("title") or "Dokumen Kebutuhan Produk"
+                                    sec_lines = [f"# {doc_title}\n"]
+                                    for s_name, s_val in nested["sections"].items():
+                                        s_title = s_name.replace("_", " ").title()
+                                        sec_lines.append(f"## {s_title}\n{s_val}\n")
+                                    parsed_json["content"] = "\n".join(sec_lines)
+                                if "title" in nested and "title" not in parsed_json:
+                                    parsed_json["title"] = nested["title"]
+                                if "summary" in nested and "summary" not in parsed_json:
+                                    parsed_json["summary"] = nested["summary"]
+                                break
+
                 return parsed_json
             except Exception as e:
                 logger.error(f"Gemini API invocation failed: {str(e)}. Falling back to structured response.")
@@ -311,7 +337,40 @@ class GeminiAdapter:
                 }
 
         if cap and cap.startswith("DOC_"):
-            if "FSD" in cap:
+            if "PRD" in cap:
+                return {
+                    "title": "Product Requirement Document (PRD)",
+                    "summary": "Dokumen kebutuhan produk komprehensif mencakup latar belakang, target pengguna, batasan ruang lingkup, modul utama, dan kriteria keberhasilan.",
+                    "content": """# Product Requirement Document (PRD)
+
+## 1. Latar Belakang & Tujuan Bisnis
+Proyek ini dikembangkan untuk membangun sistem perangkat lunak yang andal, scalable, dan terintegrasi penuh untuk menjawab kebutuhan bisnis utama klien serta mempercepat efisiensi operasional.
+
+## 2. Target Pengguna (User Persona) & Problem Statement
+- **Pengguna Primer**: Pengguna akhir yang membutuhkan kemudahan akses layanan dengan alur intuitif dan waktu respon cepat.
+- **Administrator / Operasional**: Tim internal yang mengelola konfigurasi, pemantauan transaksi, dan rekonsiliasi data.
+- **Problem Statement**: Mengatasi proses manual yang memakan waktu lama, mengurangi potensi human error, dan meningkatkan transparansi layanan.
+
+## 3. Batasan Ruang Lingkup & Asumsi (Scope Baseline)
+- **In-Scope**: Modul antarmuka pengguna responsif, integrasi payment gateway multi-channel, sistem notifikasi real-time, dan audit trail data.
+- **Out-of-Scope**: Fitur batch processing skala enterprise tahap lanjutan dan migrasi infrastruktur legacy on-premise (Fase 2).
+
+## 4. Modul Utama & Spesifikasi Fitur
+- **Modul Otentikasi & Profil**: Registrasi akun, verifikasi identitas, dan otorisasi berbasis peran (RBAC).
+- **Modul Transaksi & Workflow**: Pemrosesan transaksi end-to-end dengan validasi data real-time.
+- **Modul Integrasi Eksternal**: Penghubung REST API dan webhook handler dengan fallback retry mechanism.
+
+## 5. Kebutuhan Non-Fungsional (Performa, Keamanan, Aksesibilitas)
+- **Performa**: Waktu respon API rata-rata < 500ms pada beban normal.
+- **Keamanan**: Seluruh komunikasi data menggunakan TLS 1.3 dan enkripsi at-rest AES-256.
+- **Ketersediaan (Availability)**: Uptime target 99.9% selama jam operasional bisnis.
+
+## 6. Metrik Keberhasilan (KPI & Acceptance Standard)
+- Tingkat penyelesaian transaksi sukses > 98%.
+- Adopsi pengguna aktif mencapai target dalam 3 bulan pasca rilis MVP.
+""",
+                }
+            elif "FSD" in cap:
                 return {
                     "title": "Functional Specification Document (FSD)",
                     "summary": "Dokumen spesifikasi fungsional lengkap mencakup baseline scope, modul otentikasi, modul pembayaran, dan matriks ketertelusuran kebutuhan.",

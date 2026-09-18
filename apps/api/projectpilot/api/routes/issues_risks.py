@@ -389,6 +389,8 @@ async def list_client_dependencies(
             requested_date=d.requested_date,
             expected_date=d.expected_date,
             provided_date=d.provided_date,
+            provided_data=d.provided_data,
+            receipt_notes=d.receipt_notes,
             impact_summary=d.impact_summary,
             waiting_days=waiting_days,
             is_overdue=is_overdue,
@@ -423,6 +425,8 @@ async def create_client_dependency(
         requested_date=dep_in.requested_date,
         expected_date=dep_in.expected_date,
         impact_summary=dep_in.impact_summary,
+        provided_data=dep_in.provided_data,
+        receipt_notes=dep_in.receipt_notes,
         status=ClientDependencyStatus.REQUESTED,
     )
     db.add(dependency)
@@ -457,6 +461,79 @@ async def create_client_dependency(
         requested_date=dependency.requested_date,
         expected_date=dependency.expected_date,
         provided_date=dependency.provided_date,
+        provided_data=dependency.provided_data,
+        receipt_notes=dependency.receipt_notes,
+        impact_summary=dependency.impact_summary,
+        waiting_days=waiting_days,
+        is_overdue=is_overdue,
+        created_at=dependency.created_at,
+        updated_at=dependency.updated_at,
+    )
+
+
+@router.put(
+    "/client-dependencies/{dep_id}",
+    response_model=ClientDependencyResponse,
+)
+async def update_client_dependency(
+    project_id: uuid.UUID,
+    dep_id: uuid.UUID,
+    dep_in: ClientDependencyUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(ClientDependency).where(
+        ClientDependency.id == dep_id, ClientDependency.project_id == project_id
+    )
+    res = await db.execute(query)
+    dependency = res.scalar_one_or_none()
+    if not dependency:
+        raise HTTPException(status_code=404, detail="Client dependency not found.")
+
+    if dep_in.title is not None:
+        dependency.title = dep_in.title
+    if dep_in.description is not None:
+        dependency.description = dep_in.description
+    if dep_in.dependency_type is not None:
+        dependency.dependency_type = dep_in.dependency_type
+    if dep_in.expected_date is not None:
+        dependency.expected_date = dep_in.expected_date
+    if dep_in.impact_summary is not None:
+        dependency.impact_summary = dep_in.impact_summary
+    if dep_in.provided_data is not None:
+        dependency.provided_data = dep_in.provided_data
+    if dep_in.receipt_notes is not None:
+        dependency.receipt_notes = dep_in.receipt_notes
+    if dep_in.provided_date is not None:
+        dependency.provided_date = dep_in.provided_date
+
+    await db.commit()
+    await db.refresh(dependency)
+
+    today = date.today()
+    end_date = dependency.provided_date or today
+    waiting_days = max(0, (end_date - dependency.requested_date).days)
+    is_overdue = (
+        dependency.status not in [ClientDependencyStatus.PROVIDED, ClientDependencyStatus.CANCELLED]
+        and today > dependency.expected_date
+    )
+
+    return ClientDependencyResponse(
+        id=dependency.id,
+        project_id=dependency.project_id,
+        task_id=dependency.task_id,
+        milestone_id=dependency.milestone_id,
+        blocker_id=dependency.blocker_id,
+        key=dependency.key,
+        title=dependency.title,
+        description=dependency.description,
+        dependency_type=dependency.dependency_type,
+        status=dependency.status,
+        requested_date=dependency.requested_date,
+        expected_date=dependency.expected_date,
+        provided_date=dependency.provided_date,
+        provided_data=dependency.provided_data,
+        receipt_notes=dependency.receipt_notes,
         impact_summary=dependency.impact_summary,
         waiting_days=waiting_days,
         is_overdue=is_overdue,
@@ -487,6 +564,10 @@ async def update_client_dependency_status(
     dependency.status = status_in.target_status
     if status_in.target_status == ClientDependencyStatus.PROVIDED:
         dependency.provided_date = status_in.provided_date or date.today()
+    if status_in.provided_data is not None:
+        dependency.provided_data = status_in.provided_data
+    if status_in.receipt_notes is not None:
+        dependency.receipt_notes = status_in.receipt_notes
 
     await db.commit()
     await db.refresh(dependency)
@@ -513,6 +594,8 @@ async def update_client_dependency_status(
         requested_date=dependency.requested_date,
         expected_date=dependency.expected_date,
         provided_date=dependency.provided_date,
+        provided_data=dependency.provided_data,
+        receipt_notes=dependency.receipt_notes,
         impact_summary=dependency.impact_summary,
         waiting_days=waiting_days,
         is_overdue=is_overdue,

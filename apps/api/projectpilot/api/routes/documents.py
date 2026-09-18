@@ -73,9 +73,20 @@ async def generate_document_draft(
     existing_count = len(count_res.scalars().all())
     doc_key = f"DOC-{(existing_count + 1):03d}"
 
-    title = ai_result.get("title", f"Dokumen {req.document_type.value}: {project.name}")
-    content = ai_result.get("content", "# Dokumentasi Proyek\n\nKonten sedang diproses.")
-    summary = ai_result.get("summary")
+    title = ai_result.get("title") or f"Dokumen {req.document_type.value}: {project.name}"
+    content = (
+        ai_result.get("content")
+        or ai_result.get("prd_content")
+        or ai_result.get("fsd_content")
+        or ai_result.get("markdown_content")
+        or ai_result.get("document_content")
+        or ai_result.get("doc_content")
+        or ai_result.get("markdown")
+    )
+    if not content:
+        content = "# Dokumentasi Proyek\n\nKonten sedang diproses."
+    summary = ai_result.get("summary") or f"Dokumen {req.document_type.value} disusun otomatis berdasarkan bukti proyek."
+
 
     doc = GeneratedDocument(
         project_id=project_id,

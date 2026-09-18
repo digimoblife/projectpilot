@@ -9,13 +9,19 @@ import {
   ArrowRight,
   Bug,
   Calendar,
+  Check,
   CheckCircle2,
   Clock,
+  Copy,
+  Edit3,
   ExternalLink,
+  Eye,
   Flame,
   Hourglass,
   Info,
+  Key,
   Layers,
+  Lock,
   Plus,
   RefreshCw,
   Search,
@@ -23,6 +29,7 @@ import {
   Sparkles,
   Tag,
   Trash2,
+  Unlock,
   X,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
@@ -76,6 +83,8 @@ interface ClientDependency {
   requested_date: string;
   expected_date: string;
   provided_date: string | null;
+  provided_data: string | null;
+  receipt_notes: string | null;
   impact_summary: string | null;
   waiting_days: number;
   is_overdue: boolean;
@@ -109,9 +118,9 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const tabParam = searchParams.get("tab") as "issues" | "risks" | "blockers" | "client_deps" | null;
-  const activeTab: "issues" | "risks" | "blockers" | "client_deps" =
-    tabParam && ["issues", "risks", "blockers", "client_deps"].includes(tabParam)
+  const tabParam = searchParams.get("tab") as "issues" | "blockers" | "client_deps" | null;
+  const activeTab: "issues" | "blockers" | "client_deps" =
+    tabParam && ["issues", "blockers", "client_deps"].includes(tabParam)
       ? tabParam
       : "issues";
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -158,6 +167,24 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
     blockerTitle: string;
     isTaskLinked: boolean;
   } | null>(null);
+
+  // Mark Client Dependency Provided Modal States
+  const [isMarkProvidedModalOpen, setIsMarkProvidedModalOpen] = useState(false);
+  const [selectedDepForProvided, setSelectedDepForProvided] = useState<ClientDependency | null>(null);
+  const [markProvidedDate, setMarkProvidedDate] = useState("");
+  const [markProvidedData, setMarkProvidedData] = useState("");
+  const [markReceiptNotes, setMarkReceiptNotes] = useState("");
+  const [markProvidedError, setMarkProvidedError] = useState<string | null>(null);
+
+  // Client Dependency Detail Modal States
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedDepForDetail, setSelectedDepForDetail] = useState<ClientDependency | null>(null);
+  const [isEditingData, setIsEditingData] = useState(false);
+  const [editProvidedData, setEditProvidedData] = useState("");
+  const [editReceiptNotes, setEditReceiptNotes] = useState("");
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isDataMasked, setIsDataMasked] = useState(false);
 
   useEffect(() => {
     fetchIssuesRisksData();
@@ -311,18 +338,106 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
     }
   }
 
-  async function handleMarkClientDepProvided(depId: string) {
+  function openMarkProvidedModal(dep: ClientDependency) {
+    setSelectedDepForProvided(dep);
+    setMarkProvidedDate(new Date().toISOString().split("T")[0]);
+    setMarkProvidedData(dep.provided_data || "");
+    setMarkReceiptNotes(dep.receipt_notes || "");
+    setMarkProvidedError(null);
+    setIsMarkProvidedModalOpen(true);
+  }
+
+  async function handleConfirmMarkProvided(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedDepForProvided) return;
+
+    setMarkProvidedError(null);
+    setIsSubmitting(true);
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
-      await apiClient(`/projects/${projectId}/client-dependencies/${depId}/status`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ target_status: "PROVIDED" }),
-      });
-      fetchIssuesRisksData();
+      const res = await apiClient<ClientDependency>(
+        `/projects/${projectId}/client-dependencies/${selectedDepForProvided.id}/status`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            target_status: "PROVIDED",
+            provided_date: markProvidedDate,
+            provided_data: markProvidedData || null,
+            receipt_notes: markReceiptNotes || null,
+          }),
+        }
+      );
+
+      if (res.data) {
+        setIsMarkProvidedModalOpen(false);
+        setSelectedDepForProvided(null);
+        fetchIssuesRisksData();
+        if (selectedDepForDetail && selectedDepForDetail.id === res.data.id) {
+          setSelectedDepForDetail(res.data);
+        }
+      } else {
+        setMarkProvidedError(res.error || "Gagal memperbarui status.");
+      }
     } catch {
-      // Handle error
+      setMarkProvidedError("Terjadi kesalahan jaringan.");
+    } finally {
+      setIsSubmitting(false);
     }
+  }
+
+  function openDetailModal(dep: ClientDependency) {
+    setSelectedDepForDetail(dep);
+    setEditProvidedData(dep.provided_data || "");
+    setEditReceiptNotes(dep.receipt_notes || "");
+    setIsEditingData(false);
+    setIsDataMasked(false);
+    setIsCopied(false);
+    setDetailError(null);
+    setIsDetailModalOpen(true);
+  }
+
+  async function handleSaveEditedDataInDetail(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedDepForDetail) return;
+
+    setIsSubmitting(true);
+    setDetailError(null);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      const res = await apiClient<ClientDependency>(
+        `/projects/${projectId}/client-dependencies/${selectedDepForDetail.id}`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            provided_data: editProvidedData || null,
+            receipt_notes: editReceiptNotes || null,
+          }),
+        }
+      );
+
+      if (res.data) {
+        setSelectedDepForDetail(res.data);
+        setIsEditingData(false);
+        fetchIssuesRisksData();
+      } else {
+        setDetailError(res.error || "Gagal memperbarui data kredensial.");
+      }
+    } catch {
+      setDetailError("Terjadi kesalahan jaringan.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handleCopyData(text: string) {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   }
 
   function openResolveBlockerModal(blocker: Blocker) {
@@ -515,8 +630,8 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
         </div>
       )}
 
-      {/* TAB 2: RISKS REGISTRY & MATRIX */}
-      {activeTab === "risks" && (
+      {/* TAB 2: RISKS REGISTRY & MATRIX (Hidden from sub-routes) */}
+      {(activeTab as string) === "risks" && (
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -778,15 +893,37 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                     const isProvided = dep.status === "PROVIDED";
 
                     return (
-                      <tr key={dep.id} className={`hover:bg-slate-50/70 ${dep.is_overdue ? "bg-rose-50/30" : ""}`}>
-                        <td className="py-3 px-4 font-mono font-bold text-slate-700">{dep.key}</td>
-                        <td className="py-3 px-4 font-semibold text-slate-900">{dep.title}</td>
+                      <tr key={dep.id} className={`hover:bg-slate-50/70 transition-colors ${dep.is_overdue ? "bg-rose-50/30" : ""}`}>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-700 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => openDetailModal(dep)}
+                            className="hover:underline text-slate-800 hover:text-black cursor-pointer font-bold"
+                          >
+                            {dep.key}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-900">
+                          <button
+                            type="button"
+                            onClick={() => openDetailModal(dep)}
+                            className="text-left hover:underline text-slate-900 hover:text-black cursor-pointer font-semibold block"
+                          >
+                            {dep.title}
+                          </button>
+                          {dep.provided_data && (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-0.5">
+                              <Key className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span className="truncate max-w-[200px]">Data tersimpan</span>
+                            </div>
+                          )}
+                        </td>
                         <td className="py-3 px-4">
                           <span className="font-mono text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
                             {dep.dependency_type}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           {isProvided ? (
                             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                               Diterima ({dep.provided_date})
@@ -801,20 +938,33 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <span className="font-bold text-slate-900">{dep.waiting_days} hari</span>
                         </td>
-                        <td className="py-3 px-4 text-slate-500">{dep.expected_date}</td>
-                        <td className="py-3 px-4 text-right">
-                          {!isProvided && (
+                        <td className="py-3 px-4 text-slate-500 whitespace-nowrap">{dep.expected_date}</td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleMarkClientDepProvided(dep.id)}
-                              className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded border border-emerald-200"
+                              onClick={() => openDetailModal(dep)}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                              title="Lihat Detail & Data"
                             >
-                              Tandai Diterima
+                              <Eye className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Lihat Detail</span>
                             </button>
-                          )}
+                            {!isProvided && (
+                              <button
+                                type="button"
+                                onClick={() => openMarkProvidedModal(dep)}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                                title="Tandai Diterima & Masukkan Kredensial"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Tandai Diterima</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1234,6 +1384,357 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 5. KONFIRMASI PENERIMAAN DEPENDENSI KLIEN MODAL                           */}
+      {/* ========================================================================= */}
+      {isMarkProvidedModalOpen && selectedDepForProvided && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+          onClick={() => setIsMarkProvidedModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-5 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">Konfirmasi Penerimaan Kebutuhan</h3>
+                  <span className="font-mono text-[11px] font-bold text-slate-500">
+                    {selectedDepForProvided.key} &bull; {selectedDepForProvided.title}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMarkProvidedModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Tutup Modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {markProvidedError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{markProvidedError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmMarkProvided} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Tanggal Diterima Resmi *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={markProvidedDate}
+                  onChange={(e) => setMarkProvidedDate(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-slate-900"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Data / Kredensial / Link yang Diterima (Opsional)
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-mono">Tersimpan aman</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mb-1.5">
+                  Simpan username & password, API key, bearer token, atau tautan Drive/Figma yang diberikan oleh klien.
+                </p>
+                <textarea
+                  rows={4}
+                  value={markProvidedData}
+                  onChange={(e) => setMarkProvidedData(e.target.value)}
+                  placeholder={"Contoh:\nHost: 10.0.1.25\nUser: admin_staging\nPassword: S3cur3P@ssw0rd!\nAPI Key: live_sk_abcdef123456\nLink Docs: https://docs.klien.com"}
+                  className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Catatan Tambahan Penerimaan (Opsional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={markReceiptNotes}
+                  onChange={(e) => setMarkReceiptNotes(e.target.value)}
+                  placeholder="Contoh: Diserahkan oleh Pak Budi via Slack, akun sudah dicek dan siap digunakan."
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-slate-900"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsMarkProvidedModalOpen(false)}
+                  className="px-3.5 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{isSubmitting ? "Menyimpan..." : "Simpan & Konfirmasi Diterima"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 6. DETAIL DEPENDENSI KLIEN & KREDENSIAL VAULT MODAL                       */}
+      {/* ========================================================================= */}
+      {isDetailModalOpen && selectedDepForDetail && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+          onClick={() => setIsDetailModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-xl w-full p-5 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                    {selectedDepForDetail.key}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                      selectedDepForDetail.status === "PROVIDED"
+                        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                        : selectedDepForDetail.is_overdue
+                        ? "text-rose-700 bg-rose-50 border-rose-200"
+                        : "text-amber-700 bg-amber-50 border-amber-200"
+                    }`}
+                  >
+                    {selectedDepForDetail.status === "PROVIDED"
+                      ? "Diterima"
+                      : selectedDepForDetail.is_overdue
+                      ? "Terlambat (Overdue)"
+                      : "Menunggu Klien"}
+                  </span>
+                </div>
+                <h3 className="font-bold text-slate-900 text-base">{selectedDepForDetail.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDetailModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Tutup Modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Chronology & Metrics Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-semibold block">Tipe Dependensi</span>
+                <span className="font-bold text-slate-800 text-[11px] mt-0.5 block truncate">
+                  {selectedDepForDetail.dependency_type}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-semibold block">Tgl Diajukan</span>
+                <span className="font-bold text-slate-800 text-[11px] mt-0.5 block">
+                  {selectedDepForDetail.requested_date}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-semibold block">Target Klien</span>
+                <span className="font-bold text-slate-800 text-[11px] mt-0.5 block">
+                  {selectedDepForDetail.expected_date}
+                </span>
+              </div>
+              <div className={`p-2.5 rounded-xl border ${
+                selectedDepForDetail.status === "PROVIDED"
+                  ? "bg-emerald-50/50 border-emerald-100 text-emerald-900"
+                  : selectedDepForDetail.is_overdue
+                  ? "bg-rose-50/50 border-rose-100 text-rose-900"
+                  : "bg-slate-50 border-slate-100 text-slate-800"
+              }`}>
+                <span className="text-[10px] opacity-70 font-semibold block">Lama Menunggu</span>
+                <span className="font-bold text-xs mt-0.5 block">
+                  {selectedDepForDetail.waiting_days} hari
+                  {selectedDepForDetail.status === "PROVIDED" && selectedDepForDetail.provided_date && ` (Selesai ${selectedDepForDetail.provided_date})`}
+                </span>
+              </div>
+            </div>
+
+            {/* Description & Impact Summary */}
+            {(selectedDepForDetail.description || selectedDepForDetail.impact_summary) && (
+              <div className="space-y-2 text-xs">
+                {selectedDepForDetail.description && (
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Deskripsi Kebutuhan</span>
+                    <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedDepForDetail.description}</p>
+                  </div>
+                )}
+                {selectedDepForDetail.impact_summary && (
+                  <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-1">
+                    <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Dampak Jika Terlambat</span>
+                    <p className="text-amber-900 whitespace-pre-wrap leading-relaxed">{selectedDepForDetail.impact_summary}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* VAULT: Data / Kredensial / API Key / Link */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-slate-700" />
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Data / Kredensial / Link Diterima
+                  </h4>
+                </div>
+                {selectedDepForDetail.provided_data && !isEditingData && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsDataMasked(!isDataMasked)}
+                      className="text-[10px] font-semibold text-slate-600 hover:text-slate-900 px-2 py-0.5 rounded hover:bg-slate-100 flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      {isDataMasked ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                      <span>{isDataMasked ? "Tampilkan" : "Sensor"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyData(selectedDepForDetail.provided_data || "")}
+                      className="text-[10px] font-semibold text-sky-700 hover:text-sky-900 px-2.5 py-0.5 rounded bg-sky-50 hover:bg-sky-100 border border-sky-200 flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Salin Data"
+                    >
+                      {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                      <span>{isCopied ? "Tersalin!" : "Salin"}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {isEditingData ? (
+                <form onSubmit={handleSaveEditedDataInDetail} className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Data / Kredensial / Link
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={editProvidedData}
+                      onChange={(e) => setEditProvidedData(e.target.value)}
+                      placeholder="Masukkan kredensial, API key, password, token, atau link URL..."
+                      className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Catatan Penerimaan
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={editReceiptNotes}
+                      onChange={(e) => setEditReceiptNotes(e.target.value)}
+                      placeholder="Catatan tambahan penyerahan..."
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-slate-900"
+                    />
+                  </div>
+                  {detailError && (
+                    <p className="text-xs text-rose-600">{detailError}</p>
+                  )}
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingData(false)}
+                      className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
+                    </button>
+                  </div>
+                </form>
+              ) : selectedDepForDetail.provided_data ? (
+                <div className="relative group">
+                  <div className="p-3.5 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs whitespace-pre-wrap break-all selection:bg-slate-700 selection:text-white border border-slate-800 leading-relaxed">
+                    {isDataMasked
+                      ? "•".repeat(Math.min(selectedDepForDetail.provided_data.length, 36))
+                      : selectedDepForDetail.provided_data}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                  Belum ada data/kredensial yang disimpan untuk dependensi ini.
+                </div>
+              )}
+            </div>
+
+            {/* Receipt Notes display if not editing */}
+            {!isEditingData && selectedDepForDetail.receipt_notes && (
+              <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 text-xs text-emerald-900 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Catatan Penerimaan / Serah Terima</span>
+                <p className="whitespace-pre-wrap leading-relaxed">{selectedDepForDetail.receipt_notes}</p>
+              </div>
+            )}
+
+            {/* Footer Actions */}
+            <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                {!isEditingData && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingData(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{selectedDepForDetail.provided_data ? "Edit Data / Kredensial" : "Tambah Data / Kredensial"}</span>
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                {selectedDepForDetail.status !== "PROVIDED" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDetailModalOpen(false);
+                      openMarkProvidedModal(selectedDepForDetail);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Tandai Diterima Sekarang</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

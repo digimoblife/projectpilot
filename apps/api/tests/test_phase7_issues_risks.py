@@ -150,12 +150,32 @@ async def test_issues_risks_blockers_and_dependencies_workflow(client: AsyncClie
     dep_id = dep_res.json()["id"]
     assert dep_res.json()["status"] == "REQUESTED"
 
-    # Mark as Provided
+    # Mark as Provided with provided_data & receipt_notes
     dep_provided = await client.post(
         f"/api/v1/projects/{project_id}/client-dependencies/{dep_id}/status",
-        json={"target_status": "PROVIDED", "provided_date": "2026-10-06"},
+        json={
+            "target_status": "PROVIDED",
+            "provided_date": "2026-10-06",
+            "provided_data": "Host: 10.0.1.20\nUser: simrs_admin\nPass: S3cur3P@ssw0rd!",
+            "receipt_notes": "Diterima via Bitwarden dari Pak Budi IT RS.",
+        },
         headers=headers,
     )
     assert dep_provided.status_code == 200
     assert dep_provided.json()["status"] == "PROVIDED"
     assert dep_provided.json()["waiting_days"] == 5
+    assert "simrs_admin" in dep_provided.json()["provided_data"]
+    assert "Bitwarden" in dep_provided.json()["receipt_notes"]
+
+    # Test PUT update client dependency
+    dep_update = await client.put(
+        f"/api/v1/projects/{project_id}/client-dependencies/{dep_id}",
+        json={
+            "provided_data": "Host: 10.0.1.20\nUser: simrs_admin_updated\nPass: N3wP@ssw0rd!",
+            "receipt_notes": "Password dirotasi oleh tim infra klien pada tanggal 10.",
+        },
+        headers=headers,
+    )
+    assert dep_update.status_code == 200
+    assert "simrs_admin_updated" in dep_update.json()["provided_data"]
+    assert "dirotasi" in dep_update.json()["receipt_notes"]

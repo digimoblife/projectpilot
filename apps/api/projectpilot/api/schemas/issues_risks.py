@@ -123,6 +123,8 @@ class ClientDependencyBase(BaseModel):
     requested_date: date
     expected_date: date
     impact_summary: Optional[str] = None
+    provided_data: Optional[str] = None
+    receipt_notes: Optional[str] = None
     task_id: Optional[uuid.UUID] = None
     milestone_id: Optional[uuid.UUID] = None
     blocker_id: Optional[uuid.UUID] = None
@@ -138,6 +140,9 @@ class ClientDependencyUpdate(BaseModel):
     dependency_type: Optional[str] = None
     expected_date: Optional[date] = None
     impact_summary: Optional[str] = None
+    provided_data: Optional[str] = None
+    receipt_notes: Optional[str] = None
+    provided_date: Optional[date] = None
     task_id: Optional[uuid.UUID] = None
     milestone_id: Optional[uuid.UUID] = None
     blocker_id: Optional[uuid.UUID] = None
@@ -146,6 +151,8 @@ class ClientDependencyUpdate(BaseModel):
 class ClientDependencyStatusUpdate(BaseModel):
     target_status: ClientDependencyStatus
     provided_date: Optional[date] = None
+    provided_data: Optional[str] = None
+    receipt_notes: Optional[str] = None
 
 
 class ClientDependencyResponse(ClientDependencyBase):

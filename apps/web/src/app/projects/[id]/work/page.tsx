@@ -9,14 +9,14 @@ import { WorkMilestonesView } from "@/components/work/WorkMilestonesView";
 import { WorkWBSView } from "@/components/work/WorkWBSView";
 import { WorkTeamView } from "@/components/work/WorkTeamView";
 
-type WorkTab = "board" | "timeline" | "milestones" | "wbs" | "team";
+type WorkTab = "board" | "timeline" | "milestones" | "team";
 
 function WorkWorkspaceContent({ projectId }: { projectId: string }) {
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get("tab") as WorkTab | null;
   const activeTab: WorkTab =
-    tabParam && ["board", "timeline", "milestones", "wbs", "team"].includes(tabParam)
+    tabParam && ["board", "timeline", "milestones", "team"].includes(tabParam)
       ? tabParam
       : "board";
 
@@ -32,9 +32,6 @@ function WorkWorkspaceContent({ projectId }: { projectId: string }) {
         )}
         {activeTab === "milestones" && (
           <WorkMilestonesView projectId={projectId} embedded={true} />
-        )}
-        {activeTab === "wbs" && (
-          <WorkWBSView projectId={projectId} embedded={true} />
         )}
         {activeTab === "team" && (
           <WorkTeamView projectId={projectId} embedded={true} />

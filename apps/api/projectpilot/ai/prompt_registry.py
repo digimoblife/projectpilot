@@ -254,6 +254,11 @@ Include sections:
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Product Requirement Document (PRD): {project_name}"
+- "summary": "Ringkasan eksekutif dokumen PRD dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Dokumen PRD lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "EPIC_FEATURE_GEN": """
 Analyze the following project brief, requirements, and discovery evidence.

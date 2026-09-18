@@ -62,10 +62,12 @@ out/
 *.swp
 *.swo
 
-# Docker / Logs
+# Docker / Logs / Data
 *.log
 docker-data/
 postgres_data/
+apps/api/data/
+data/
 
 # Project Hub frontend source libraries
 !apps/web/src/lib/

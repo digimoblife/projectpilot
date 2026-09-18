@@ -66,6 +66,12 @@ from projectpilot.persistence.models.report import (
     ReportStatus,
     ReportType,
 )
+from projectpilot.persistence.models.resource import (
+    DeliverableStatus,
+    ProjectResource,
+    ResourceStatus,
+    ResourceType,
+)
 from projectpilot.persistence.models.requirements_scope import (
     Decision,
     DecisionStatus,
@@ -153,4 +159,8 @@ __all__ = [
     "HandoverItemStatus",
     "HandoverItemType",
     "ActivityEvent",
+    "ProjectResource",
+    "ResourceType",
+    "ResourceStatus",
+    "DeliverableStatus",
 ]

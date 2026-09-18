@@ -117,7 +117,11 @@ function Tier2SubTabsContent({
             } else if (activePillar.id === "communication") {
               isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "meetings";
             } else if (activePillar.id === "resources") {
-              isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "files";
+              if (currentTab === "deliverables") {
+                isSubActive = sub.tabKey === "files";
+              } else {
+                isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "files";
+              }
             } else if (activePillar.id === "issues") {
               isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "issues";
             } else {
@@ -286,7 +290,6 @@ export default function ProjectWorkspaceLayout({
         { name: "Board", href: `/projects/${id}/work?tab=board`, sublabel: "Kanban & Tasks", icon: Sliders, tabKey: "board" },
         { name: "Timeline", href: `/projects/${id}/work?tab=timeline`, sublabel: "Jadwal & Dependensi", icon: Calendar, tabKey: "timeline" },
         { name: "Milestones", href: `/projects/${id}/work?tab=milestones`, sublabel: "Gate Pengiriman", icon: MilestoneIcon, tabKey: "milestones" },
-        { name: "WBS", href: `/projects/${id}/work?tab=wbs`, sublabel: "Epics & Features", icon: FolderTree, tabKey: "wbs" },
         { name: "Team & Capacity", href: `/projects/${id}/work?tab=team`, sublabel: "Alokasi Personel", icon: Users, tabKey: "team" },
       ],
     },
@@ -297,7 +300,6 @@ export default function ProjectWorkspaceLayout({
       icon: ShieldAlert,
       subRoutes: [
         { name: "Log Issue", href: `/projects/${id}/issues?tab=issues`, sublabel: "Pelacak Isu Teknis", icon: Bug, tabKey: "issues" },
-        { name: "Matriks Risiko", href: `/projects/${id}/issues?tab=risks`, sublabel: "Peta Probabilitas & Dampak", icon: AlertTriangle, tabKey: "risks" },
         { name: "Active Blockers", href: `/projects/${id}/issues?tab=blockers`, sublabel: "Eskalasi & Hambatan", icon: ShieldAlert, tabKey: "blockers" },
         { name: "Waiting Matrix", href: `/projects/${id}/issues?tab=client_deps`, sublabel: "Ketergantungan Klien", icon: Hourglass, tabKey: "client_deps" },
       ],
@@ -320,7 +322,6 @@ export default function ProjectWorkspaceLayout({
       subRoutes: [
         { name: "Berkas Proyek", href: `/projects/${id}/resources?tab=files`, sublabel: "PDF, Dokumen & Aset", icon: Files, tabKey: "files" },
         { name: "Tautan Referensi", href: `/projects/${id}/resources?tab=links`, sublabel: "Figma, Git & Deployment", icon: Link2, tabKey: "links" },
-        { name: "Arsip Deliverable", href: `/projects/${id}/resources?tab=deliverables`, sublabel: "Artefak Ekspor & Rilis", icon: Archive, tabKey: "deliverables" },
       ],
     },
     {

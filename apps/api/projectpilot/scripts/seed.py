@@ -677,7 +677,7 @@ Rapat koordinasi teknis mingguan membahas kemajuan modul integrasi Payment Gatew
 """
 
         stmt = select(MoMDocument).where(MoMDocument.mom_key == "MOM-2026-001")
-        existing_mom = (await session.execute(stmt)).scalar_one_or_none()
+        existing_mom = (await session.execute(stmt)).scalars().first()
         if not existing_mom:
             mom_obj = MoMDocument(
                 mom_key="MOM-2026-001",
@@ -706,7 +706,7 @@ Rapat koordinasi teknis mingguan membahas kemajuan modul integrasi Payment Gatew
         # 11. REPORTS & FINAL DOCUMENTATION
         # ---------------------------------------------------------------------
         stmt = select(Report).where((Report.project_id == main_project.id) & (Report.report_key == "REP-001"))
-        existing_rep = (await session.execute(stmt)).scalar_one_or_none()
+        existing_rep = (await session.execute(stmt)).scalars().first()
         if not existing_rep:
             rep_obj = Report(
                 project_id=main_project.id,
@@ -742,7 +742,7 @@ Rapat koordinasi teknis mingguan membahas kemajuan modul integrasi Payment Gatew
         stmt = select(GeneratedDocument).where(
             (GeneratedDocument.project_id == main_project.id) & (GeneratedDocument.document_key == "DOC-001")
         )
-        existing_doc = (await session.execute(stmt)).scalar_one_or_none()
+        existing_doc = (await session.execute(stmt)).scalars().first()
         if not existing_doc:
             doc_obj = GeneratedDocument(
                 project_id=main_project.id,
@@ -785,6 +785,11 @@ Platform mencakup aplikasi Point-of-Sale (POS) untuk terminal kasir toko fisik d
         await session.commit()
         print("[Seed] Seeding completed successfully! All demo data is populated and persistent.")
 
+    # Also seed Discovery-only project (PRJ-004)
+    from projectpilot.scripts.seed_discovery_project import seed_discovery_project
+    await seed_discovery_project()
+
 
 if __name__ == "__main__":
     asyncio.run(seed_data())
+

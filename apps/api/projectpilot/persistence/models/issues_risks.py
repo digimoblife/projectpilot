@@ -149,6 +149,8 @@ class ClientDependency(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     requested_date: Mapped[date] = mapped_column(Date, nullable=False)
     expected_date: Mapped[date] = mapped_column(Date, nullable=False)
     provided_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    provided_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    receipt_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     impact_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships

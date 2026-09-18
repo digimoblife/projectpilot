@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "development_secret_key_change_in_production_12345"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
 
+    # Storage
+    STORAGE_PROVIDER: str = "local"
+    STORAGE_LOCAL_PATH: str = "data/storage"
+    MAX_UPLOAD_SIZE_BYTES: int = 25 * 1024 * 1024  # 25 MB max file upload size
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
