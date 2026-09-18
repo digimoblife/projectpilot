@@ -165,3 +165,24 @@ async def test_meeting_management_ai_analysis_and_action_item_conversion(client:
     assert fin_res.status_code == 200
     assert fin_res.json()["status"] == "FINALIZED"
     assert fin_res.json()["finalized_at"] is not None
+
+    # 9. Test AI MoM Generation Endpoint
+    ai_gen_res = await client.post(
+        f"/api/v1/projects/{project_id}/meetings/generate-ai",
+        json={
+            "raw_text": "Catatan Rapat Sinkronisasi:\n- Fitur QRIS sudah selesai diuji coba bersama tim QA.\n- Masih menunggu credential API dari bank mitra.\n- PIC Budi akan mengupdate dokumentasi API sebelum hari Jumat.\n- Klien menyetujui jadwal deployment pada 15 Oktober 2026.",
+            "title": "Weekly Sprint Sync & QRIS Demo",
+            "meeting_type": "WEEKLY_SYNC",
+            "attendees_raw": "Budi Santoso, Sinta PM, Hendra Klien",
+        },
+        headers=headers,
+    )
+    assert ai_gen_res.status_code == 201
+    ai_mtg_data = ai_gen_res.json()
+    assert ai_mtg_data["title"] == "Weekly Sprint Sync & QRIS Demo"
+    assert ai_mtg_data["meeting_key"].startswith("MTG-")
+    assert len(ai_mtg_data["participants"]) >= 3
+    assert len(ai_mtg_data["action_items"]) >= 1
+    assert "OPEN" in [a["status"] for a in ai_mtg_data["action_items"]]
+    assert ai_mtg_data["notes"] is not None
+    assert ai_mtg_data["summary"] is not None

@@ -362,7 +362,7 @@ export function ResourcesDeliverablesView({ projectId }: ResourcesDeliverablesVi
               Arsip Deliverable Resmi (Formal Deliverables Archive)
             </span>
             <span className="text-indigo-800 sm:ml-1">
-              — Ruang khusus artefak rilis formal proyek. Terpisah secara ketat dari rekaman dokumen terstruktur.
+              : Ruang khusus artefak rilis formal proyek. Terpisah secara ketat dari rekaman dokumen terstruktur.
             </span>
           </div>
         </div>

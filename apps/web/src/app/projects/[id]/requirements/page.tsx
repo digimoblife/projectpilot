@@ -408,10 +408,10 @@ export default function ProjectRequirementsPage({
                 type="button"
                 disabled={isAILoading}
                 onClick={handleAIExtractRequirements}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50 shrink-0"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50 shrink-0 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                <span>{isAILoading ? "Mengekstrak..." : "AI Ekstraksi Requirement"}</span>
+                <span>{isAILoading ? "Mengekstrak..." : "Ekstraksi Requirement"}</span>
               </button>
 
               <button

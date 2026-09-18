@@ -206,18 +206,40 @@ export function AISuggestionReviewModal({
     ? suggestedData
     : suggestedData.tasks || [];
 
+  const isMeetingAnalysisMode = suggestion.capability === "MEETING_ANALYSIS";
   const isQuestionsMode =
-    suggestion.capability === "DISCOVERY_QUESTION_GEN" ||
-    (questionsList.length > 0 && !requirementsList.length && !epicsList.length && !tasksList.length);
+    !isMeetingAnalysisMode &&
+    (suggestion.capability === "DISCOVERY_QUESTION_GEN" ||
+      (questionsList.length > 0 && !requirementsList.length && !epicsList.length && !tasksList.length));
   const isRequirementsMode =
-    suggestion.capability === "REQUIREMENT_EXTRACTION" ||
-    (requirementsList.length > 0 && !questionsList.length && !epicsList.length && !tasksList.length);
+    !isMeetingAnalysisMode &&
+    (suggestion.capability === "REQUIREMENT_EXTRACTION" ||
+      (requirementsList.length > 0 && !questionsList.length && !epicsList.length && !tasksList.length));
   const isContradictionsMode =
-    suggestion.capability === "CONTRADICTION_DETECTION" || contradictionsList.length > 0;
+    !isMeetingAnalysisMode &&
+    (suggestion.capability === "CONTRADICTION_DETECTION" || contradictionsList.length > 0);
   const isEpicsMode =
-    suggestion.capability === "EPIC_FEATURE_GEN" || epicsList.length > 0;
+    !isMeetingAnalysisMode &&
+    (suggestion.capability === "EPIC_FEATURE_GEN" || epicsList.length > 0);
   const isTasksMode =
-    suggestion.capability === "TASK_BREAKDOWN_GEN" || tasksList.length > 0;
+    !isMeetingAnalysisMode &&
+    (suggestion.capability === "TASK_BREAKDOWN_GEN" || tasksList.length > 0);
+
+  // Meeting Analysis fields
+  const meetingSummary = typeof suggestedData.summary === "string" ? suggestedData.summary : "";
+  const meetingDecisions: any[] = Array.isArray(suggestedData.decisions) ? suggestedData.decisions : [];
+  const meetingActionItems: any[] = Array.isArray(suggestedData.action_items) ? suggestedData.action_items : [];
+  const meetingReqs: any[] = Array.isArray(suggestedData.candidate_requirements)
+    ? suggestedData.candidate_requirements
+    : Array.isArray(suggestedData.requirements)
+    ? suggestedData.requirements
+    : [];
+  const meetingRisks: any[] = Array.isArray(suggestedData.risks_blockers)
+    ? suggestedData.risks_blockers
+    : Array.isArray(suggestedData.risks)
+    ? suggestedData.risks
+    : [];
+  const meetingUnknowns: any[] = Array.isArray(suggestedData.unknowns) ? suggestedData.unknowns : [];
 
   async function handleCreateClarificationQuestion(c: any, idx: number) {
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -300,13 +322,17 @@ export function AISuggestionReviewModal({
                 <span className="font-bold text-xs text-slate-800">
                   {isEditing
                     ? "Mode Edit Data JSON"
+                    : isMeetingAnalysisMode
+                    ? "Hasil Analisis Notulensi Rapat Proyek:"
                     : isContradictionsMode
                     ? "Daftar Temuan Konflik Spesifikasi:"
                     : "Daftar Rekomendasi Hasil AI:"}
                 </span>
                 {!isEditing && (
                   <span className="text-[11px] text-slate-500">
-                    ({isQuestionsMode
+                    ({isMeetingAnalysisMode
+                      ? `${meetingDecisions.length} keputusan • ${meetingReqs.length} kebutuhan • ${meetingRisks.length} risiko`
+                      : isQuestionsMode
                       ? `${questionsList.length} pertanyaan`
                       : isRequirementsMode
                       ? `${requirementsList.length} requirement`
@@ -379,14 +405,186 @@ export function AISuggestionReviewModal({
                   );
                 })}
               </div>
+            ) : isMeetingAnalysisMode ? (
+              /* ========================================================================= */
+              /* HUMAN-FRIENDLY MEETING ANALYSIS GOVERNANCE VIEW                           */
+              /* ========================================================================= */
+              <div className="space-y-4">
+                {/* 1. Ringkasan Eksekutif */}
+                {meetingSummary && (
+                  <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-purple-900 font-bold text-xs">
+                      <Sparkles className="w-4 h-4 text-purple-600" />
+                      <span>Ringkasan Eksekutif Rapat:</span>
+                    </div>
+                    <p className="text-xs text-slate-800 leading-relaxed">{meetingSummary}</p>
+                  </div>
+                )}
+
+                {/* 2. Keputusan yang Disepakati */}
+                {meetingDecisions.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Keputusan yang Disepakati ({meetingDecisions.length}):</span>
+                    </div>
+                    <div className="space-y-2">
+                      {meetingDecisions.map((d: any, idx: number) => (
+                        <div key={idx} className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="text-xs font-bold text-slate-900">
+                              {d.decision || d.title || `Keputusan #${idx + 1}`}
+                            </h4>
+                            {d.evidence_quality && (
+                              <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider shrink-0">
+                                {d.evidence_quality}
+                              </span>
+                            )}
+                          </div>
+                          {(d.rational || d.rationale) && (
+                            <div className="text-xs text-slate-600">
+                              <span className="font-semibold text-slate-700">Rasional: </span>
+                              {d.rational || d.rationale}
+                            </div>
+                          )}
+                          {d.context && (
+                            <div className="text-[11px] text-slate-500 italic">
+                              Konteks: {d.context}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Kandidat Kebutuhan Baru */}
+                {meetingReqs.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                      <Layers className="w-4 h-4 text-sky-600" />
+                      <span>Kandidat Kebutuhan Baru ({meetingReqs.length}):</span>
+                    </div>
+                    <div className="space-y-2">
+                      {meetingReqs.map((r: any, idx: number) => {
+                        const reqText = r.requirement || r.title || r.name || (typeof r === "string" ? r : "");
+                        const reqType = r.type || r.category || "Umum";
+                        return (
+                          <div key={idx} className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs font-bold text-slate-500">
+                                  REQ-AI-{(idx + 1).toString().padStart(3, "0")}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
+                                  {reqType}
+                                </span>
+                              </div>
+                              {r.evidence_quality && (
+                                <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                                  {r.evidence_quality}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug pt-0.5">
+                              {reqText}
+                            </h4>
+                            {r.description && r.description !== reqText && (
+                              <p className="text-xs text-slate-600 leading-relaxed">{r.description}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Risiko & Potensi Hambatan */}
+                {meetingRisks.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                      <AlertTriangle className="w-4 h-4 text-amber-600" />
+                      <span>Risiko & Potensi Hambatan ({meetingRisks.length}):</span>
+                    </div>
+                    <div className="space-y-2">
+                      {meetingRisks.map((rb: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-amber-50/50 rounded-xl border border-amber-200 text-xs space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-amber-900">
+                              {rb.risk_blocker || rb.title || rb.description}
+                            </span>
+                            {rb.type && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white text-amber-800 border border-amber-200 shrink-0">
+                                {rb.type}
+                              </span>
+                            )}
+                          </div>
+                          {rb.impact && (
+                            <p className="text-amber-800 text-[11px] leading-relaxed">
+                              <strong>Dampak:</strong> {rb.impact}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. Rekomendasi Action Items */}
+                {meetingActionItems.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                      <Check className="w-4 h-4 text-purple-600" />
+                      <span>Rekomendasi Action Items ({meetingActionItems.length}):</span>
+                    </div>
+                    <div className="space-y-2">
+                      {meetingActionItems.map((ai: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-slate-900">
+                              {ai.action_item || ai.title}
+                            </span>
+                            {ai.status && (
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                                {ai.status}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-0.5">
+                            <span>PIC: <strong className="text-slate-700">{ai.owner_name || "TBD"}</strong></span>
+                            {ai.module_area && <span>Area: {ai.module_area}</span>}
+                            {ai.due_date && ai.due_date !== "TBD" && <span>Target: {ai.due_date}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. Unknowns / Hal yang Perlu Dikonfirmasi */}
+                {meetingUnknowns.length > 0 && (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                    <span className="text-[11px] font-bold uppercase text-slate-600 block">
+                      Hal yang Masih Perlu Dipastikan (Unknowns):
+                    </span>
+                    <ul className="text-xs text-slate-700 list-disc list-inside space-y-0.5">
+                      {meetingUnknowns.map((u: string, idx: number) => (
+                        <li key={idx}>{u}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             ) : isRequirementsMode && requirementsList.length > 0 ? (
               /* ========================================================================= */
               /* HUMAN-FRIENDLY REQUIREMENTS CARDS                                         */
               /* ========================================================================= */
               <div className="space-y-3">
                 {requirementsList.map((r: any, idx: number) => {
-                  const catCfg = formatCategory(r.category);
+                  const catCfg = formatCategory(r.category || r.type);
                   const isHigh = ["CRITICAL", "HIGH"].includes(r.priority);
+                  const titleText = r.title || r.requirement || r.name || (typeof r === "string" ? r : "Kebutuhan Proyek");
+                  const descText = r.description || (r.title && r.requirement ? r.requirement : "") || (r.type ? `Tipe: ${r.type}` : "");
                   return (
                     <div
                       key={idx}
@@ -412,8 +610,8 @@ export function AISuggestionReviewModal({
                         </span>
                       </div>
 
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">{r.title}</h4>
-                      <p className="text-xs text-slate-600 leading-relaxed">{r.description}</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">{titleText}</h4>
+                      {descText && <p className="text-xs text-slate-600 leading-relaxed">{descText}</p>}
 
                       {r.acceptance_criteria && Array.isArray(r.acceptance_criteria) && (
                         <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100 space-y-1">

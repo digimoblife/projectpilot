@@ -111,3 +111,11 @@ class MeetingResponse(MeetingBase):
     updated_at: datetime
     participants: List[MeetingParticipantResponse] = []
     action_items: List[ActionItemResponse] = []
+
+
+class MeetingGenerateAIRequest(BaseModel):
+    raw_text: str
+    title: Optional[str] = None
+    meeting_type: MeetingType = MeetingType.WEEKLY_SYNC
+    meeting_date: Optional[datetime] = None
+    attendees_raw: Optional[str] = None

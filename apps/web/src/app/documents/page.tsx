@@ -173,12 +173,12 @@ export default function DocumentsPage() {
             <table className="w-full text-left text-xs text-slate-700 min-w-[750px]">
               <thead className="bg-slate-50 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3">Dokumen & Kode</th>
-                  <th className="px-4 py-3">Proyek</th>
-                  <th className="px-4 py-3">Jenis Dokumen</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Tanggal Dibuat</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Dokumen & Kode</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Proyek</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Jenis Dokumen</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Tanggal Dibuat</th>
+                  <th className="px-4 py-3 whitespace-nowrap text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-sans">
@@ -190,33 +190,34 @@ export default function DocumentsPage() {
                     <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-4 py-3 font-semibold text-slate-900">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800">
-                            {d.document_key} v{d.version}
+                          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 shrink-0 whitespace-nowrap">
+                            <span>{d.document_key}</span>
+                            <span className="text-slate-500 font-medium">v{d.version}</span>
                           </span>
                           <span className="line-clamp-1">{d.title}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-slate-600">
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                         <span className="font-mono text-[10px] font-bold text-slate-500 mr-1">{d.project_code}</span>
                         <span className="font-medium text-slate-800">{d.project_name}</span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeCfg.color}`}>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-medium px-2.5 py-0.5 rounded-full border ${typeCfg.color}`}>
                           {typeCfg.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-medium px-2.5 py-0.5 rounded-full border ${statusCfg.color}`}>
                           {statusCfg.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[11px] text-slate-500 font-medium">
+                      <td className="px-4 py-3 text-[11px] text-slate-500 font-medium whitespace-nowrap">
                         {new Date(d.created_at).toLocaleDateString("id-ID")}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         <Link
                           href={`/projects/${d.project_id}/documents`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
+                          className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
                         >
                           <span>Buka</span>
                           <ChevronRight className="w-3.5 h-3.5" />

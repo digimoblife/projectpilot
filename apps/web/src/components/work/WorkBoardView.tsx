@@ -494,7 +494,7 @@ export function WorkBoardView({
         <div>
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <span>Kanban & Tasks</span>
-            <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+            <span className="inline-flex items-center whitespace-nowrap shrink-0 text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
               {tasks.length} Total Task
             </span>
           </h2>
@@ -533,10 +533,10 @@ export function WorkBoardView({
             type="button"
             disabled={isAILoading}
             onClick={handleAIBreakdownTasks}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50 shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors disabled:opacity-50 shrink-0 cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-            <span>{isAILoading ? "Menyiapkan..." : "AI Breakdown"}</span>
+            <span>{isAILoading ? "Menyiapkan..." : "Breakdown Tugas"}</span>
           </button>
 
           <button
@@ -586,7 +586,7 @@ export function WorkBoardView({
                     <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                     <span className="font-bold text-xs text-slate-800">{col.label}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded-full border border-slate-200">
+                  <span className="inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">
                     {colTasks.length}
                   </span>
                 </div>
@@ -738,26 +738,26 @@ export function WorkBoardView({
           <table className="w-full text-left text-xs min-w-[750px]">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
               <tr>
-                <th className="py-3 px-4">Key</th>
+                <th className="py-3 px-4 whitespace-nowrap">Key</th>
                 <th className="py-3 px-4">Judul Task</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Prioritas</th>
-                <th className="py-3 px-4">Estimasi Hari</th>
-                <th className="py-3 px-4">Assignee</th>
-                <th className="py-3 px-4">Due Date</th>
-                <th className="py-3 px-4 text-right">Aksi</th>
+                <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                <th className="py-3 px-4 whitespace-nowrap">Prioritas</th>
+                <th className="py-3 px-4 whitespace-nowrap">Estimasi Hari</th>
+                <th className="py-3 px-4 whitespace-nowrap">Assignee</th>
+                <th className="py-3 px-4 whitespace-nowrap">Due Date</th>
+                <th className="py-3 px-4 whitespace-nowrap text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTasks.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-2.5 px-4 font-mono font-bold text-slate-700">{t.key}</td>
+                  <td className="py-2.5 px-4 font-mono font-bold text-slate-700 whitespace-nowrap">{t.key}</td>
                   <td className="py-2.5 px-4 font-medium text-slate-900">{t.title}</td>
-                  <td className="py-2.5 px-4">
+                  <td className="py-2.5 px-4 whitespace-nowrap">
                     <select
                       value={t.status}
                       onChange={(e) => handleStatusChange(t, e.target.value as any)}
-                      className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5"
+                      className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5 whitespace-nowrap"
                     >
                       {columns.map((c) => (
                         <option key={c.key} value={c.key}>
@@ -766,16 +766,16 @@ export function WorkBoardView({
                       ))}
                     </select>
                   </td>
-                  <td className="py-2.5 px-4">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${priorityColors[t.priority]}`}>
+                  <td className="py-2.5 px-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border ${priorityColors[t.priority]}`}>
                       {t.priority}
                     </span>
                   </td>
-                  <td className="py-2.5 px-4 font-mono text-slate-600">
+                  <td className="py-2.5 px-4 font-mono text-slate-600 whitespace-nowrap">
                     {t.estimated_hours != null ? `${t.estimated_hours} Hari` : "0 Hari"}
                   </td>
-                  <td className="py-2.5 px-4 text-slate-600">{t.assignee_name || "-"}</td>
-                  <td className="py-2.5 px-4 text-slate-500">{t.due_date || "-"}</td>
+                  <td className="py-2.5 px-4 text-slate-600 whitespace-nowrap">{t.assignee_name || "-"}</td>
+                  <td className="py-2.5 px-4 text-slate-500 whitespace-nowrap">{t.due_date || "-"}</td>
                   <td className="py-2.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <button

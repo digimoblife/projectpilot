@@ -152,7 +152,7 @@ export function WorkTeamView({
         <div>
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <span>Tim & Kapasitas Kerja (Team & Capacity)</span>
-            <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+            <span className="inline-flex items-center whitespace-nowrap shrink-0 text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
               {members.length} Anggota
             </span>
           </h2>
@@ -235,7 +235,7 @@ export function WorkTeamView({
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-slate-900 leading-tight">{mem.name}</h4>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border inline-block mt-0.5 ${roleConf.color}`}>
+                      <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${roleConf.color}`}>
                         {roleConf.label}
                       </span>
                     </div>

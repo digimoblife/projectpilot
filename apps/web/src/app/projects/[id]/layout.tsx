@@ -434,7 +434,7 @@ export default function ProjectWorkspaceLayout({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer shrink-0 self-start md:self-auto"
             >
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
-              <span>Tanya AI Asisten (Project Q&A)</span>
+              <span>Tanya Asisten (Project Q&A)</span>
             </button>
           </div>
 

@@ -589,7 +589,7 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${conf.color}`}>
+                        <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${conf.color}`}>
                           {conf.label}
                         </span>
                         <select
@@ -683,7 +683,7 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                           <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
                             {risk.key}
                           </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${conf.color}`}>
+                          <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${conf.color}`}>
                             {conf.label}
                           </span>
                         </div>
@@ -925,15 +925,15 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           {isProvided ? (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <span className="inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                               Diterima ({dep.provided_date})
                             </span>
                           ) : dep.is_overdue ? (
-                            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                            <span className="inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
                               Terlambat (Overdue)
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                            <span className="inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
                               Menunggu Klien
                             </span>
                           )}

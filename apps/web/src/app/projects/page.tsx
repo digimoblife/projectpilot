@@ -278,11 +278,11 @@ export default function ProjectsPage() {
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
                       {project.code}
                     </span>
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${stageConfig.color}`}
+                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${stageConfig.color}`}
                     >
                       {stageConfig.label}
                     </span>
@@ -309,8 +309,8 @@ export default function ProjectsPage() {
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
                         <span>Target: {project.target_completion_date || "Belum ditentukan"}</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${healthConfig.dot}`} />
+                      <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${healthConfig.dot}`} />
                         <span className={`font-medium ${healthConfig.text}`}>
                           {healthConfig.label}
                         </span>

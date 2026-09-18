@@ -182,20 +182,20 @@ export default function MyWorkPage() {
                 className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="space-y-1.5 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 shrink-0 whitespace-nowrap">
                       {task.key}
                     </span>
-                    <span className="text-xs font-medium text-slate-500">
+                    <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
                       [{task.project_code}] {task.project_name}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusConf.color}`}
+                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusConf.color}`}
                     >
                       {statusConf.label}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border ${
                         priorityColors[task.priority] || "bg-slate-50 text-slate-600"
                       }`}
                     >

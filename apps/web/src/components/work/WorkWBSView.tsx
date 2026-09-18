@@ -406,10 +406,10 @@ export function WorkWBSView({
             type="button"
             disabled={isAILoading}
             onClick={handleAIExtractEpics}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors disabled:opacity-50 shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors disabled:opacity-50 shrink-0 cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-            <span>{isAILoading ? "Memetakan..." : "AI Ekstraksi Epics"}</span>
+            <span>{isAILoading ? "Memetakan..." : "Ekstraksi Epics"}</span>
           </button>
 
           <button
@@ -473,7 +473,7 @@ export function WorkWBSView({
           </div>
           <h3 className="text-sm font-bold text-slate-900">Belum ada Modul (Epic) Terdaftar</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Klik tombol <strong>&quot;✨ AI Ekstraksi Epics & Features&quot;</strong> di atas untuk memetakan modul proyek secara instan, atau buat secara manual.
+            Klik tombol <strong>&quot;Ekstraksi Epics & Features&quot;</strong> di atas untuk memetakan modul proyek secara instan, atau buat secara manual.
           </p>
         </div>
       ) : (

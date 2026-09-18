@@ -367,7 +367,7 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{prdDoc ? "AI Regenerate PRD" : "Susun Draf PRD (AI)"}</span>
+              <span>{prdDoc ? "Regenerate PRD" : "Susun Draf PRD"}</span>
             </button>
           </div>
         </div>
@@ -590,7 +590,7 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-emerald-400" />
-              <span>Susun Draf PRD Sekarang (AI)</span>
+              <span>Susun Draf PRD Sekarang</span>
             </button>
           </div>
         </div>
@@ -708,7 +708,7 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
                 ) : (
                   <>
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{prdDoc ? "Susun Ulang Sekarang" : "Mulai Penyusunan AI"}</span>
+                    <span>{prdDoc ? "Susun Ulang Sekarang" : "Mulai Penyusunan"}</span>
                   </>
                 )}
               </button>

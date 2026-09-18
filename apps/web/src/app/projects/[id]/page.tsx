@@ -279,7 +279,7 @@ export default function ProjectOverviewPage({
             <span className="text-2xl font-bold tracking-tight">
               {blockedTasks.length > 0 ? `${blockedTasks.length} Terhambat` : "0 Blocker"}
             </span>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+            <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full ${
               blockedTasks.length > 0 ? "bg-rose-200/80 text-rose-900" : "bg-emerald-200/80 text-emerald-900"
             }`}>
               {blockedTasks.length > 0 ? "Perlu Tindakan" : "Lancar"}
@@ -319,7 +319,7 @@ export default function ProjectOverviewPage({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Executive Summary & Ringkasan AI</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-semibold">
+              <span className="inline-flex items-center whitespace-nowrap shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-semibold">
                 Status Terkini
               </span>
             </div>
@@ -383,7 +383,7 @@ export default function ProjectOverviewPage({
                           </span>
                         </div>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                         isAchieved
                           ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                           : isMissed

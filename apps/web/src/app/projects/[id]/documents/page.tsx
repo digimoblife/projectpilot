@@ -359,16 +359,17 @@ export default function ProjectDocumentsPage({
                         : "border-slate-200 hover:border-slate-300"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
-                          {d.document_key} v{d.version}
+                        <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
+                          <span>{d.document_key}</span>
+                          <span className="text-slate-500 font-medium">v{d.version}</span>
                         </span>
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${typeCfg.color}`}>
+                        <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[9px] font-bold px-2 py-0.5 rounded border ${typeCfg.color}`}>
                           {typeCfg.label}
                         </span>
                       </div>
-                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${statusCfg.color}`}>
+                      <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[9px] font-semibold px-2 py-0.5 rounded border ${statusCfg.color}`}>
                         {statusCfg.label}
                       </span>
                     </div>
@@ -393,19 +394,20 @@ export default function ProjectDocumentsPage({
               {/* Document Header Bar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800">
-                      {selectedDoc.document_key} (Versi {selectedDoc.version})
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 shrink-0 whitespace-nowrap">
+                      <span>{selectedDoc.document_key}</span>
+                      <span className="text-slate-500 font-medium">v{selectedDoc.version}</span>
                     </span>
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
                         docTypeConfigs[selectedDoc.document_type]?.color
                       }`}
                     >
                       {docTypeConfigs[selectedDoc.document_type]?.label}
                     </span>
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
                         docStatusConfigs[selectedDoc.status]?.color
                       }`}
                     >

@@ -28,6 +28,7 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { AISuggestionReviewModal, AISuggestionItem } from "@/components/ai/AISuggestionReviewModal";
+import { MarkdownViewer } from "@/components/ui/markdown-viewer";
 
 interface MeetingParticipant {
   id: string;
@@ -141,6 +142,31 @@ export function CommunicationMeetingsView({
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
 
+  // AI MoM Generation Modal States
+  const [isAIGenModalOpen, setIsAIGenModalOpen] = useState(false);
+  const [aiRawText, setAiRawText] = useState("");
+  const [aiTitle, setAiTitle] = useState("");
+  const [aiMeetingType, setAiMeetingType] = useState("WEEKLY_SYNC");
+  const [aiMeetingDate, setAiMeetingDate] = useState(new Date().toISOString().slice(0, 16));
+  const [aiAttendeesRaw, setAiAttendeesRaw] = useState("");
+  const [aiGenError, setAiGenError] = useState<string | null>(null);
+  const [isGeneratingMoM, setIsGeneratingMoM] = useState(false);
+
+  const SAMPLE_MEETING_NOTES = `Rapat sinkronisasi mingguan Tim ProjectPilot dengan Stakeholder Klien.
+Hadir: Budi (Project Manager), Siti (Lead Frontend), Joko (Backend Architect), Pak Hartono (Client Sponsor), Ibu Dina (PIC Bisnis).
+
+Poin Diskusi:
+1. Progress sprint berjalan lancar di 75%, fitur Workspace dan Notulensi Rapat sudah masuk tahap review.
+2. Integrasi payment gateway terkendala: Klien belum menyerahkan sandbox API key dan webhook secret.
+3. Klien meminta penyesuaian alur approval di menu Notulensi: Action items hasil rumusan AI jangan langsung otomatis jadi task Kanban, melainkan harus ditawarkan terlebih dahulu untuk disetujui PM/Lead.
+4. Tim sepakat target rilis staging dimundurkan 2 hari menunggu kredensial dari Ibu Dina.
+
+Tindak Lanjut / Action Items:
+- Joko menyiapkan endpoint callback webhook payment gateway selambatnya hari Jumat
+- Siti merapikan form notulensi rapat dengan opsi AI generation dan approval konversi task
+- Ibu Dina mengirimkan API key sandbox payment gateway paling lambat besok sore
+- Budi mengupdate timeline project dan mengabari stakeholder`;
+
   useEffect(() => {
     fetchData();
   }, [projectId, token]);
@@ -207,6 +233,46 @@ export function CommunicationMeetingsView({
       setCreateError("Terjadi kesalahan sistem.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleGenerateAIMoM(e: React.FormEvent) {
+    e.preventDefault();
+    if (!aiRawText.trim()) {
+      setAiGenError("Teks catatan rapat / transkrip wajib diisi.");
+      return;
+    }
+    setAiGenError(null);
+    setIsGeneratingMoM(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      const res = await apiClient<Meeting>(`/projects/${projectId}/meetings/generate-ai`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          raw_text: aiRawText,
+          title: aiTitle.trim() || undefined,
+          meeting_type: aiMeetingType,
+          meeting_date: aiMeetingDate ? new Date(aiMeetingDate).toISOString() : new Date().toISOString(),
+          attendees_raw: aiAttendeesRaw.trim() || undefined,
+        }),
+      });
+
+      if (res.data) {
+        setIsAIGenModalOpen(false);
+        setAiRawText("");
+        setAiTitle("");
+        setAiAttendeesRaw("");
+        await fetchData();
+        setSelectedMeeting(res.data);
+      } else {
+        setAiGenError(res.error || "Gagal menyusun notulen dengan AI.");
+      }
+    } catch (err: any) {
+      setAiGenError(err?.message || "Terjadi kesalahan sistem saat menyusun notulen dengan AI.");
+    } finally {
+      setIsGeneratingMoM(false);
     }
   }
 
@@ -418,17 +484,31 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            resetCreateForm();
-            setIsCreateModalOpen(true);
-          }}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Catat Notulen Rapat Baru</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setAiGenError(null);
+              setIsAIGenModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-purple-200" />
+            <span>Generate MoM</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              resetCreateForm();
+              setIsCreateModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 text-slate-500" />
+            <span>Catat Manual</span>
+          </button>
+        </div>
       </div>
       )}
 
@@ -442,17 +522,31 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              resetCreateForm();
-              setIsCreateModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Catat Rapat Baru</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAiGenError(null);
+                setIsAIGenModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-200" />
+              <span>Generate MoM</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                resetCreateForm();
+                setIsCreateModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs active:scale-[0.98] transition-all shrink-0 cursor-pointer"
+            >
+              <Plus className="w-3 h-3 text-slate-500" />
+              <span>Manual</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -527,17 +621,17 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
                         {m.meeting_key}
                       </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${typeCfg.color}`}>
+                      <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${typeCfg.color}`}>
                         {typeCfg.label}
                       </span>
                     </div>
 
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
+                    <span className={`inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
                       {statusCfg.label}
                     </span>
                   </div>
@@ -571,12 +665,12 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
               {/* Meeting Header */}
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 shrink-0 whitespace-nowrap">
                       {selectedMeeting.meeting_key}
                     </span>
                     <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
                         meetingTypeConfigs[selectedMeeting.meeting_type]?.color
                       }`}
                     >
@@ -589,32 +683,32 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => handleDownloadMinutes(selectedMeeting)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors"
-                    title="Download Notulensi Rapat (.md)"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    title="Unduh Notulensi Rapat (.md)"
                   >
                     <Download className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Download (.md)</span>
+                    <span>Unduh (.md)</span>
                   </button>
 
                   <button
                     type="button"
                     disabled={isAILoading}
                     onClick={() => handleAIMeetingAnalysis(selectedMeeting)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50 whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    <span>{isAILoading ? "Menganalisis..." : "✨ AI Analisa Rapat"}</span>
+                    <span>{isAILoading ? "Menganalisis..." : "Analisa Dokumen"}</span>
                   </button>
 
                   {selectedMeeting.status !== "FINALIZED" && (
                     <button
                       type="button"
                       onClick={() => handleFinalizeMeeting(selectedMeeting)}
-                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg"
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
                     >
                       Finalisasi
                     </button>
@@ -653,9 +747,9 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
               </div>
 
               {/* Meeting Notes */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-900 block">Catatan Diskusi / Notula:</span>
+                  <span className="text-xs font-bold text-slate-900 block">Catatan Diskusi / Notulensi Rapat:</span>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
@@ -663,7 +757,7 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                       className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-purple-700 font-medium transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download .md</span>
+                      <span>Unduh .md</span>
                     </button>
                     <button
                       type="button"
@@ -675,58 +769,70 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                     </button>
                   </div>
                 </div>
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
-                  {selectedMeeting.notes || "Tidak ada catatan tertulis."}
+                <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200">
+                  {selectedMeeting.notes ? (
+                    <MarkdownViewer
+                      content={selectedMeeting.notes}
+                      showPrintButton={false}
+                      showCopyButton={false}
+                    />
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">Tidak ada catatan tertulis.</p>
+                  )}
                 </div>
               </div>
 
               {/* Action Items List */}
-              <div className="space-y-3 pt-2 border-t border-slate-100">
+              <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-slate-900 block">
                       Tindak Lanjut / Action Items ({selectedMeeting.action_items.length})
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      Tugas atau ketergantungan yang dapat dikonversi langsung menjadi Task / Blocker.
-                    </span>
+                    <p className="text-[11px] text-slate-500">
+                      Rekomendasi tindak lanjut hasil rapat. Anda dapat memilih untuk mengonversinya menjadi Task Kanban atau Issue teknis.
+                    </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setIsActionModalOpen(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg shadow-xs transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-medium rounded-lg shadow-xs transition-colors shrink-0"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Tambah Aksi</span>
+                    <span>Tambah Aksi Manual</span>
                   </button>
                 </div>
 
                 {selectedMeeting.action_items.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="p-5 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
                     Belum ada action item pada rapat ini.
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {selectedMeeting.action_items.map((item) => (
                       <div
                         key={item.id}
-                        className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5"
+                        className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                       >
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center flex-wrap gap-2">
                             <span className="text-xs font-bold text-slate-900">{item.title}</span>
-                            {item.status === "CONVERTED" && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Terkonversi: {item.converted_entity_type}
+                            {item.status === "CONVERTED" ? (
+                              <span className="inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✓ Terkonversi: {item.converted_entity_type}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center whitespace-nowrap shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                Belum dikonversi
                               </span>
                             )}
                           </div>
                           {item.description && (
-                            <p className="text-[11px] text-slate-600 line-clamp-1">{item.description}</p>
+                            <p className="text-[11px] text-slate-600 line-clamp-2">{item.description}</p>
                           )}
                           <div className="flex items-center gap-3 text-[10px] text-slate-500 pt-0.5">
-                            <span>PIC: {item.owner_name || "Belum ditugaskan"}</span>
+                            <span>PIC: <strong className="text-slate-700">{item.owner_name || "Belum ditugaskan"}</strong></span>
                             {item.due_date && (
                               <span>Target: {new Date(item.due_date).toLocaleDateString("id-ID")}</span>
                             )}
@@ -734,14 +840,33 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                         </div>
 
                         {item.status !== "CONVERTED" && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedActionForConvert(item)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors"
-                          >
-                            <span>Konversi</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedActionForConvert(item);
+                                setTargetEntity("TASK");
+                                setConvertError(null);
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                              title="Konversi menjadi Task di Kanban & Timeline"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Jadikan Task Kanban</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedActionForConvert(item);
+                                setTargetEntity("ISSUE");
+                                setConvertError(null);
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                              title="Konversi menjadi Issue / Kendala Teknis"
+                            >
+                              <span>Jadikan Issue</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -1093,6 +1218,166 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? "Mengonversi..." : "Konfirmasi Konversi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* AI MOM GENERATION MODAL */}
+      {isAIGenModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 space-y-4 my-8">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm">Susun Notulensi Rapat dengan AI (Project MoM)</h3>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Tempelkan catatan mentah atau transkrip meeting. AI akan merumuskan ringkasan formal, daftar hadir, dan rekomendasi action item untuk proyek ini.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isGeneratingMoM}
+                onClick={() => setIsAIGenModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {aiGenError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{aiGenError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGenerateAIMoM} className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Catatan Mentah / Transkrip Suara Rapat *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiRawText(SAMPLE_MEETING_NOTES);
+                      if (!aiTitle) setAiTitle("Sprint Review & Handover Diskusi");
+                      if (!aiAttendeesRaw) setAiAttendeesRaw("Budi (PM), Siti (Frontend), Joko (Backend), Pak Hartono (Client), Ibu Dina (PIC)");
+                    }}
+                    className="text-[11px] text-purple-600 hover:text-purple-700 font-medium cursor-pointer"
+                  >
+                    Gunakan Contoh Catatan
+                  </button>
+                </div>
+                <textarea
+                  rows={6}
+                  required
+                  disabled={isGeneratingMoM}
+                  value={aiRawText}
+                  onChange={(e) => setAiRawText(e.target.value)}
+                  placeholder="Tempel catatan singkat, transkrip rekaman, atau poin-poin diskusi rapat di sini..."
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:border-purple-500 focus:outline-hidden leading-relaxed"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Judul Rapat <span className="text-slate-400 font-normal">(opsional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    disabled={isGeneratingMoM}
+                    value={aiTitle}
+                    onChange={(e) => setAiTitle(e.target.value)}
+                    placeholder="Otomatis dirumuskan AI jika kosong"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:border-purple-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Jenis Rapat</label>
+                  <select
+                    disabled={isGeneratingMoM}
+                    value={aiMeetingType}
+                    onChange={(e) => setAiMeetingType(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:border-purple-500 focus:outline-hidden"
+                  >
+                    {Object.keys(meetingTypeConfigs).map((k) => (
+                      <option key={k} value={k}>
+                        {meetingTypeConfigs[k].label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Waktu Pelaksanaan Rapat</label>
+                  <input
+                    type="datetime-local"
+                    disabled={isGeneratingMoM}
+                    value={aiMeetingDate}
+                    onChange={(e) => setAiMeetingDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:border-purple-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Peserta Rapat <span className="text-slate-400 font-normal">(opsional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    disabled={isGeneratingMoM}
+                    value={aiAttendeesRaw}
+                    onChange={(e) => setAiAttendeesRaw(e.target.value)}
+                    placeholder="Contoh: Budi (PM), Siti (Dev), Klien"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:border-purple-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-purple-50/70 border border-purple-200/80 rounded-xl text-xs text-purple-900 flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  <strong>Human Approval Gate:</strong> Action items yang dirumuskan AI tidak akan otomatis masuk ke Kanban. Anda dapat mereview dan memilih tombol <em>&quot;Jadikan Task Kanban&quot;</em> atau <em>&quot;Jadikan Issue&quot;</em> kapan pun diperlukan.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  disabled={isGeneratingMoM}
+                  onClick={() => setIsAIGenModalOpen(false)}
+                  className="px-3.5 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGeneratingMoM}
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isGeneratingMoM ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Gemini sedang menyusun notulensi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-purple-200" />
+                      <span>Generate MoM</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

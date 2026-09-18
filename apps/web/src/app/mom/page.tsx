@@ -827,7 +827,7 @@ export default function MoMGeneratorPage() {
                       title="Download File Markdown (.md)"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download (.md)</span>
+                      <span>Unduh (.md)</span>
                     </button>
 
                     <button
@@ -1578,7 +1578,7 @@ export default function MoMGeneratorPage() {
                   className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Download (.md)</span>
+                  <span>Unduh (.md)</span>
                 </button>
               </div>
             </div>

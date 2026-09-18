@@ -407,7 +407,7 @@ export function Header() {
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-900 text-sm">Notifikasi Operasional</span>
                   {unreadCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold border border-rose-200">
+                    <span className="inline-flex items-center whitespace-nowrap shrink-0 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold border border-rose-200">
                       {unreadCount} baru
                     </span>
                   )}

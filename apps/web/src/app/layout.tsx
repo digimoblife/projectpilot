@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-
 import "./globals.css";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: "ProjectPilot - Project Management Hub",
+  title: "ProjectHub - Project Management Hub",
   description: "From Lead to Handover. Operational Hub for Project Managers.",
   icons: {
     icon: "/favicon.png",
@@ -22,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className="min-h-screen bg-slate-50 antialiased text-slate-900">
+      <body className="min-h-screen bg-slate-50 antialiased text-slate-900 font-sans">
         <AuthProvider>
           <AppShell>
             {children}

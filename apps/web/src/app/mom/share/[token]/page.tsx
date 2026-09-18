@@ -102,13 +102,20 @@ export default function MoMPublicSharePage() {
     window.print();
   }
 
+  useEffect(() => {
+    if (data?.title) {
+      document.title = `${data.title} | ProjectHub`;
+    } else {
+      document.title = "ProjectHub - Notulensi Rapat";
+    }
+  }, [data?.title]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-medium text-slate-500">Memuat Dokumen MoM...</p>
-        </div>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-10 h-10 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-semibold text-slate-700">Memuat dokumen Notulensi Rapat...</p>
+        <p className="text-xs text-slate-400 mt-1">Mengakses tautan publik terenkripsi</p>
       </div>
     );
   }
@@ -117,12 +124,12 @@ export default function MoMPublicSharePage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-xs space-y-4">
-          <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-500 mx-auto flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
             <AlertCircle className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-bold text-slate-900">Tautan Tidak Tersedia</h2>
+          <h2 className="text-base font-bold text-slate-900">Dokumen Tidak Tersedia</h2>
           <p className="text-xs text-slate-500 leading-relaxed">
-            {error || "Tautan dokumen yang Anda tuju mungkin sudah kedaluwarsa, dinonaktifkan oleh pemilik, atau salah ketik."}
+            {error || "Tautan share MoM ini mungkin sudah kedaluwarsa atau telah dinonaktifkan oleh administrator proyek."}
           </p>
         </div>
       </div>
@@ -143,19 +150,13 @@ export default function MoMPublicSharePage() {
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 shadow-2xs">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-xs">
-              <Share2 className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-900">ProjectPilot</span>
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200/60 rounded-full">
-                  Public MoM View
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">Minutes of Meeting Official Document</p>
-            </div>
+          <div className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="ProjectHub"
+              className="h-8 sm:h-9 w-auto object-contain shrink-0 max-w-[160px] sm:max-w-[200px]"
+            />
           </div>
 
           <div className="flex items-center gap-2">
@@ -408,7 +409,7 @@ export default function MoMPublicSharePage() {
 
         {/* Public Footer */}
         <footer className="pt-6 border-t border-slate-200 text-center text-xs text-slate-400 space-y-1">
-          <p>Dokumen ini dibagikan secara resmi melalui <strong>ProjectPilot Hub</strong>.</p>
+          <p>Dokumen ini dibagikan secara resmi melalui <strong>ProjectHub</strong>.</p>
           <p className="text-[11px]">Tampilan ini bersifat publik & read-only. Dilihat {data.view_count} kali.</p>
         </footer>
       </main>

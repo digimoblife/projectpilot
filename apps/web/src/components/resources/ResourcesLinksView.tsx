@@ -756,13 +756,13 @@ export function ResourcesLinksView({ projectId }: ResourcesLinksViewProps) {
                   onChange={(e) => setFormCategory(e.target.value as LinkCategory)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                 >
-                  <option value="FIGMA">FIGMA — Desain, Prototype, Wireframe</option>
-                  <option value="GITHUB">GITHUB — Repository, Pull Request, CI/CD</option>
-                  <option value="STAGING">STAGING — Lingkungan Pengujian UAT</option>
-                  <option value="PRODUCTION">PRODUCTION — Lingkungan Rilis Live</option>
-                  <option value="DOCS">DOCS — Dokumentasi Teknis Eksternal</option>
-                  <option value="DRIVE">DRIVE — Google Drive, Cloud Storage</option>
-                  <option value="OTHER">OTHER — Lainnya</option>
+                  <option value="FIGMA">FIGMA - Desain, Prototype, Wireframe</option>
+                  <option value="GITHUB">GITHUB - Repository, Pull Request, CI/CD</option>
+                  <option value="STAGING">STAGING - Lingkungan Pengujian UAT</option>
+                  <option value="PRODUCTION">PRODUCTION - Lingkungan Rilis Live</option>
+                  <option value="DOCS">DOCS - Dokumentasi Teknis Eksternal</option>
+                  <option value="DRIVE">DRIVE - Google Drive, Cloud Storage</option>
+                  <option value="OTHER">OTHER - Lainnya</option>
                 </select>
               </div>
 

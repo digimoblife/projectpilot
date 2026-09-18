@@ -202,7 +202,7 @@ export function WorkMilestonesView({
         <div>
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <span>Milestones Proyek</span>
-            <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+            <span className="inline-flex items-center whitespace-nowrap shrink-0 text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
               {milestones.length} Total
             </span>
           </h2>

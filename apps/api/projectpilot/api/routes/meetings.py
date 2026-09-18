@@ -14,12 +14,13 @@ from projectpilot.api.schemas.meeting import (
     ActionItemResponse,
     ActionItemUpdate,
     MeetingCreate,
+    MeetingGenerateAIRequest,
     MeetingParticipantCreate,
     MeetingParticipantResponse,
     MeetingResponse,
     MeetingUpdate,
 )
-from datetime import date
+from datetime import date, datetime
 from projectpilot.persistence.base import utc_now
 from projectpilot.persistence.models.activity import ActivityEvent
 from projectpilot.persistence.models.ai import AISuggestion, AISuggestionStatus
@@ -36,8 +37,10 @@ from projectpilot.persistence.models.meeting import (
     Meeting,
     MeetingParticipant,
     MeetingStatus,
+    ParticipantType,
 )
 from projectpilot.persistence.models.planning_tasks import Feature, Task, TaskStatus
+from projectpilot.persistence.models.project import Project
 from projectpilot.persistence.models.requirements_scope import Decision, DecisionStatus
 from projectpilot.persistence.models.user import User
 
@@ -90,6 +93,137 @@ async def create_meeting(
         actor_id=current_user.id,
         event_type="MEETING_CREATED",
         description=f"Notulen rapat '{meeting.title}' ({meeting.meeting_key}) dicatat.",
+    )
+    db.add(activity)
+
+    await db.commit()
+
+    # Re-fetch with relationships
+    query = (
+        select(Meeting)
+        .where(Meeting.id == meeting.id)
+        .options(selectinload(Meeting.participants), selectinload(Meeting.action_items))
+    )
+    res = await db.execute(query)
+    return res.scalar_one()
+
+
+@router.post("/generate-ai", response_model=MeetingResponse, status_code=status.HTTP_201_CREATED)
+async def generate_meeting_ai(
+    project_id: uuid.UUID,
+    req: MeetingGenerateAIRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    if not req.raw_text.strip():
+        raise HTTPException(status_code=400, detail="Teks mentah hasil rapat tidak boleh kosong.")
+
+    p_res = await db.execute(select(Project).where(Project.id == project_id))
+    proj = p_res.scalar_one_or_none()
+    if not proj:
+        raise HTTPException(status_code=404, detail="Project not found.")
+
+    project_context = f"Proyek: {proj.name} ({proj.code})"
+
+    meeting_date_val = req.meeting_date or utc_now()
+    meeting_date_str = meeting_date_val.strftime("%d %B %Y")
+    meeting_title_str = req.title.strip() if req.title and req.title.strip() else f"Rapat Koordinasi: {proj.name}"
+
+    # Process explicit attendees if provided
+    explicit_attendees: List[str] = []
+    if req.attendees_raw:
+        explicit_attendees = [a.strip() for a in req.attendees_raw.replace("\n", ",").split(",") if a.strip()]
+
+    attendees_prompt_str = ", ".join(explicit_attendees) if explicit_attendees else "Ekstrak otomatis dari teks rapat jika tersedia"
+
+    prompt = get_prompt(
+        "MOM_GENERATION",
+        meeting_title=meeting_title_str,
+        meeting_date=meeting_date_str,
+        project_context=project_context,
+        attendees=attendees_prompt_str,
+        outstanding_items_context="Tidak ada item tertunda dari rapat sebelumnya.",
+        raw_text=req.raw_text,
+    )
+
+    ai_result = await gemini_adapter.generate_structured(
+        prompt=prompt,
+        system_instruction=SYSTEM_LANGUAGE_INSTRUCTION,
+        capability="MOM_GENERATION",
+    )
+
+    final_title = req.title.strip() if req.title and req.title.strip() else ai_result.get("title", f"Notulen Rapat: {proj.name}")
+    content_md = ai_result.get("content_md", f"# Notulensi Rapat\n\n{req.raw_text}")
+    summary = ai_result.get("summary")
+    raw_attendees = explicit_attendees if explicit_attendees else (ai_result.get("attendees") or [])
+    raw_action_items = ai_result.get("action_items") or []
+
+    # Sequential meeting key
+    count_res = await db.execute(select(Meeting).where(Meeting.project_id == project_id))
+    existing_count = len(count_res.scalars().all())
+    meeting_key = f"MTG-{(existing_count + 1):03d}"
+
+    meeting = Meeting(
+        project_id=project_id,
+        meeting_key=meeting_key,
+        title=final_title,
+        meeting_type=req.meeting_type,
+        occurred_at=meeting_date_val,
+        status=MeetingStatus.COMPLETED,
+        notes=content_md,
+        transcript=req.raw_text,
+        summary=summary,
+        created_by_user_id=current_user.id,
+    )
+    db.add(meeting)
+    await db.flush()
+
+    # Add participants
+    for att in raw_attendees:
+        att_name = str(att).strip()
+        if att_name:
+            part = MeetingParticipant(
+                meeting_id=meeting.id,
+                participant_type=ParticipantType.INTERNAL,
+                display_name_snapshot=att_name,
+                role_snapshot=None,
+            )
+            db.add(part)
+
+    # Add action items (Status: OPEN - requiring Human Approval to convert to Task/Issue)
+    for act in raw_action_items:
+        act_title = act.get("title") or act.get("action_item") or "Tindak lanjut rapat"
+        owner_name = act.get("owner") or act.get("owner_name")
+        due_date_str = act.get("due_date")
+        
+        parsed_due = None
+        if due_date_str:
+            try:
+                parsed_due = datetime.fromisoformat(due_date_str)
+            except Exception:
+                parsed_due = None
+
+        module_str = act.get("module") or act.get("module_area") or "Umum"
+        priority_str = act.get("priority") or "Normal"
+        desc = f"Area: {module_str} | Prioritas: {priority_str}"
+
+        action_item = ActionItem(
+            project_id=project_id,
+            meeting_id=meeting.id,
+            title=act_title,
+            description=desc,
+            status=ActionItemStatus.OPEN,
+            owner_name=owner_name if owner_name and owner_name != "TBD" else None,
+            due_date=parsed_due,
+        )
+        db.add(action_item)
+
+    activity = ActivityEvent(
+        project_id=project_id,
+        actor_id=current_user.id,
+        event_type="MEETING_CREATED",
+        description=f"AI menyusun notulen rapat '{meeting.title}' ({meeting.meeting_key}) dengan {len(raw_action_items)} tindak lanjut.",
+        event_metadata={"meeting_key": meeting.meeting_key},
     )
     db.add(activity)
 

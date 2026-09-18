@@ -400,7 +400,7 @@ export default function LeadsPage() {
                       {lead.project_type || "Proyek"}
                     </span>
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${config.color}`}
+                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${config.color}`}
                     >
                       {config.label}
                     </span>
