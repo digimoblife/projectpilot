@@ -1,4 +1,5 @@
 
+import uuid
 import pytest
 from httpx import AsyncClient
 
@@ -751,4 +752,116 @@ async def test_resources_archived_file_download_and_recoverability(client: Async
 
     # Reset storage provider
     set_storage_provider(None)
+
+
+@pytest.mark.asyncio
+async def test_resources_text_markdown_crud(
+    client: AsyncClient,
+    db_session: AsyncSession,
+):
+    from projectpilot.services.storage import (
+        InMemoryStorageProvider,
+        set_storage_provider,
+    )
+    storage = InMemoryStorageProvider()
+    set_storage_provider(storage)
+
+    # Register PM user
+    email = f"pm_text_{uuid.uuid4().hex[:6]}@projectpilot.id"
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": "Password123!",
+            "full_name": "PM Text Lead",
+            "role": "PROJECT_MANAGER",
+        },
+    )
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "Password123!"},
+    )
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Create client
+    c_res = await client.post(
+        "/api/v1/clients",
+        json={"name": "Text Client", "company_name": "PT Text Digital"},
+        headers=headers,
+    )
+    client_id = c_res.json()["id"]
+
+    # Create project
+    proj_res = await client.post(
+        "/api/v1/projects",
+        json={"name": "Text Project", "code": f"PRJ-{uuid.uuid4().hex[:4].upper()}", "client_id": client_id},
+        headers=headers,
+    )
+    project_id = proj_res.json()["id"]
+
+    # 1. Create text resource
+    create_payload = {
+        "name": "Catatan Arsitektur Sistem",
+        "file_name": "arsitektur.md",
+        "content": "# Arsitektur\n\n- Modul 1\n- Modul 2",
+        "description": "Dokumen rancangan arsitektur microservices",
+    }
+    create_res = await client.post(
+        f"/api/v1/projects/{project_id}/resources/text",
+        json=create_payload,
+        headers=headers,
+    )
+    assert create_res.status_code == 201
+    created_data = create_res.json()
+    resource_id = created_data["id"]
+    assert created_data["name"] == "Catatan Arsitektur Sistem"
+    assert created_data["file_name"] == "arsitektur.md"
+    assert created_data["mime_type"] == "text/markdown"
+    assert created_data["file_size_bytes"] > 0
+
+    # 2. Get content
+    content_res = await client.get(
+        f"/api/v1/projects/{project_id}/resources/{resource_id}/content",
+        headers=headers,
+    )
+    assert content_res.status_code == 200
+    assert content_res.json()["content"] == "# Arsitektur\n\n- Modul 1\n- Modul 2"
+
+    # 3. Update text resource
+    update_payload = {
+        "name": "Catatan Arsitektur Sistem (Revisi)",
+        "file_name": "arsitektur_v2.md",
+        "content": "# Arsitektur Revisi\n\n- Modul A\n- Modul B",
+        "description": "Dokumentasi diperbarui",
+    }
+    update_res = await client.put(
+        f"/api/v1/projects/{project_id}/resources/{resource_id}/text",
+        json=update_payload,
+        headers=headers,
+    )
+    assert update_res.status_code == 200
+    updated_data = update_res.json()
+    assert updated_data["name"] == "Catatan Arsitektur Sistem (Revisi)"
+    assert updated_data["file_name"] == "arsitektur_v2.md"
+
+    # 4. Verify updated content
+    content_v2 = await client.get(
+        f"/api/v1/projects/{project_id}/resources/{resource_id}/content",
+        headers=headers,
+    )
+    assert content_v2.status_code == 200
+    assert content_v2.json()["content"] == "# Arsitektur Revisi\n\n- Modul A\n- Modul B"
+
+    # 5. Download updated file
+    download_res = await client.get(
+        f"/api/v1/projects/{project_id}/resources/{resource_id}/download",
+        headers=headers,
+    )
+    assert download_res.status_code == 200
+    assert download_res.text == "# Arsitektur Revisi\n\n- Modul A\n- Modul B"
+
+    # Reset storage provider
+    set_storage_provider(None)
+
 

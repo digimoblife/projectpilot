@@ -330,6 +330,7 @@ export default function ProjectWorkspaceLayout({
       icon: Files,
       subRoutes: [
         { name: "Berkas Proyek", href: `/projects/${id}/resources?tab=files`, sublabel: "PDF, Dokumen & Aset", icon: Files, tabKey: "files" },
+        { name: "File Teks", href: `/projects/${id}/resources?tab=texts`, sublabel: "Dokumen & Catatan Markdown", icon: FileText, tabKey: "texts" },
         { name: "Tautan Referensi", href: `/projects/${id}/resources?tab=links`, sublabel: "Figma, Git & Deployment", icon: Link2, tabKey: "links" },
       ],
     },

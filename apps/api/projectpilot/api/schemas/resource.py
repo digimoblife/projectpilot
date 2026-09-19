@@ -187,3 +187,52 @@ class ProjectResourceResponse(BaseModel):
     archived_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class ProjectTextResourceCreate(BaseModel):
+    name: str
+    file_name: str | None = None
+    content: str
+    description: str | None = None
+
+    @model_validator(mode="after")
+    def validate_text_resource(self) -> "ProjectTextResourceCreate":
+        if not self.name or not self.name.strip():
+            raise ValueError("Document name cannot be empty.")
+        self.name = self.name.strip()
+        fn = self.file_name.strip() if self.file_name else ""
+        if not fn:
+            fn = f"{self.name.lower().replace(' ', '_')}.md"
+        elif not (fn.lower().endswith(".md") or fn.lower().endswith(".markdown") or fn.lower().endswith(".txt")):
+            fn = f"{fn}.md"
+        self.file_name = validate_file_safety(fn, "text/markdown")
+        return self
+
+
+class ProjectTextResourceUpdate(BaseModel):
+    name: str | None = None
+    file_name: str | None = None
+    content: str
+    description: str | None = None
+
+    @model_validator(mode="after")
+    def validate_text_update(self) -> "ProjectTextResourceUpdate":
+        if self.name is not None:
+            cleaned = self.name.strip()
+            if not cleaned:
+                raise ValueError("Document name cannot be empty.")
+            self.name = cleaned
+        if self.file_name is not None:
+            fn = self.file_name.strip()
+            if fn and not (fn.lower().endswith(".md") or fn.lower().endswith(".markdown") or fn.lower().endswith(".txt")):
+                fn = f"{fn}.md"
+            self.file_name = validate_file_safety(fn, "text/markdown")
+        return self
+
+
+class ProjectTextContentResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    file_name: str | None = None
+    content: str
+

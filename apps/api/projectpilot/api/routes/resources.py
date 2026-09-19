@@ -22,6 +22,9 @@ from projectpilot.api.schemas.resource import (
     ProjectResourceCreate,
     ProjectResourceResponse,
     ProjectResourceUpdate,
+    ProjectTextContentResponse,
+    ProjectTextResourceCreate,
+    ProjectTextResourceUpdate,
     validate_file_safety,
 )
 from projectpilot.core.config import get_settings
@@ -300,6 +303,211 @@ async def upload_project_resource_file(
     )
     refreshed = await db.execute(query)
     return refreshed.scalar_one()
+
+
+# =========================================================================
+# 2B. CREATE TEXT RESOURCE (MARKDOWN / TEXT)
+# =========================================================================
+@router.post("/text", response_model=ProjectResourceResponse, status_code=status.HTTP_201_CREATED)
+async def create_text_resource(
+    project_id: uuid.UUID,
+    payload: ProjectTextResourceCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await verify_project_access(project_id, current_user, db)
+
+    storage = get_storage_provider()
+    new_id = uuid.uuid4()
+    content_bytes = payload.content.encode("utf-8")
+    file_size = len(content_bytes)
+    checksum = hashlib.sha256(content_bytes).hexdigest()
+    safe_filename = payload.file_name or f"{payload.name.lower().replace(' ', '_')}.md"
+    storage_key = f"projects/{project_id}/resources/{new_id}/{safe_filename}"
+
+    try:
+        await storage.store(
+            storage_key,
+            content_bytes,
+            "text/markdown",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to store text document: {e!s}",
+        )
+
+    resource = ProjectResource(
+        id=new_id,
+        project_id=project_id,
+        resource_type=ResourceType.FILE,
+        name=payload.name,
+        description=payload.description.strip() if payload.description else None,
+        status=ResourceStatus.ACTIVE,
+        file_name=safe_filename,
+        file_size_bytes=file_size,
+        mime_type="text/markdown",
+        storage_key=storage_key,
+        checksum_sha256=checksum,
+        created_by_user_id=current_user.id,
+        updated_by_user_id=current_user.id,
+    )
+
+    try:
+        db.add(resource)
+        activity = ActivityEvent(
+            project_id=project_id,
+            actor_id=current_user.id,
+            event_type="RESOURCE_TEXT_CREATED",
+            description=f"Dokumen teks markdown '{resource.name}' ({resource.file_name}) berhasil dibuat.",
+            event_metadata={
+                "resource_id": str(resource.id),
+                "file_name": resource.file_name,
+                "file_size_bytes": resource.file_size_bytes,
+                "mime_type": resource.mime_type,
+            },
+        )
+        db.add(activity)
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        await storage.delete(storage_key)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save text resource metadata: {e!s}",
+        )
+
+    query = (
+        select(ProjectResource)
+        .options(selectinload(ProjectResource.related_resource))
+        .where(ProjectResource.id == resource.id)
+    )
+    refreshed = await db.execute(query)
+    return refreshed.scalar_one()
+
+
+# =========================================================================
+# 2C. UPDATE TEXT RESOURCE CONTENT & METADATA
+# =========================================================================
+@router.put("/{resource_id}/text", response_model=ProjectResourceResponse)
+async def update_text_resource(
+    project_id: uuid.UUID,
+    resource_id: uuid.UUID,
+    payload: ProjectTextResourceUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await verify_project_access(project_id, current_user, db)
+
+    query = (
+        select(ProjectResource)
+        .options(selectinload(ProjectResource.related_resource))
+        .where(
+            ProjectResource.id == resource_id,
+            ProjectResource.project_id == project_id,
+        )
+    )
+    res = await db.execute(query)
+    resource = res.scalar_one_or_none()
+    if not resource:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resource not found in this project.",
+        )
+
+    storage = get_storage_provider()
+    content_bytes = payload.content.encode("utf-8")
+    file_size = len(content_bytes)
+    checksum = hashlib.sha256(content_bytes).hexdigest()
+
+    safe_filename = payload.file_name or resource.file_name or f"{resource.name.lower().replace(' ', '_')}.md"
+    storage_key = resource.storage_key or f"projects/{project_id}/resources/{resource.id}/{safe_filename}"
+
+    try:
+        await storage.store(
+            storage_key,
+            content_bytes,
+            "text/markdown",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update text document storage: {e!s}",
+        )
+
+    if payload.name:
+        resource.name = payload.name
+    if payload.description is not None:
+        resource.description = payload.description.strip() if payload.description else None
+    resource.file_name = safe_filename
+    resource.file_size_bytes = file_size
+    resource.storage_key = storage_key
+    resource.checksum_sha256 = checksum
+    resource.updated_by_user_id = current_user.id
+    resource.updated_at = utc_now()
+
+    activity = ActivityEvent(
+        project_id=project_id,
+        actor_id=current_user.id,
+        event_type="RESOURCE_TEXT_UPDATED",
+        description=f"Dokumen teks markdown '{resource.name}' ({resource.file_name}) diperbarui.",
+        event_metadata={
+            "resource_id": str(resource.id),
+            "file_name": resource.file_name,
+            "file_size_bytes": resource.file_size_bytes,
+        },
+    )
+    db.add(activity)
+    await db.commit()
+    await db.refresh(resource)
+    return resource
+
+
+# =========================================================================
+# 2D. GET TEXT RESOURCE RAW CONTENT
+# =========================================================================
+@router.get("/{resource_id}/content", response_model=ProjectTextContentResponse)
+async def get_text_resource_content(
+    project_id: uuid.UUID,
+    resource_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await verify_project_access(project_id, current_user, db)
+
+    query = select(ProjectResource).where(
+        ProjectResource.id == resource_id,
+        ProjectResource.project_id == project_id,
+    )
+    result = await db.execute(query)
+    resource = result.scalar_one_or_none()
+    if not resource:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resource not found in this project.",
+        )
+
+    if not resource.storage_key:
+        return ProjectTextContentResponse(
+            id=resource.id,
+            name=resource.name,
+            file_name=resource.file_name,
+            content="",
+        )
+
+    storage = get_storage_provider()
+    try:
+        data, _ = await storage.get(resource.storage_key)
+        text_content = data.decode("utf-8", errors="replace")
+    except FileNotFoundError:
+        text_content = ""
+
+    return ProjectTextContentResponse(
+        id=resource.id,
+        name=resource.name,
+        file_name=resource.file_name,
+        content=text_content,
+    )
 
 
 # =========================================================================
