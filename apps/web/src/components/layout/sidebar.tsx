@@ -19,7 +19,7 @@ const navigationItems = [
   { name: "Leads", href: "/leads", icon: Users, label: "Buka Pipeline Leads" },
   { name: "Projects", href: "/projects", icon: FolderKanban, label: "Buka Daftar Proyek" },
   { name: "My Work", href: "/my-work", icon: CheckSquare, label: "Buka Task Saya" },
-  { name: "MoM Generator", href: "/mom", icon: Sparkles, label: "Buka MoM Generator AI" },
+  { name: "MoM Generator", href: "/mom", icon: Sparkles, label: "Buka MoM Generator" },
   { name: "Reports", href: "/reports", icon: FileText, label: "Buka Repositori Laporan" },
   { name: "Documents", href: "/documents", icon: Files, label: "Buka Repositori Dokumen" },
 ];
@@ -30,9 +30,9 @@ export function Sidebar() {
   return (
     <aside
       aria-label="Navigasi Sidebar Desktop"
-      className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50 bg-white border-r border-slate-200"
+      className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50 bg-[var(--ph-bg-nav)] border-r border-[var(--ph-border-soft)]"
     >
-      <div className="flex items-center px-4 h-16 border-b border-slate-200 shrink-0">
+      <div className="flex items-center px-4 h-16 border-b border-[var(--ph-border-soft)] shrink-0">
         <Link href="/dashboard" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -52,29 +52,23 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               aria-label={item.label}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] focus:outline-hidden focus:ring-2 focus:ring-[var(--ph-primary)]/20 ${
                 isActive
-                  ? "bg-slate-900 text-white shadow-xs font-semibold"
-                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
+                  ? "bg-[var(--ph-primary)] text-white shadow-xs font-semibold"
+                  : "text-[var(--ph-text-secondary)] hover:bg-[var(--ph-surface-hover)] hover:text-[var(--ph-text)]"
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400"}`} />
+              <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-[var(--ph-text-placeholder)]"}`} />
               <span>{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-200">
-        <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-700">ProjectPilot AI</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          </div>
-          <p className="text-[10px] text-slate-500 leading-relaxed">
-            Evidence-grounded engine aktif dan terlindungi.
-          </p>
-        </div>
+      <div className="p-4 border-t border-[var(--ph-border-soft)]">
+        <p className="text-[11px] font-medium text-[var(--ph-text-muted)] text-center tracking-wide">
+          ProjectHub
+        </p>
       </div>
     </aside>
   );

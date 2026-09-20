@@ -33,7 +33,7 @@ export function MobileNav() {
 
   const secondaryItems = [
     {
-      name: "MoM Generator (AI)",
+      name: "MoM Generator",
       desc: "Generate notulensi rapat otomatis (.md)",
       href: "/mom",
       icon: Sparkles,
@@ -163,19 +163,6 @@ export function MobileNav() {
               })}
             </div>
 
-            {/* AI Status Card */}
-            <div className="p-3.5 bg-slate-900 rounded-2xl text-white space-y-1.5 shadow-md border border-slate-800">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-slate-300" />
-                  <span className="text-xs font-bold">ProjectPilot AI</span>
-                </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              </div>
-              <p className="text-[10px] text-slate-300 leading-relaxed">
-                Evidence-grounded engine aktif &amp; terlindungi Human Approval Gate.
-              </p>
-            </div>
 
             {/* Logout Button */}
             <button

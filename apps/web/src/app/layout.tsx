@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { AuthProvider } from "@/lib/auth-context";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["400", "500", "600"],
+});
 
 export const metadata: Metadata = {
   title: "ProjectHub - Project Management Hub",
@@ -20,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
-      <body className="min-h-screen bg-slate-50 antialiased text-slate-900 font-sans">
+    <html lang="id" data-theme="light" className={`light ${inter.variable}`}>
+      <body className="min-h-screen bg-[var(--ph-bg-subtle)] text-[var(--ph-text)] antialiased font-sans">
         <AuthProvider>
           <AppShell>
             {children}

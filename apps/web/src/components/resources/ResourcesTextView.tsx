@@ -28,7 +28,7 @@ import {
   Minus,
   Link as LinkIcon,
   HelpCircle,
-  FileCode,
+  FolderArchive,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -36,6 +36,7 @@ import { apiClient } from "@/lib/api-client";
 import {
   ProjectResource,
   formatBytes,
+  formatDate,
   formatDateTime,
   downloadResourceFile,
 } from "./types";
@@ -115,33 +116,41 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
     }
   }, [actionSuccessMessage]);
 
-  // Filter text & markdown files
-  const textResources = resources.filter((res) => {
-    const fn = (res.file_name || "").toLowerCase();
-    const mime = (res.mime_type || "").toLowerCase();
-    const isTextDoc =
-      fn.endsWith(".md") ||
-      fn.endsWith(".markdown") ||
-      fn.endsWith(".txt") ||
-      mime.includes("text/markdown") ||
-      mime.includes("text/plain") ||
-      mime.includes("text/x-markdown");
+  // Filter only text & markdown files
+  const filteredResources = resources
+    .filter((res) => {
+      if (res.resource_type !== "FILE") return false;
 
-    if (!isTextDoc) return false;
+      const fn = (res.file_name || "").toLowerCase();
+      const mime = (res.mime_type || "").toLowerCase();
+      const isTextDoc =
+        fn.endsWith(".md") ||
+        fn.endsWith(".markdown") ||
+        fn.endsWith(".txt") ||
+        mime.includes("text/markdown") ||
+        mime.includes("text/plain") ||
+        mime.includes("text/x-markdown");
 
-    if (statusFilter === "ACTIVE" && res.status !== "ACTIVE") return false;
-    if (statusFilter === "ARCHIVED" && res.status !== "ARCHIVED") return false;
+      if (!isTextDoc) return false;
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = res.name.toLowerCase().includes(q);
-      const matchFileName = fn.includes(q);
-      const matchDesc = (res.description || "").toLowerCase().includes(q);
-      return matchName || matchFileName || matchDesc;
-    }
+      if (statusFilter === "ACTIVE" && res.status !== "ACTIVE") return false;
+      if (statusFilter === "ARCHIVED" && res.status !== "ARCHIVED") return false;
 
-    return true;
-  });
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = res.name.toLowerCase().includes(q);
+        const matchFileName = fn.includes(q);
+        const matchDesc = (res.description || "").toLowerCase().includes(q);
+        return matchName || matchFileName || matchDesc;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.status === "ACTIVE" && b.status === "ARCHIVED") return -1;
+      if (a.status === "ARCHIVED" && b.status === "ACTIVE") return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   // Helper auto-format slug file name from title
   const generateFileNameFromTitle = (title: string): string => {
@@ -244,7 +253,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
           setEditorError(res.error);
         } else {
           setIsEditorOpen(false);
-          setActionSuccessMessage(`Dokumen "${docTitle}" berhasil diperbarui.`);
+          setActionSuccessMessage(`Dokumen '${docTitle}' berhasil diperbarui.`);
           fetchResources();
         }
       } else {
@@ -265,7 +274,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
           setEditorError(res.error);
         } else {
           setIsEditorOpen(false);
-          setActionSuccessMessage(`Dokumen "${docTitle}" berhasil dibuat dan disimpan.`);
+          setActionSuccessMessage(`Dokumen '${docTitle}' berhasil dibuat dan disimpan.`);
           fetchResources();
         }
       }
@@ -299,7 +308,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
       if (res.error) {
         setError(res.error);
       } else {
-        setActionSuccessMessage(`Dokumen "${resourceToArchive.name}" berhasil diarsipkan.`);
+        setActionSuccessMessage(`Dokumen '${resourceToArchive.name}' berhasil diarsipkan.`);
         setResourceToArchive(null);
         fetchResources();
       }
@@ -321,7 +330,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
       if (res.error) {
         setError(res.error);
       } else {
-        setActionSuccessMessage(`Dokumen "${resourceToRestore.name}" berhasil dipulihkan.`);
+        setActionSuccessMessage(`Dokumen '${resourceToRestore.name}' berhasil dipulihkan.`);
         setResourceToRestore(null);
         fetchResources();
       }
@@ -345,7 +354,6 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
       el.value.substring(0, start) + replacement + el.value.substring(end);
     setDocContent(newContent);
 
-    // Focus & selection position
     setTimeout(() => {
       el.focus();
       const newCursorPos = start + prefix.length + selectedText.length;
@@ -353,251 +361,292 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
     }, 0);
   };
 
-  // Calculate doc stats
+  // Stats
   const wordCount = docContent.trim() ? docContent.trim().split(/\s+/).length : 0;
   const charCount = docContent.length;
   const lineCount = docContent ? docContent.split("\n").length : 0;
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">
-              File Teks & Catatan Markdown
-            </h2>
-            <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
-              {textResources.length} Berkas
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Buat dokumen markdown langsung di browser, simpan aman di storage proyek, baca pratinjau, dan unduh berkas kapan saja.
-          </p>
-        </div>
-
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium rounded-lg transition-colors shadow-xs shrink-0 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Buat Dokumen Teks</span>
-        </button>
-      </div>
-
-      {/* Action Notification Alert */}
+      {/* Toast feedback banner */}
       {actionSuccessMessage && (
-        <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm shadow-xs animate-in fade-in duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{actionSuccessMessage}</span>
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center justify-between gap-2 shadow-xs transition-all">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="font-medium">{actionSuccessMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionSuccessMessage(null)}
+            className="text-emerald-600 hover:text-emerald-900 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
       {/* Main Error Alert */}
       {error && (
-        <div className="flex items-center justify-between p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-sm shadow-xs">
-          <div className="flex items-center gap-2.5">
+        <div className="bg-white rounded-2xl border border-rose-200 p-4 shadow-xs flex items-center justify-between text-xs text-rose-800">
+          <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{error}</span>
           </div>
           <button
+            type="button"
             onClick={() => setError(null)}
-            className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
+            className="text-rose-500 hover:text-rose-700 cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cari judul dokumen, nama berkas, atau deskripsi..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
-          />
+      {/* Header Bar: Title, Search, and Create Action (Consistent with Berkas Proyek & Tautan Referensi) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">File Teks</h2>
+          <p className="text-xs text-slate-500">Dokumen dan catatan markdown proyek</p>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <span className="text-xs text-slate-500 font-medium">Status:</span>
-          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-medium">
-            <button
-              onClick={() => setStatusFilter("ACTIVE")}
-              className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-                statusFilter === "ACTIVE"
-                  ? "bg-blue-50 text-blue-700 font-semibold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Aktif
-            </button>
-            <button
-              onClick={() => setStatusFilter("ARCHIVED")}
-              className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-                statusFilter === "ARCHIVED"
-                  ? "bg-blue-50 text-blue-700 font-semibold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Diarsipkan
-            </button>
-            <button
-              onClick={() => setStatusFilter("ALL")}
-              className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-                statusFilter === "ALL"
-                  ? "bg-blue-50 text-blue-700 font-semibold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Semua
-            </button>
+        <div className="flex items-center gap-2.5">
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Cari dokumen teks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-1.5 rounded-xl border border-slate-200 text-xs bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 transition-all"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
+
+          {/* Create Document Button */}
+          <button
+            type="button"
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-black transition-all shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 text-slate-300" />
+            <span>Buat Dokumen</span>
+          </button>
         </div>
       </div>
 
-      {/* Content List Area */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-slate-200/80">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
-          <p className="text-sm text-slate-500 font-medium">Memuat daftar file teks...</p>
-        </div>
-      ) : textResources.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-slate-200/80 text-center px-4">
-          <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-3.5 ring-8 ring-indigo-50/50">
-            <FileCode className="w-7 h-7" />
+      {/* Status Filter Pills (Consistent with Tautan Referensi) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        <button
+          type="button"
+          onClick={() => setStatusFilter("ALL")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+            statusFilter === "ALL"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80"
+          }`}
+        >
+          Semua
+        </button>
+        <button
+          type="button"
+          onClick={() => setStatusFilter("ACTIVE")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+            statusFilter === "ACTIVE"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80"
+          }`}
+        >
+          Aktif
+        </button>
+        <button
+          type="button"
+          onClick={() => setStatusFilter("ARCHIVED")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+            statusFilter === "ARCHIVED"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80"
+          }`}
+        >
+          Diarsipkan
+        </button>
+      </div>
+
+      {/* Loading state */}
+      {isLoading && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 text-slate-500 animate-spin" />
+            <p className="text-xs text-slate-500 font-medium">Memuat dokumen teks...</p>
           </div>
-          <h3 className="text-base font-semibold text-slate-900 mb-1">
-            Belum Ada Dokumen Teks
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-md mb-5">
-            {searchQuery
-              ? "Tidak ada dokumen teks yang sesuai dengan kata kunci pencarian."
-              : "Buat berkas markdown untuk menyimpan catatan arsitektur, panduan teknis, checklist, atau spesifikasi dokumen proyek."}
-          </p>
-          {!searchQuery && (
-            <button
-              onClick={handleOpenCreateModal}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-xs cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Buat Dokumen Baru Sekarang</span>
-            </button>
-          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {textResources.map((res) => {
-            const isArchived = res.status === "ARCHIVED";
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !error && filteredResources.length === 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 shadow-xs text-center">
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-400 shadow-xs">
+              <FolderArchive className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-base font-bold text-slate-900">
+                {searchQuery
+                  ? "Tidak Ada Dokumen Teks yang Cocok"
+                  : "Belum Memiliki Dokumen Teks"}
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {searchQuery
+                  ? `Pencarian untuk "${searchQuery}" tidak menemukan dokumen teks apapun.`
+                  : "Buat dokumen markdown untuk menyimpan catatan teknis, panduan arsitektur, checklist, atau spesifikasi dokumen proyek."}
+              </p>
+            </div>
+
+            {!searchQuery && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleOpenCreateModal}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-black transition-all shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Buat Dokumen</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* File List Cards (Consistent with Berkas Proyek grid and styling) */}
+      {!isLoading && !error && filteredResources.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          {filteredResources.map((file) => {
+            const isArchived = file.status === "ARCHIVED";
+            const isDownloading = downloadingId === file.id;
+
             return (
               <div
-                key={res.id}
-                className={`flex flex-col justify-between bg-white rounded-xl border transition-all hover:shadow-md ${
+                key={file.id}
+                className={`bg-white rounded-2xl border p-4 shadow-xs transition-all flex flex-col justify-between gap-3 ${
                   isArchived
-                    ? "border-slate-200 opacity-75 bg-slate-50/40"
-                    : "border-slate-200/90 hover:border-blue-300"
+                    ? "border-amber-200/70 bg-amber-50/20"
+                    : "border-slate-200 hover:border-slate-300"
                 }`}
               >
-                {/* Header card */}
-                <div className="p-4 sm:p-5 pb-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-sm font-semibold text-slate-900 truncate" title={res.name}>
-                          {res.name}
-                        </h4>
-                        <p className="text-xs text-slate-500 font-mono truncate" title={res.file_name || ""}>
-                          {res.file_name || "dokumen.md"}
-                        </p>
-                      </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 mt-0.5 text-slate-600">
+                      <FileText className="w-5 h-5 text-slate-600" />
                     </div>
-
-                    {isArchived ? (
-                      <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                        Diarsipkan
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                        Aktif
-                      </span>
-                    )}
-                  </div>
-
-                  {res.description && (
-                    <p className="mt-3 text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                      {res.description}
-                    </p>
-                  )}
-
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>{formatBytes(res.file_size_bytes)}</span>
-                    <span>Diperbarui {formatDateTime(res.updated_at || res.created_at)}</span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4
+                          className={`text-xs font-bold truncate ${
+                            isArchived ? "text-slate-600 line-through decoration-amber-500" : "text-slate-900"
+                          }`}
+                          title={file.name}
+                        >
+                          {file.name}
+                        </h4>
+                        {isArchived ? (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-semibold uppercase tracking-wider shrink-0">
+                            Diarsipkan
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold shrink-0">
+                            Aktif
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5" title={file.file_name || ""}>
+                        {file.file_name || "dokumen.md"}
+                      </p>
+                      {file.description && (
+                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                          {file.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Footer action buttons */}
-                <div className="px-4 sm:px-5 py-3 bg-slate-50/80 border-t border-slate-100 rounded-b-xl flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-slate-700">
+                      {formatBytes(file.file_size_bytes)}
+                    </span>
+                    <span>•</span>
+                    <span title={`Diperbarui: ${formatDateTime(file.updated_at || file.created_at)}`}>
+                      {formatDate(file.updated_at || file.created_at)}
+                    </span>
+                  </div>
+
                   <div className="flex items-center gap-1.5">
                     {/* View Preview Button */}
                     <button
-                      onClick={() => setPreviewResource(res)}
+                      type="button"
+                      onClick={() => setPreviewResource(file)}
+                      className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                       title="Lihat Pratinjau Dokumen"
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-blue-600 transition-colors cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>Lihat</span>
                     </button>
 
-                    {/* Edit Document Button */}
+                    {/* Edit Button */}
                     {!isArchived && (
                       <button
-                        onClick={() => handleOpenEditModal(res)}
+                        type="button"
+                        onClick={() => handleOpenEditModal(file)}
+                        className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                         title="Edit Dokumen Markdown"
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-blue-600 transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit</span>
                       </button>
                     )}
-                  </div>
 
-                  <div className="flex items-center gap-1">
                     {/* Download Button */}
                     <button
-                      onClick={() => handleDownload(res)}
-                      disabled={downloadingId === res.id}
+                      type="button"
+                      onClick={() => handleDownload(file)}
+                      disabled={isDownloading}
+                      className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                       title="Unduh Berkas Markdown (.md)"
-                      className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white rounded-md transition-colors border border-transparent hover:border-slate-200 cursor-pointer disabled:opacity-50"
                     >
-                      {downloadingId === res.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      {isDownloading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-700" />
                       ) : (
-                        <Download className="w-4 h-4" />
+                        <Download className="w-3.5 h-3.5" />
                       )}
                     </button>
 
                     {/* Archive / Restore Button */}
                     {isArchived ? (
                       <button
-                        onClick={() => setResourceToRestore(res)}
+                        type="button"
+                        onClick={() => setResourceToRestore(file)}
+                        className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                         title="Pulihkan Dokumen"
-                        className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-white rounded-md transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
                       >
-                        <RefreshCw className="w-4 h-4" />
+                        <RefreshCw className="w-3.5 h-3.5" />
                       </button>
                     ) : (
                       <button
-                        onClick={() => setResourceToArchive(res)}
+                        type="button"
+                        onClick={() => setResourceToArchive(file)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Arsipkan Dokumen"
-                        className="p-1.5 text-slate-500 hover:text-rose-700 hover:bg-white rounded-md transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
                       >
-                        <Archive className="w-4 h-4" />
+                        <Archive className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -610,16 +659,16 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
 
       {/* MODAL EDITOR: CREATE / EDIT MARKDOWN DOCUMENT */}
       {isEditorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-slate-900">
+                  <h3 className="text-sm font-bold text-slate-900">
                     {isEditing ? "Edit Dokumen Markdown" : "Buat Dokumen Teks Baru"}
                   </h3>
                   <p className="text-xs text-slate-500">
@@ -640,7 +689,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
             {/* Modal Content / Form Area */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {editorError && (
-                <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-sm">
+                <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-xs">
                   <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                   <span>{editorError}</span>
                 </div>
@@ -658,7 +707,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                     value={docTitle}
                     onChange={(e) => handleTitleChange(e.target.value)}
                     disabled={isSaving}
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-slate-900"
+                    className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-slate-300 transition-all font-medium text-slate-900"
                   />
                 </div>
 
@@ -675,7 +724,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                       setDocFileName(e.target.value);
                     }}
                     disabled={isSaving}
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-slate-800"
+                    className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-slate-300 transition-all font-mono text-slate-800"
                   />
                 </div>
               </div>
@@ -691,7 +740,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                   value={docDescription}
                   onChange={(e) => setDocDescription(e.target.value)}
                   disabled={isSaving}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800"
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-slate-300 transition-all text-slate-800"
                 />
               </div>
 
@@ -699,82 +748,81 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
               <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50 flex flex-col">
                 {/* Toolbar */}
                 <div className="px-3 py-2 bg-slate-100/90 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                  {/* Formatting Buttons */}
                   <div className="flex flex-wrap items-center gap-1">
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("**", "**", "teks tebal")}
                       title="Tebal (Bold)"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Bold className="w-4 h-4" />
+                      <Bold className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("*", "*", "teks miring")}
                       title="Miring (Italic)"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Italic className="w-4 h-4" />
+                      <Italic className="w-3.5 h-3.5" />
                     </button>
                     <div className="w-px h-4 bg-slate-300 mx-1" />
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("# ", "", "Judul Utama")}
                       title="Heading 1"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Heading1 className="w-4 h-4" />
+                      <Heading1 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("## ", "", "Sub Judul")}
                       title="Heading 2"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Heading2 className="w-4 h-4" />
+                      <Heading2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("### ", "", "Topik Detail")}
                       title="Heading 3"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Heading3 className="w-4 h-4" />
+                      <Heading3 className="w-3.5 h-3.5" />
                     </button>
                     <div className="w-px h-4 bg-slate-300 mx-1" />
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("- ", "", "Item daftar")}
                       title="Daftar Poin"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <List className="w-4 h-4" />
+                      <List className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("1. ", "", "Item berurutan")}
                       title="Daftar Angka"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <ListOrdered className="w-4 h-4" />
+                      <ListOrdered className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("- [ ] ", "", "Tugas baru")}
                       title="Checklist Tugas"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <CheckSquare className="w-4 h-4" />
+                      <CheckSquare className="w-3.5 h-3.5" />
                     </button>
                     <div className="w-px h-4 bg-slate-300 mx-1" />
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("```typescript\n", "\n```", "// Tulis kode di sini")}
                       title="Blok Kode"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Code className="w-4 h-4" />
+                      <Code className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
@@ -784,33 +832,33 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                         )
                       }
                       title="Tabel"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Table className="w-4 h-4" />
+                      <Table className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("> ", "", "Kutipan atau catatan penting")}
                       title="Kutipan (Quote)"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Quote className="w-4 h-4" />
+                      <Quote className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("\n---\n")}
                       title="Garis Pemisah"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <Minus className="w-4 h-4" />
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => insertTextAtCursor("[", "](https://example.com)", "Teks Tautan")}
                       title="Tautan (Link)"
-                      className="p-1.5 text-slate-700 hover:bg-white hover:text-blue-600 rounded-md transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-700 hover:bg-white hover:text-slate-900 rounded-md transition-colors cursor-pointer"
                     >
-                      <LinkIcon className="w-4 h-4" />
+                      <LinkIcon className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
@@ -821,7 +869,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                       onClick={() => setEditorMode("write")}
                       className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                         editorMode === "write"
-                          ? "bg-blue-50 text-blue-700 font-semibold"
+                          ? "bg-slate-900 text-white font-semibold"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
@@ -832,7 +880,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                       onClick={() => setEditorMode("split")}
                       className={`hidden lg:block px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                         editorMode === "split"
-                          ? "bg-blue-50 text-blue-700 font-semibold"
+                          ? "bg-slate-900 text-white font-semibold"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
@@ -843,7 +891,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                       onClick={() => setEditorMode("preview")}
                       className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                         editorMode === "preview"
-                          ? "bg-blue-50 text-blue-700 font-semibold"
+                          ? "bg-slate-900 text-white font-semibold"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
@@ -855,11 +903,11 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                 {/* Editor Content Area */}
                 {isLoadingDocContent ? (
                   <div className="flex flex-col items-center justify-center py-24 bg-white">
-                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
+                    <Loader2 className="w-8 h-8 text-slate-500 animate-spin mb-2" />
                     <p className="text-xs text-slate-500">Memuat isi dokumen...</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-1 min-h-[360px] max-h-[460px] bg-white">
+                  <div className="grid grid-cols-1 min-h-[360px] max-h-[460px] bg-white">
                     {editorMode === "split" ? (
                       <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 h-full">
                         <textarea
@@ -867,11 +915,11 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                           value={docContent}
                           onChange={(e) => setDocContent(e.target.value)}
                           placeholder="Ketik konten markdown di sini..."
-                          className="w-full h-[360px] p-4 text-sm font-mono text-slate-800 bg-white resize-none focus:outline-hidden leading-relaxed"
+                          className="w-full h-[360px] p-4 text-xs font-mono text-slate-800 bg-white resize-none focus:outline-hidden leading-relaxed"
                           disabled={isSaving}
                         />
                         <div className="h-[360px] overflow-y-auto p-4 bg-slate-50/50">
-                          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
                             Hasil Pratinjau
                           </div>
                           <div className="prose prose-sm max-w-none text-slate-800">
@@ -887,7 +935,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                         value={docContent}
                         onChange={(e) => setDocContent(e.target.value)}
                         placeholder="Ketik konten markdown di sini..."
-                        className="w-full h-[360px] p-4 text-sm font-mono text-slate-800 bg-white resize-none focus:outline-hidden leading-relaxed"
+                        className="w-full h-[360px] p-4 text-xs font-mono text-slate-800 bg-white resize-none focus:outline-hidden leading-relaxed"
                         disabled={isSaving}
                       />
                     ) : (
@@ -923,7 +971,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                 type="button"
                 onClick={() => setIsEditorOpen(false)}
                 disabled={isSaving}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Batal
               </button>
@@ -931,11 +979,11 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
                 type="button"
                 onClick={handleSaveDocument}
                 disabled={isSaving || isLoadingDocContent}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-black rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-50"
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Menyimpan Dokumen...</span>
                   </>
                 ) : (
@@ -960,30 +1008,30 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
       {/* CONFIRMATION MODAL: ARCHIVE */}
       {resourceToArchive && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 max-w-md w-full animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-md w-full">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
               <Archive className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-slate-900 mb-1">
+            <h3 className="text-sm font-bold text-slate-900 mb-1">
               Arsipkan Dokumen Teks?
             </h3>
-            <p className="text-sm text-slate-500 mb-5 leading-relaxed">
-              Dokumen <span className="font-medium text-slate-800">&quot;{resourceToArchive.name}&quot;</span> akan dipindahkan ke daftar arsip. Anda dapat memulihkannya kembali kapan saja.
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              Dokumen <span className="font-semibold text-slate-800">&quot;{resourceToArchive.name}&quot;</span> akan dipindahkan ke daftar arsip. Anda dapat memulihkannya kembali kapan saja.
             </p>
             <div className="flex items-center justify-end gap-2.5">
               <button
                 onClick={() => setResourceToArchive(null)}
                 disabled={isProcessingAction}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleArchiveConfirm}
                 disabled={isProcessingAction}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-xs cursor-pointer"
               >
-                {isProcessingAction && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isProcessingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Ya, Arsipkan</span>
               </button>
             </div>
@@ -994,30 +1042,30 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
       {/* CONFIRMATION MODAL: RESTORE */}
       {resourceToRestore && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 max-w-md w-full animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-md w-full">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
               <RefreshCw className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-slate-900 mb-1">
+            <h3 className="text-sm font-bold text-slate-900 mb-1">
               Pulihkan Dokumen Teks?
             </h3>
-            <p className="text-sm text-slate-500 mb-5 leading-relaxed">
-              Dokumen <span className="font-medium text-slate-800">&quot;{resourceToRestore.name}&quot;</span> akan dikembalikan ke status aktif dan muncul di daftar utama.
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              Dokumen <span className="font-semibold text-slate-800">&quot;{resourceToRestore.name}&quot;</span> akan dikembalikan ke status aktif dan muncul di daftar utama.
             </p>
             <div className="flex items-center justify-end gap-2.5">
               <button
                 onClick={() => setResourceToRestore(null)}
                 disabled={isProcessingAction}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleRestoreConfirm}
                 disabled={isProcessingAction}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-xs cursor-pointer"
               >
-                {isProcessingAction && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isProcessingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Ya, Pulihkan</span>
               </button>
             </div>

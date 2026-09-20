@@ -288,8 +288,22 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
 
   const filteredResources = resources
     .filter((item) => {
-      // Strict domain boundary: only FILE resources in Berkas Proyek
+      // Strict domain boundary: only non-text FILE resources in Berkas Proyek
+      // Markdown and text documents have their own dedicated "File Teks" tab
       if (item.resource_type !== "FILE") return false;
+
+      const fn = (item.file_name || "").toLowerCase();
+      const mime = (item.mime_type || "").toLowerCase();
+      const isTextDoc =
+        fn.endsWith(".md") ||
+        fn.endsWith(".markdown") ||
+        fn.endsWith(".txt") ||
+        mime.includes("text/markdown") ||
+        mime.includes("text/plain") ||
+        mime.includes("text/x-markdown");
+
+      if (isTextDoc) return false;
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = item.name.toLowerCase().includes(q);

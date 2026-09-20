@@ -56,10 +56,10 @@ export function AppShell({ children }: AppShellProps) {
    */
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--ph-bg-subtle)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin mx-auto" />
-          <p className="mt-3 text-sm text-slate-500">
+          <div className="w-8 h-8 border-2 border-[var(--ph-border)] border-t-[var(--ph-primary)] rounded-full animate-spin mx-auto" />
+          <p className="mt-3 text-sm text-[var(--ph-text-muted)]">
             Memeriksa sesi...
           </p>
         </div>
@@ -76,7 +76,7 @@ export function AppShell({ children }: AppShellProps) {
     }
 
     return (
-      <main className="min-h-screen bg-slate-50">
+      <main className="min-h-screen bg-[var(--ph-bg-subtle)]">
         {children}
       </main>
     );

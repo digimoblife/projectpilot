@@ -766,7 +766,7 @@ export default function MoMGeneratorPage() {
                   <Sparkles className="w-6 h-6 animate-spin" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-slate-900">ProjectPilot sedang menganalisis rapat...</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Sedang menganalisis rapat...</h3>
                   <p className="text-xs text-slate-500 max-w-md mx-auto">
                     Mengekstrak peserta rapat, merangkum poin diskusi, memisahkan keputusan kunci, serta menyusun tabel action items ke dalam format Markdown (.md).
                   </p>

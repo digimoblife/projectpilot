@@ -49,7 +49,7 @@ export function MarkdownViewer({
     if (!doc) return;
 
     const contentHtml = docEl.innerHTML;
-    const docTitle = title || "Dokumen Resmi ProjectPilot";
+    const docTitle = title || "Dokumen Resmi ProjectHub";
 
     doc.open();
     doc.write(`<!DOCTYPE html>

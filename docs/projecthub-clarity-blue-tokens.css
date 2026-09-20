@@ -1,0 +1,135 @@
+/* ProjectHub - palet "Clarity blue" (Apple + Jira), mode terang saja.
+   Terverifikasi dari sumber publik: #1868DB, #1558BC, #E9F2FE, #172B4D, #22A06B,
+   #AF59E1, #AE2E24, #505258, #F5F5F7, #D2D2D7, #E8E8ED, #6E6E73, #86868B, #FBFBFD.
+   Sisanya (anak tangga ramp biru, latar tint, warna peringatan/bahaya) adalah
+   turunan saya. Cek kontras dengan alat WCAG sebelum rilis. */
+
+:root {
+  /* ---------- Primitif: biru (600 = primary) ---------- */
+  --ph-blue-50:  #E9F2FE;
+  --ph-blue-100: #CFE1FD;
+  --ph-blue-200: #A9CCFB;
+  --ph-blue-300: #7DB0F5;
+  --ph-blue-400: #5192EC;
+  --ph-blue-500: #357DE8;
+  --ph-blue-600: #1868DB;
+  --ph-blue-700: #1558BC;
+  --ph-blue-800: #124A9C;
+  --ph-blue-900: #0F3B7A;
+
+  /* ---------- Primitif: netral ---------- */
+  --ph-neutral-0:   #FFFFFF;
+  --ph-neutral-50:  #FBFBFD;
+  --ph-neutral-100: #F5F5F7;
+  --ph-neutral-200: #E8E8ED;
+  --ph-neutral-300: #D2D2D7;
+  --ph-neutral-500: #86868B;
+  --ph-neutral-600: #6E6E73;
+  --ph-neutral-700: #505258;
+  --ph-neutral-800: #292A2E;
+  --ph-neutral-900: #172B4D;
+
+  /* ---------- Peran: permukaan ---------- */
+  --ph-bg:              var(--ph-neutral-0);
+  --ph-bg-subtle:       var(--ph-neutral-100);
+  --ph-bg-nav:          #FAFAFC;
+  --ph-surface:         var(--ph-neutral-0);
+  --ph-surface-hover:   var(--ph-neutral-100);
+  --ph-surface-selected: var(--ph-blue-50);
+
+  /* ---------- Peran: teks ---------- */
+  --ph-text:            var(--ph-neutral-900);
+  --ph-text-secondary:  var(--ph-neutral-700);
+  --ph-text-muted:      var(--ph-neutral-600);
+  --ph-text-placeholder: var(--ph-neutral-500);  /* jangan untuk teks isi */
+  --ph-text-on-primary: #FFFFFF;
+  --ph-link:            var(--ph-blue-600);
+  --ph-link-hover:      var(--ph-blue-700);
+
+  /* ---------- Peran: garis ---------- */
+  --ph-border:          var(--ph-neutral-300);
+  --ph-border-soft:     var(--ph-neutral-200);
+  --ph-border-selected: var(--ph-blue-200);
+
+  /* ---------- Peran: aksi ---------- */
+  --ph-primary:         var(--ph-blue-600);
+  --ph-primary-hover:   var(--ph-blue-700);
+  --ph-primary-active:  var(--ph-blue-800);
+  --ph-primary-subtle:  var(--ph-blue-50);
+  --ph-primary-subtle-text: var(--ph-blue-700);
+  --ph-focus-ring:      0 0 0 3px rgba(24, 104, 219, 0.25);
+
+  /* ---------- Semantik: isi / latar / teks ---------- */
+  --ph-success:         #22A06B;
+  --ph-success-bg:      #E4F5EC;
+  --ph-success-text:    #17694A;
+
+  --ph-warning:         #E56910;
+  --ph-warning-bg:      #FFF1E5;
+  --ph-warning-text:    #A34700;
+
+  --ph-danger:          #C9372C;
+  --ph-danger-bg:       #FFECEB;
+  --ph-danger-text:     #AE2E24;
+  --ph-danger-hover:    #AE2E24;
+
+  --ph-info:            var(--ph-blue-600);
+  --ph-info-bg:         var(--ph-blue-50);
+  --ph-info-text:       var(--ph-blue-700);
+
+  --ph-accent-purple:      #AF59E1;
+  --ph-accent-purple-bg:   #F8EEFE;
+  --ph-accent-purple-text: #803FA5;
+
+  /* ---------- Tahap proyek (untuk titik, badge, progress) ---------- */
+  --ph-stage-lead:      var(--ph-neutral-500);
+  --ph-stage-proposal:  var(--ph-accent-purple);
+  --ph-stage-progress:  var(--ph-blue-600);
+  --ph-stage-done:      var(--ph-success);
+  --ph-stage-onhold:    var(--ph-warning);
+  --ph-stage-lost:      var(--ph-danger);
+
+  /* ---------- Grafik (kategori) ---------- */
+  --ph-chart-1: #1868DB;
+  --ph-chart-2: #AF59E1;
+  --ph-chart-3: #22A06B;
+  --ph-chart-4: #E56910;
+  --ph-chart-5: #5192EC;
+  --ph-chart-6: #C9372C;
+
+  /* ---------- Bayangan, scrim, bentuk ---------- */
+  --ph-shadow-sm: 0 1px 2px rgba(23, 43, 77, 0.08);
+  --ph-shadow-md: 0 4px 12px rgba(23, 43, 77, 0.10);
+  --ph-scrim:     rgba(23, 43, 77, 0.50);
+  --ph-radius-sm: 6px;
+  --ph-radius-md: 8px;
+  --ph-radius-card: 12px;
+  --ph-radius-pill: 980px;
+}
+
+/* ---------- Contoh pemakaian ---------- */
+body { background: var(--ph-bg); color: var(--ph-text); }
+a { color: var(--ph-link); }
+a:hover { color: var(--ph-link-hover); }
+
+.ph-btn { border: 0; border-radius: var(--ph-radius-pill); padding: 8px 18px; font-weight: 500; }
+.ph-btn-primary { background: var(--ph-primary); color: var(--ph-text-on-primary); }
+.ph-btn-primary:hover { background: var(--ph-primary-hover); }
+.ph-btn-primary:active { background: var(--ph-primary-active); }
+.ph-btn-secondary { background: var(--ph-surface); color: var(--ph-text); border: 0.5px solid var(--ph-border); }
+.ph-btn-subtle { background: var(--ph-primary-subtle); color: var(--ph-primary-subtle-text); }
+.ph-btn-danger { background: var(--ph-danger); color: #fff; }
+.ph-btn-danger:hover { background: var(--ph-danger-hover); }
+
+.ph-input { border: 1px solid var(--ph-border); border-radius: var(--ph-radius-md); padding: 8px 12px; }
+.ph-input:focus { outline: 0; border-color: var(--ph-primary); box-shadow: var(--ph-focus-ring); }
+
+.ph-card { background: var(--ph-surface); border: 0.5px solid var(--ph-border-soft); border-radius: var(--ph-radius-card); box-shadow: var(--ph-shadow-sm); }
+.ph-row:hover { background: var(--ph-surface-hover); }
+.ph-row[aria-selected="true"] { background: var(--ph-surface-selected); border: 0.5px solid var(--ph-border-selected); }
+
+.ph-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: var(--ph-radius-pill); padding: 2px 10px; font-size: 12px; font-weight: 500; }
+.ph-badge-success { background: var(--ph-success-bg); color: var(--ph-success-text); }
+.ph-badge-warning { background: var(--ph-warning-bg); color: var(--ph-warning-text); }
+.ph-badge-danger  { background: var(--ph-danger-bg);  color: var(--ph-danger-text); }
+.ph-badge-info    { background: var(--ph-info-bg);    color: var(--ph-info-text); }

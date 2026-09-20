@@ -271,7 +271,7 @@ ${r.content}
 
 ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshots)\n${r.evidences.map((ev) => `- **${ev.evidence_type}**: ${ev.evidence_snapshot?.key || ev.evidence_snapshot?.title || "Item"}`).join("\n")}\n` : ""}
 ---
-*Digenerate melalui ProjectPilot Governance Hub pada ${new Date().toLocaleString("id-ID")}*
+*Digenerate melalui ProjectHub Governance Hub pada ${new Date().toLocaleString("id-ID")}*
 `;
 
     const blob = new Blob([content], { type: "text/markdown;charset=utf-8;" });

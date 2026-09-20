@@ -152,7 +152,7 @@ export function CommunicationMeetingsView({
   const [aiGenError, setAiGenError] = useState<string | null>(null);
   const [isGeneratingMoM, setIsGeneratingMoM] = useState(false);
 
-  const SAMPLE_MEETING_NOTES = `Rapat sinkronisasi mingguan Tim ProjectPilot dengan Stakeholder Klien.
+  const SAMPLE_MEETING_NOTES = `Rapat sinkronisasi mingguan Tim ProjectHub dengan Stakeholder Klien.
 Hadir: Budi (Project Manager), Siti (Lead Frontend), Joko (Backend Architect), Pak Hartono (Client Sponsor), Ibu Dina (PIC Bisnis).
 
 Poin Diskusi:
@@ -363,7 +363,7 @@ ${actionItemsList}
 
 ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
 ---
-*Dokumen resmi notulensi ProjectPilot Governance • Dicetak/diunduh pada ${new Date().toLocaleString("id-ID")}*
+*Dokumen resmi notulensi ProjectHub Governance • Dicetak/diunduh pada ${new Date().toLocaleString("id-ID")}*
 `;
 
     const blob = new Blob([content], { type: "text/markdown;charset=utf-8;" });
