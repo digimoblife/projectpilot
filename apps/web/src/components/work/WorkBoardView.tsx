@@ -3,6 +3,7 @@
 import React, { useEffect, useState, use } from "react";
 import {
   AlertCircle,
+  ArrowDownToLine,
   Calendar,
   Clock,
   Edit3,
@@ -12,6 +13,7 @@ import {
   LayoutList,
   List,
   ListFilter,
+  MoreHorizontal,
   MoreVertical,
   MoveRight,
   Plus,
@@ -154,6 +156,23 @@ export function WorkBoardView({
     const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1; // Inklusif hari pengerjaan (misal 17 s/d 18 = 2 hari)
     return diffDays > 0 ? diffDays : 0;
   }
+
+  // Contextual Action Menu
+  const [activeMenuTaskId, setActiveMenuTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!activeMenuTaskId) return;
+    const handleClickOutside = () => setActiveMenuTaskId(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveMenuTaskId(null);
+    };
+    window.addEventListener("click", handleClickOutside);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeMenuTaskId]);
 
   useEffect(() => {
     fetchTasksAndEpics();
@@ -654,7 +673,7 @@ export function WorkBoardView({
                           if (draggedTaskId) return;
                           openEditTaskModal(task);
                         }}
-                        className={`bg-white rounded-xl p-3 border shadow-2xs hover:shadow-xs transition-all space-y-2 group cursor-pointer select-none active:scale-[0.99] ${
+                        className={`bg-white rounded-xl p-4 border shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer select-none active:scale-[0.99] relative h-[200px] ${
                           isBeingDragged
                             ? "opacity-40 scale-[0.98] border-blue-400 ring-2 ring-blue-400 shadow-md cursor-grabbing"
                             : isBlocked
@@ -664,120 +683,158 @@ export function WorkBoardView({
                             : "border-slate-200 hover:border-slate-300"
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-1.5 min-w-0">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0 cursor-grab" />
-                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
-                              {task.key}
-                            </span>
-                            {(() => {
-                              const epic = epics.find((e) => e.id === task.epic_id);
-                              return epic ? (
-                                <span
-                                  className="text-[9px] font-medium text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded truncate max-w-[110px]"
-                                  title={`Epic: ${epic.title}`}
+                        {/* Top Section: Header & Title */}
+                        <div className="space-y-2.5 min-w-0">
+                          {/* Header: Task ID (Left) & Priority + Contextual Menu (Right) */}
+                          <div className="flex items-center justify-between gap-1.5 min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0 cursor-grab" />
+                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
+                                {task.key}
+                              </span>
+                            </div>
+
+                            <div
+                              className="flex items-center gap-1.5 shrink-0 relative"
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                            >
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 whitespace-nowrap ${
+                                  priorityColors[task.priority] || "bg-slate-50 text-slate-600"
+                                }`}
+                              >
+                                {task.priority}
+                              </span>
+
+                              {/* Contextual Action Menu Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuTaskId((prev) => (prev === task.id ? null : task.id));
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                className={`p-1 rounded-md transition-all focus:outline-hidden focus:ring-1 focus:ring-slate-300 ${
+                                  activeMenuTaskId === task.id
+                                    ? "bg-slate-100 text-slate-800 opacity-100"
+                                    : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                }`}
+                                aria-label="Menu Aksi Task"
+                                title="Aksi Task"
+                              >
+                                <MoreHorizontal className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Contextual Dropdown Menu */}
+                              {activeMenuTaskId === task.id && (
+                                <div
+                                  className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-30 text-xs animate-in fade-in zoom-in-95 duration-100"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onMouseDown={(e) => e.stopPropagation()}
                                 >
-                                  {epic.title}
-                                </span>
-                              ) : null;
-                            })()}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveMenuTaskId(null);
+                                      openEditTaskModal(task);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Edit Task</span>
+                                  </button>
+                                  <div className="my-1 border-t border-slate-100" />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveMenuTaskId(null);
+                                      handleDeleteTask(task.id, task.title);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors font-medium"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                    <span>Hapus Task</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div
-                            className="flex items-center gap-1 shrink-0 whitespace-nowrap"
-                            onClick={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()}
-                          >
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 whitespace-nowrap ${
-                                priorityColors[task.priority] || "bg-slate-50 text-slate-600"
-                              }`}
-                            >
-                              {task.priority}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => openEditTaskModal(task)}
-                              className="p-1 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100"
-                              title="Lihat Detail / Edit Task"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTask(task.id, task.title)}
-                              className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50"
-                              title="Hapus Task"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
+
+                          {/* Title: Primary content */}
+                          <h4 className={`text-xs font-bold text-slate-900 leading-snug ${isBlocked && task.blocker_reason ? "line-clamp-2" : "line-clamp-3 sm:line-clamp-4"}`}>
+                            {task.title}
+                          </h4>
+
+                          {/* Blocked Exception: concise blocker summary only if task is BLOCKED */}
+                          {isBlocked && task.blocker_reason && (
+                            <div className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-[10px] text-rose-700 flex items-start gap-1.5 leading-snug">
+                              <ShieldAlert className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
+                              <span className="line-clamp-1 font-medium">{task.blocker_reason}</span>
+                            </div>
+                          )}
                         </div>
 
-                        <h4 className="text-xs font-bold text-slate-900 leading-snug">
-                          {task.title}
-                        </h4>
-
-                        {task.description && (
-                          <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                            {task.description}
-                          </p>
-                        )}
-
-                        {task.blocker_reason && (
-                          <div className="p-1.5 rounded bg-rose-50 border border-rose-200 text-[10px] text-rose-700 flex items-start gap-1">
-                            <ShieldAlert className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
-                            <span className="line-clamp-2">{task.blocker_reason}</span>
-                          </div>
-                        )}
-
-                        {/* Polished Kanban Card Footer */}
+                        {/* Simplified Footer: Assignee & Estimate only */}
                         <div
-                          className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 text-[11px]"
+                          className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 text-[11px] mt-auto shrink-0"
                           onClick={(e) => e.stopPropagation()}
                           onMouseDown={(e) => e.stopPropagation()}
                         >
                           <div className="flex items-center gap-1.5 min-w-0 text-slate-600">
-                            <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 text-[9px] font-bold border border-slate-200">
-                              {task.assignee_name ? task.assignee_name.charAt(0).toUpperCase() : <User className="w-3 h-3 text-slate-400" />}
+                            <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 text-[9px] font-bold border border-slate-200">
+                              {task.assignee_name ? (
+                                task.assignee_name.charAt(0).toUpperCase()
+                              ) : (
+                                <User className="w-3 h-3 text-slate-400" />
+                              )}
                             </div>
                             <span className="truncate text-[11px] font-medium text-slate-700">
                               {task.assignee_name || "Belum ditugaskan"}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {task.estimated_hours != null && (
-                              <span className="font-mono text-[9px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                                {task.estimated_hours}h
-                              </span>
-                            )}
-                            <select
-                              value={task.status}
-                              onChange={(e) => handleStatusChange(task, e.target.value as any)}
-                              className="text-[10px] font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-0.5 focus:outline-none cursor-pointer"
-                              title="Ubah Status"
-                            >
-                              {columns.map((c) => (
-                                <option key={c.key} value={c.key}>
-                                  {c.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                          {task.estimated_hours != null && (
+                            <div className="flex items-center gap-1 shrink-0 text-slate-500 font-mono text-[10px] font-semibold bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/60">
+                              <Clock className="w-3 h-3 text-slate-400" />
+                              <span>{task.estimated_hours}h</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
                   })}
 
-                  {isDragOverThisCol && (
-                    <div className="p-2.5 rounded-xl border border-dashed border-blue-400 bg-blue-50 text-blue-700 text-[11px] font-semibold text-center flex items-center justify-center gap-1.5 animate-pulse">
-                      <span>Lepas tiket di sini</span>
+                  {/* Drop Target Area while Dragging or Drag Over */}
+                  {draggedTaskId && (
+                    <div
+                      onDragOver={(e) => handleDragOver(e, col.key)}
+                      onDrop={(e) => handleDrop(e, col.key)}
+                      className={`min-h-[140px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2.5 transition-all select-none ${
+                        isDragOverThisCol
+                          ? "border-blue-500 bg-blue-50/90 text-blue-700 ring-2 ring-blue-400/20 shadow-xs animate-pulse"
+                          : "border-slate-200/90 bg-slate-100/40 text-slate-400 hover:border-slate-300"
+                      }`}
+                    >
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                          isDragOverThisCol
+                            ? "bg-blue-100 text-blue-600 shadow-2xs"
+                            : "bg-slate-200/60 text-slate-400"
+                        }`}
+                      >
+                        <ArrowDownToLine className="w-4.5 h-4.5" />
+                      </div>
+                      <span className="text-xs font-semibold">
+                        {isDragOverThisCol ? "Lepas tiket di sini" : "Pindahkan ke kolom ini"}
+                      </span>
                     </div>
                   )}
 
-                  {colTasks.length === 0 && !isDragOverThisCol && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4 border border-dashed border-slate-200/90 rounded-xl text-slate-400 text-xs text-center min-h-[120px] select-none">
-                      <span className="text-[11px]">Tarik tiket ke kolom ini</span>
+                  {/* Empty Column Placeholder when not dragging */}
+                  {colTasks.length === 0 && !draggedTaskId && (
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 border border-dashed border-slate-200/90 rounded-2xl text-slate-400 text-xs text-center min-h-[140px] select-none">
+                      <span className="text-[11px] font-medium">Belum ada task</span>
                     </div>
                   )}
                 </div>

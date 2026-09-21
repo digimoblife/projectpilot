@@ -239,7 +239,8 @@ code, kbd, samp, pre {
   }
 
   /* Reset layout constraints on print */
-  .md\:pl-64 {
+  .md\:pl-64,
+  .md\:pl-\[96px\] {
     padding-left: 0 !important;
   }
 

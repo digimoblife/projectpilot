@@ -6,10 +6,35 @@ import { usePathname, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Sidebar } from "@/components/layout/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/layout/sidebar-context";
 import { useAuth } from "@/lib/auth-context";
 
 interface AppShellProps {
   children: React.ReactNode;
+}
+
+function AuthenticatedWorkspace({ children }: { children: React.ReactNode }) {
+  const { isCollapsed } = useSidebar();
+
+  return (
+    <>
+      <Sidebar />
+
+      <div
+        className={`flex flex-col min-h-screen transition-[padding] duration-200 ease-in-out ${
+          isCollapsed ? "md:pl-[96px]" : "md:pl-64"
+        }`}
+      >
+        <Header />
+
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 max-w-7xl w-full mx-auto">
+          {children}
+        </main>
+
+        <MobileNav />
+      </div>
+    </>
+  );
 }
 
 const PUBLIC_ROUTES = new Set([
@@ -91,18 +116,8 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <>
-      <Sidebar />
-
-      <div className="md:pl-64 flex flex-col min-h-screen">
-        <Header />
-
-        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 max-w-7xl w-full mx-auto">
-          {children}
-        </main>
-
-        <MobileNav />
-      </div>
-    </>
+    <SidebarProvider>
+      <AuthenticatedWorkspace>{children}</AuthenticatedWorkspace>
+    </SidebarProvider>
   );
 }
