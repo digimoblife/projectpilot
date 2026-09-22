@@ -1,8 +1,8 @@
 import enum
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
-from sqlalchemy import Date, Enum, Float, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from projectpilot.persistence.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
@@ -107,6 +107,8 @@ class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     assignee_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     blocker_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     order_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     project: Mapped["Project"] = relationship("Project")

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, use } from "react";
 import {
   AlertCircle,
+  Archive,
   ArrowDownToLine,
   Calendar,
   Clock,
@@ -17,6 +18,7 @@ import {
   MoreVertical,
   MoveRight,
   Plus,
+  RotateCcw,
   Search,
   ShieldAlert,
   Sparkles,
@@ -53,6 +55,8 @@ interface Task {
   blocker_reason: string | null;
   epic_id: string | null;
   order_index: number;
+  is_archived?: boolean;
+  archived_at?: string | null;
   created_at: string;
 }
 
@@ -103,6 +107,14 @@ export function WorkBoardView({
   // Drag and Drop States
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverColumnKey, setDragOverColumnKey] = useState<Task["status"] | null>(null);
+  const [dragOverCardId, setDragOverCardId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<"above" | "below" | null>(null);
+
+  // Archive Feature States
+  const [isArchiveDrawerOpen, setIsArchiveDrawerOpen] = useState(false);
+  const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
+  const [isArchivedLoading, setIsArchivedLoading] = useState(false);
+  const [archiveSearch, setArchiveSearch] = useState("");
 
 
   // AI Task Breakdown States
@@ -183,21 +195,42 @@ export function WorkBoardView({
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
-      const [tasksRes, epicsRes, membersRes] = await Promise.all([
+      const [tasksRes, epicsRes, membersRes, archivedRes] = await Promise.all([
         apiClient<Task[]>(`/projects/${projectId}/tasks`, { headers }),
         apiClient<Epic[]>(`/projects/${projectId}/epics`, { headers }),
         apiClient<TeamMember[]>(`/projects/${projectId}/members`, { headers }),
+        apiClient<Task[]>(`/projects/${projectId}/tasks?archived_only=true`, { headers }),
       ]);
 
       if (tasksRes.data) setTasks(tasksRes.data);
       if (epicsRes.data) setEpics(epicsRes.data);
       if (membersRes.data) setMembers(membersRes.data);
+      if (archivedRes.data) setArchivedTasks(archivedRes.data);
     } catch {
       // Handled
     } finally {
       setIsLoading(false);
     }
   }
+
+  async function fetchArchivedTasks() {
+    setIsArchivedLoading(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const res = await apiClient<Task[]>(`/projects/${projectId}/tasks?archived_only=true`, { headers });
+      if (res.data) setArchivedTasks(res.data);
+    } catch {
+      // Handled
+    } finally {
+      setIsArchivedLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (isArchiveDrawerOpen) {
+      fetchArchivedTasks();
+    }
+  }, [isArchiveDrawerOpen]);
 
   // =========================================================================
   // 1. AI TASK AUTO-BREAKDOWN (WBS)
@@ -451,6 +484,8 @@ export function WorkBoardView({
   function handleDragEnd() {
     setDraggedTaskId(null);
     setDragOverColumnKey(null);
+    setDragOverCardId(null);
+    setDropPosition(null);
   }
 
   function handleDragOver(e: React.DragEvent, colKey: Task["status"]) {
@@ -466,17 +501,235 @@ export function WorkBoardView({
     setDragOverColumnKey(null);
   }
 
+  function handleCardDragOver(e: React.DragEvent, targetTask: Task) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+
+    if (dragOverColumnKey !== targetTask.status) {
+      setDragOverColumnKey(targetTask.status);
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    const pos = e.clientY < midY ? "above" : "below";
+
+    if (dragOverCardId !== targetTask.id || dropPosition !== pos) {
+      setDragOverCardId(targetTask.id);
+      setDropPosition(pos);
+    }
+  }
+
+  function handleCardDragLeave(e: React.DragEvent) {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setDragOverCardId(null);
+    setDropPosition(null);
+  }
+
+  async function reorderWithinColumn(draggedTask: Task, targetTaskId: string, pos: "above" | "below" | null) {
+    const colStatus = draggedTask.status;
+    const colTasks = tasks.filter((t) => t.status === colStatus);
+    const otherTasks = tasks.filter((t) => t.status !== colStatus);
+
+    const filteredColTasks = colTasks.filter((t) => t.id !== draggedTask.id);
+    const targetIndex = filteredColTasks.findIndex((t) => t.id === targetTaskId);
+
+    if (targetIndex === -1) return;
+
+    const insertIndex = pos === "below" ? targetIndex + 1 : targetIndex;
+    filteredColTasks.splice(insertIndex, 0, draggedTask);
+
+    const reorderedColTasks = filteredColTasks.map((t, idx) => ({
+      ...t,
+      order_index: idx * 10,
+    }));
+
+    // Optimistic UI update
+    setTasks([...otherTasks, ...reorderedColTasks]);
+
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      await apiClient(`/projects/${projectId}/tasks/reorder`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          items: reorderedColTasks.map((t) => ({
+            id: t.id,
+            order_index: t.order_index,
+            status: t.status,
+          })),
+        }),
+      });
+    } catch {
+      fetchTasksAndEpics();
+    }
+  }
+
+  async function moveAndReorderTask(
+    draggedTask: Task,
+    targetStatus: Task["status"],
+    targetTaskId?: string,
+    pos?: "above" | "below" | null
+  ) {
+    const previousTasks = [...tasks];
+
+    const targetColTasks = tasks.filter((t) => t.status === targetStatus && t.id !== draggedTask.id);
+    const updatedDraggedTask = { ...draggedTask, status: targetStatus };
+
+    if (targetTaskId) {
+      const targetIndex = targetColTasks.findIndex((t) => t.id === targetTaskId);
+      if (targetIndex !== -1) {
+        const insertIndex = pos === "below" ? targetIndex + 1 : targetIndex;
+        targetColTasks.splice(insertIndex, 0, updatedDraggedTask);
+      } else {
+        targetColTasks.push(updatedDraggedTask);
+      }
+    } else {
+      targetColTasks.push(updatedDraggedTask);
+    }
+
+    const reorderedTargetTasks = targetColTasks.map((t, idx) => ({
+      ...t,
+      order_index: idx * 10,
+    }));
+
+    const unaffectedTasks = tasks.filter(
+      (t) => t.status !== targetStatus && t.id !== draggedTask.id
+    );
+    setTasks([...unaffectedTasks, ...reorderedTargetTasks]);
+
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const statusRes = await apiClient<Task>(`/projects/${projectId}/tasks/${draggedTask.id}/status`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ target_status: targetStatus }),
+      });
+
+      if (!statusRes.data) {
+        setTasks(previousTasks);
+        return;
+      }
+
+      await apiClient(`/projects/${projectId}/tasks/reorder`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          items: reorderedTargetTasks.map((t) => ({
+            id: t.id,
+            order_index: t.order_index,
+            status: t.status,
+          })),
+        }),
+      });
+    } catch {
+      setTasks(previousTasks);
+    }
+  }
+
+  async function handleDropOnCard(e: React.DragEvent, targetTask: Task) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const taskId = e.dataTransfer.getData("text/plain") || draggedTaskId;
+    const currentDropPos = dropPosition;
+
+    setDraggedTaskId(null);
+    setDragOverColumnKey(null);
+    setDragOverCardId(null);
+    setDropPosition(null);
+
+    if (!taskId || taskId === targetTask.id) return;
+    const draggedTask = tasks.find((t) => t.id === taskId);
+    if (!draggedTask) return;
+
+    const targetStatus = targetTask.status;
+
+    if (draggedTask.status !== targetStatus) {
+      if (targetStatus === "BLOCKED") {
+        setSelectedTaskForBlock(draggedTask);
+        setBlockerReasonInput("");
+        setBlockerError(null);
+        return;
+      }
+      await moveAndReorderTask(draggedTask, targetStatus, targetTask.id, currentDropPos);
+    } else {
+      await reorderWithinColumn(draggedTask, targetTask.id, currentDropPos);
+    }
+  }
+
   async function handleDrop(e: React.DragEvent, targetStatus: Task["status"]) {
     e.preventDefault();
     setDragOverColumnKey(null);
+    setDragOverCardId(null);
+    setDropPosition(null);
+
     const taskId = e.dataTransfer.getData("text/plain") || draggedTaskId;
     setDraggedTaskId(null);
     if (!taskId) return;
 
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.status === targetStatus) return;
+    const draggedTask = tasks.find((t) => t.id === taskId);
+    if (!draggedTask) return;
 
-    await handleStatusChange(task, targetStatus);
+    if (draggedTask.status !== targetStatus) {
+      if (targetStatus === "BLOCKED") {
+        setSelectedTaskForBlock(draggedTask);
+        setBlockerReasonInput("");
+        setBlockerError(null);
+        return;
+      }
+      await moveAndReorderTask(draggedTask, targetStatus);
+    }
+  }
+
+  async function handleArchiveTask(taskId: string, taskTitle?: string) {
+    const previousTasks = [...tasks];
+    const taskToArchive = tasks.find((t) => t.id === taskId);
+    if (!taskToArchive) return;
+
+    // Optimistic UI update
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setArchivedTasks((prev) => [
+      { ...taskToArchive, is_archived: true, archived_at: new Date().toISOString() },
+      ...prev,
+    ]);
+
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const res = await apiClient<Task>(`/projects/${projectId}/tasks/${taskId}/archive`, {
+        method: "POST",
+        headers,
+      });
+      if (!res.data) {
+        setTasks(previousTasks);
+        setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId));
+      }
+    } catch {
+      setTasks(previousTasks);
+      setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId));
+    }
+  }
+
+  async function handleRestoreTask(taskId: string) {
+    const taskToRestore = archivedTasks.find((t) => t.id === taskId);
+    if (!taskToRestore) return;
+
+    // Optimistic UI update
+    setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setTasks((prev) => [...prev, { ...taskToRestore, is_archived: false, archived_at: null }]);
+
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const res = await apiClient<Task>(`/projects/${projectId}/tasks/${taskId}/restore`, {
+        method: "POST",
+        headers,
+      });
+      if (!res.data) {
+        fetchTasksAndEpics();
+      }
+    } catch {
+      fetchTasksAndEpics();
+    }
   }
 
 
@@ -551,6 +804,17 @@ export function WorkBoardView({
     return matchesSearch && matchesEpic && matchesPriority;
   });
 
+  const filteredArchivedTasks = archivedTasks.filter((t) => {
+    if (!archiveSearch.trim()) return true;
+    const q = archiveSearch.toLowerCase();
+    return (
+      t.key.toLowerCase().includes(q) ||
+      t.title.toLowerCase().includes(q) ||
+      (t.description && t.description.toLowerCase().includes(q)) ||
+      (t.assignee_name && t.assignee_name.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div className="space-y-6">
       {/* Top Action Bar */}
@@ -602,6 +866,21 @@ export function WorkBoardView({
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
             <span>{isAILoading ? "Menyiapkan..." : "Breakdown Tugas"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsArchiveDrawerOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition-colors shrink-0 cursor-pointer"
+            title="Lihat daftar task yang diarsipkan"
+          >
+            <Archive className="w-3.5 h-3.5 text-slate-500" />
+            <span>Arsip</span>
+            {archivedTasks.length > 0 && (
+              <span className="px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded-full font-mono text-[10px] font-bold border border-slate-200">
+                {archivedTasks.length}
+              </span>
+            )}
           </button>
 
           <button
@@ -662,106 +941,128 @@ export function WorkBoardView({
                     const isBlocked = task.status === "BLOCKED";
                     const isDone = task.status === "DONE";
                     const isBeingDragged = draggedTaskId === task.id;
+                    const isDropAbove = dragOverCardId === task.id && dropPosition === "above" && draggedTaskId !== task.id;
+                    const isDropBelow = dragOverCardId === task.id && dropPosition === "below" && draggedTaskId !== task.id;
 
                     return (
-                      <div
-                        key={task.id}
-                        draggable={true}
-                        onDragStart={(e) => handleDragStart(e, task)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleDragOver(e, col.key)}
-                        onDrop={(e) => handleDrop(e, col.key)}
-                        onClick={() => {
-                          if (draggedTaskId) return;
-                          openEditTaskModal(task);
-                        }}
-                        className={`bg-white rounded-xl p-4 border shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer select-none active:scale-[0.99] relative h-[200px] shrink-0 ${
-                          isBeingDragged
-                            ? "opacity-40 scale-[0.98] border-blue-400 ring-2 ring-blue-400 shadow-md cursor-grabbing"
-                            : isBlocked
-                            ? "border-rose-300 bg-rose-50/20 hover:border-rose-400"
-                            : isDone
-                            ? "border-emerald-200 bg-emerald-50/10 hover:border-emerald-300"
-                            : "border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        {/* Top Section: Header & Title */}
-                        <div className="space-y-2.5 min-w-0">
-                          {/* Header: Task ID (Left) & Priority + Contextual Menu (Right) */}
-                          <div className="flex items-center justify-between gap-1.5 min-w-0">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0 cursor-grab" />
-                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
-                                {task.key}
-                              </span>
-                            </div>
-
-                            <div
-                              className="flex items-center gap-1.5 shrink-0 relative"
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                            >
-                              <span
-                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 whitespace-nowrap ${
-                                  priorityColors[task.priority] || "bg-slate-50 text-slate-600"
-                                }`}
-                              >
-                                {task.priority}
-                              </span>
-
-                              {/* Contextual Action Menu Button */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuTaskId((prev) => (prev === task.id ? null : task.id));
-                                }}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                className={`p-1 rounded-md transition-all focus:outline-hidden focus:ring-1 focus:ring-slate-300 ${
-                                  activeMenuTaskId === task.id
-                                    ? "bg-slate-100 text-slate-800 opacity-100"
-                                    : "opacity-80 sm:opacity-60 sm:group-hover:opacity-100 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                                }`}
-                                aria-label="Menu Aksi Task"
-                                title="Aksi Task"
-                              >
-                                <MoreHorizontal className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Contextual Dropdown Menu */}
-                              {activeMenuTaskId === task.id && (
-                                <div
-                                  className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-30 text-xs animate-in fade-in zoom-in-95 duration-100"
-                                  onClick={(e) => e.stopPropagation()}
-                                  onMouseDown={(e) => e.stopPropagation()}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuTaskId(null);
-                                      openEditTaskModal(task);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium"
-                                  >
-                                    <Edit3 className="w-3.5 h-3.5 text-slate-400" />
-                                    <span>Edit Task</span>
-                                  </button>
-                                  <div className="my-1 border-t border-slate-100" />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuTaskId(null);
-                                      handleDeleteTask(task.id, task.title);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors font-medium"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                                    <span>Hapus Task</span>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
+                      <div key={task.id} className="relative">
+                        {/* Drop Indicator Line: Above */}
+                        {isDropAbove && (
+                          <div className="flex items-center gap-1.5 py-1 select-none animate-in fade-in duration-100">
+                            <div className="w-2.5 h-2.5 rounded-full bg-blue-600 ring-2 ring-blue-200 shrink-0" />
+                            <div className="h-0.5 w-full bg-blue-600 rounded-full" />
                           </div>
+                        )}
+
+                        <div
+                          draggable={true}
+                          onDragStart={(e) => handleDragStart(e, task)}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={(e) => handleCardDragOver(e, task)}
+                          onDragLeave={handleCardDragLeave}
+                          onDrop={(e) => handleDropOnCard(e, task)}
+                          onClick={() => {
+                            if (draggedTaskId) return;
+                            openEditTaskModal(task);
+                          }}
+                          className={`bg-white rounded-xl p-4 border shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer select-none active:scale-[0.99] relative h-[200px] shrink-0 ${
+                            isBeingDragged
+                              ? "opacity-40 scale-[0.98] border-blue-400 ring-2 ring-blue-400 shadow-md cursor-grabbing"
+                              : isBlocked
+                              ? "border-rose-300 bg-rose-50/20 hover:border-rose-400"
+                              : isDone
+                              ? "border-emerald-200 bg-emerald-50/10 hover:border-emerald-300"
+                              : "border-slate-200 hover:border-slate-300"
+                          }`}
+                        >
+                          {/* Top Section: Header & Title */}
+                          <div className="space-y-2.5 min-w-0">
+                            {/* Header: Task ID (Left) & Priority + Contextual Menu (Right) */}
+                            <div className="flex items-center justify-between gap-1.5 min-w-0">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0 cursor-grab" />
+                                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0 whitespace-nowrap">
+                                  {task.key}
+                                </span>
+                              </div>
+
+                              <div
+                                className="flex items-center gap-1.5 shrink-0 relative"
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <span
+                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 whitespace-nowrap ${
+                                    priorityColors[task.priority] || "bg-slate-50 text-slate-600"
+                                  }`}
+                                >
+                                  {task.priority}
+                                </span>
+
+                                {/* Contextual Action Menu Button */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuTaskId((prev) => (prev === task.id ? null : task.id));
+                                  }}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  className={`p-1 rounded-md transition-all focus:outline-hidden focus:ring-1 focus:ring-slate-300 ${
+                                    activeMenuTaskId === task.id
+                                      ? "bg-slate-100 text-slate-800 opacity-100"
+                                      : "opacity-80 sm:opacity-60 sm:group-hover:opacity-100 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                  }`}
+                                  aria-label="Menu Aksi Task"
+                                  title="Aksi Task"
+                                >
+                                  <MoreHorizontal className="w-3.5 h-3.5" />
+                                </button>
+
+                                {/* Contextual Dropdown Menu */}
+                                {activeMenuTaskId === task.id && (
+                                  <div
+                                    className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-30 text-xs animate-in fade-in zoom-in-95 duration-100"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveMenuTaskId(null);
+                                        openEditTaskModal(task);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5 text-slate-400" />
+                                      <span>Edit Task</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveMenuTaskId(null);
+                                        handleArchiveTask(task.id, task.title);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium"
+                                    >
+                                      <Archive className="w-3.5 h-3.5 text-slate-400" />
+                                      <span>Arsipkan Task</span>
+                                    </button>
+                                    <div className="my-1 border-t border-slate-100" />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveMenuTaskId(null);
+                                        handleDeleteTask(task.id, task.title);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors font-medium"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                      <span>Hapus Task</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
 
                           {/* Title: Primary content */}
                           <h4 className={`text-xs font-bold text-slate-900 leading-snug ${isBlocked && task.blocker_reason ? "line-clamp-2" : "line-clamp-3 sm:line-clamp-4"}`}>
@@ -804,8 +1105,17 @@ export function WorkBoardView({
                           )}
                         </div>
                       </div>
-                    );
-                  })}
+
+                      {/* Drop Indicator Line: Below */}
+                      {isDropBelow && (
+                        <div className="flex items-center gap-1.5 py-1 select-none animate-in fade-in duration-100">
+                          <div className="w-2.5 h-2.5 rounded-full bg-blue-600 ring-2 ring-blue-200 shrink-0" />
+                          <div className="h-0.5 w-full bg-blue-600 rounded-full" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
 
                   {/* Drop Target Area while Dragging or Drag Over */}
                   {draggedTaskId && (
@@ -910,6 +1220,13 @@ export function WorkBoardView({
                         className="text-slate-600 hover:text-blue-600 px-2 py-1 rounded hover:bg-slate-100"
                       >
                         Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleArchiveTask(t.id, t.title)}
+                        className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100"
+                      >
+                        Arsip
                       </button>
                       <button
                         type="button"
@@ -1290,19 +1607,35 @@ export function WorkBoardView({
               </div>
 
               <div className="pt-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (editingTaskId) {
-                      setIsEditModalOpen(false);
-                      handleDeleteTask(editingTaskId, editTaskTitle);
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Hapus Task</span>
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingTaskId) {
+                        setIsEditModalOpen(false);
+                        handleArchiveTask(editingTaskId, editTaskTitle);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="Pindahkan task ke arsip"
+                  >
+                    <Archive className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Arsipkan Task</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingTaskId) {
+                        setIsEditModalOpen(false);
+                        handleDeleteTask(editingTaskId, editTaskTitle);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Hapus</span>
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                   <button
@@ -1380,6 +1713,151 @@ export function WorkBoardView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 6. SLIDE-OVER DRAWER ARSIP TUGAS                                         */}
+      {/* ========================================================================= */}
+      {isArchiveDrawerOpen && (
+        <div
+          className="fixed inset-0 z-50 overflow-hidden bg-slate-900/30 backdrop-blur-xs flex justify-end animate-in fade-in duration-200"
+          onClick={() => setIsArchiveDrawerOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between shrink-0 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-slate-100 rounded-xl text-slate-700">
+                  <Archive className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                    <span>Arsip Tugas</span>
+                    <span className="text-xs font-mono font-bold bg-slate-200/80 text-slate-700 px-2 py-0.5 rounded-full">
+                      {archivedTasks.length}
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Daftar task yang telah selesai atau diarsipkan dari papan kanban.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsArchiveDrawerOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Tutup Arsip"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-4 border-b border-slate-100 bg-white shrink-0">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={archiveSearch}
+                  onChange={(e) => setArchiveSearch(e.target.value)}
+                  placeholder="Cari judul, key, atau PIC di arsip..."
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                />
+              </div>
+            </div>
+
+            {/* Archived Tasks List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {isArchivedLoading ? (
+                <div className="py-12 text-center text-xs text-slate-400">
+                  Memuat task arsip...
+                </div>
+              ) : filteredArchivedTasks.length === 0 ? (
+                <div className="py-16 text-center space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                    <Archive className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-700">Tidak ada task di arsip</h4>
+                  <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                    {archiveSearch
+                      ? "Tidak ditemukan task arsip yang cocok dengan kata kunci."
+                      : "Task yang selesai dapat diarsipkan lewat menu kartu agar kolom Done tetap rapi."}
+                  </p>
+                </div>
+              ) : (
+                filteredArchivedTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs space-y-2.5 transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                          {task.key}
+                        </span>
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                            priorityColors[task.priority] || "bg-slate-50 text-slate-600"
+                          }`}
+                        >
+                          {task.priority}
+                        </span>
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                          Status: {task.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleRestoreTask(task.id)}
+                          className="px-2 py-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Kembalikan ke papan Kanban"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Pulihkan</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTask(task.id, task.title)}
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                          title="Hapus Permanen"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-slate-900 leading-snug">
+                      {task.title}
+                    </h4>
+
+                    {task.description && (
+                      <p className="text-[11px] text-slate-500 line-clamp-2">
+                        {task.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+                      <span>PIC: {task.assignee_name || "Unassigned"}</span>
+                      {task.archived_at && (
+                        <span>
+                          Diarsipkan: {new Date(task.archived_at).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}

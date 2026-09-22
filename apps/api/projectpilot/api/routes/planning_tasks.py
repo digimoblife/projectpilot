@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_, select
@@ -12,6 +13,7 @@ from projectpilot.api.schemas.planning_tasks import (
     FeatureResponse,
     FeatureUpdate,
     TaskCreate,
+    TaskReorderRequest,
     TaskResponse,
     TaskStatusUpdate,
     TaskUpdate,
@@ -195,6 +197,7 @@ async def list_tasks(
     feature_id: Optional[uuid.UUID] = None,
     priority: Optional[str] = None,
     search: Optional[str] = None,
+    archived_only: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_pm),
 ):
@@ -203,6 +206,11 @@ async def list_tasks(
         .where(Task.project_id == project_id)
         .order_by(Task.order_index.asc(), Task.created_at.asc())
     )
+
+    if archived_only:
+        query = query.where(Task.is_archived == True)
+    else:
+        query = query.where(Task.is_archived == False)
 
     if task_status:
         query = query.where(Task.status == task_status)
@@ -333,3 +341,64 @@ async def delete_task(
 
     await db.delete(task)
     await db.commit()
+
+
+@router.patch("/tasks/reorder", status_code=status.HTTP_200_OK)
+async def reorder_tasks(
+    project_id: uuid.UUID,
+    reorder_in: TaskReorderRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    for item in reorder_in.items:
+        query = select(Task).where(Task.id == item.id, Task.project_id == project_id)
+        res = await db.execute(query)
+        task = res.scalar_one_or_none()
+        if task:
+            task.order_index = item.order_index
+            if item.status and task.status != item.status:
+                task.status = item.status
+
+    await db.commit()
+    return {"message": "Urutan task berhasil diperbarui."}
+
+
+@router.post("/tasks/{task_id}/archive", response_model=TaskResponse)
+async def archive_task(
+    project_id: uuid.UUID,
+    task_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(Task).where(Task.id == task_id, Task.project_id == project_id)
+    res = await db.execute(query)
+    task = res.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found.")
+
+    task.is_archived = True
+    task.archived_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(task)
+    return task
+
+
+@router.post("/tasks/{task_id}/restore", response_model=TaskResponse)
+async def restore_task(
+    project_id: uuid.UUID,
+    task_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(Task).where(Task.id == task_id, Task.project_id == project_id)
+    res = await db.execute(query)
+    task = res.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found.")
+
+    task.is_archived = False
+    task.archived_at = None
+    await db.commit()
+    await db.refresh(task)
+    return task
+

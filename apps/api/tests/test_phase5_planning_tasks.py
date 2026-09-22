@@ -163,3 +163,74 @@ async def test_planning_and_kanban_task_workflow(client: AsyncClient):
     )
     assert reopen_res.status_code == 200
     assert reopen_res.json()["status"] == "IN_PROGRESS"
+
+    # 10. Create second task for reorder testing
+    task2_res = await client.post(
+        f"/api/v1/projects/{project_id}/tasks",
+        json={
+            "key": "TSK-002",
+            "title": "Setup Logging Infrastructure",
+            "priority": "LOW",
+            "order_index": 1,
+        },
+        headers=headers,
+    )
+    assert task2_res.status_code == 201
+    task2_id = task2_res.json()["id"]
+
+    # Reorder tasks: swap order_index
+    reorder_res = await client.patch(
+        f"/api/v1/projects/{project_id}/tasks/reorder",
+        json={
+            "items": [
+                {"id": task2_id, "order_index": 0},
+                {"id": task_id, "order_index": 1},
+            ]
+        },
+        headers=headers,
+    )
+    assert reorder_res.status_code == 200
+
+    # Verify task order from GET /tasks
+    tasks_list_res = await client.get(f"/api/v1/projects/{project_id}/tasks", headers=headers)
+    assert tasks_list_res.status_code == 200
+    items = tasks_list_res.json()
+    assert items[0]["id"] == task2_id
+    assert items[0]["order_index"] == 0
+
+    # 11. Archive Task
+    archive_res = await client.post(
+        f"/api/v1/projects/{project_id}/tasks/{task2_id}/archive",
+        headers=headers,
+    )
+    assert archive_res.status_code == 200
+    assert archive_res.json()["is_archived"] is True
+    assert archive_res.json()["archived_at"] is not None
+
+    # Verify task2 is excluded from normal list
+    active_tasks = await client.get(f"/api/v1/projects/{project_id}/tasks", headers=headers)
+    active_ids = [t["id"] for t in active_tasks.json()]
+    assert task2_id not in active_ids
+
+    # Verify task2 is present in archived list
+    archived_tasks = await client.get(
+        f"/api/v1/projects/{project_id}/tasks?archived_only=true",
+        headers=headers,
+    )
+    archived_ids = [t["id"] for t in archived_tasks.json()]
+    assert task2_id in archived_ids
+
+    # 12. Restore Task
+    restore_res = await client.post(
+        f"/api/v1/projects/{project_id}/tasks/{task2_id}/restore",
+        headers=headers,
+    )
+    assert restore_res.status_code == 200
+    assert restore_res.json()["is_archived"] is False
+    assert restore_res.json()["archived_at"] is None
+
+    # Verify task2 is back in active list
+    restored_tasks = await client.get(f"/api/v1/projects/{project_id}/tasks", headers=headers)
+    restored_ids = [t["id"] for t in restored_tasks.json()]
+    assert task2_id in restored_ids
+

@@ -101,11 +101,22 @@ class TaskUpdate(BaseModel):
     actual_hours: Optional[float] = None
     assignee_name: Optional[str] = None
     order_index: Optional[int] = None
+    is_archived: Optional[bool] = None
 
 
 class TaskStatusUpdate(BaseModel):
     target_status: TaskStatus
     blocker_reason: Optional[str] = None
+
+
+class TaskReorderItem(BaseModel):
+    id: uuid.UUID
+    order_index: int
+    status: Optional[TaskStatus] = None
+
+
+class TaskReorderRequest(BaseModel):
+    items: List[TaskReorderItem]
 
 
 class TaskResponse(TaskBase):
@@ -115,5 +126,8 @@ class TaskResponse(TaskBase):
     project_id: uuid.UUID
     status: TaskStatus
     blocker_reason: Optional[str] = None
+    is_archived: bool = False
+    archived_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+
