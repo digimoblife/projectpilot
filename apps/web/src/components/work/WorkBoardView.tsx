@@ -628,7 +628,7 @@ export function WorkBoardView({
           </div>
 
           <div className="w-full max-w-full overflow-x-auto pb-4">
-            <div className="flex gap-3.5 items-start min-w-[1200px] xl:min-w-0 xl:grid xl:grid-cols-5">
+            <div className="flex gap-3.5 items-stretch min-w-[1200px] xl:min-w-0 xl:grid xl:grid-cols-5">
             {columns.map((col) => {
               const colTasks = filteredTasks.filter((t) => t.status === col.key);
               const isDragOverThisCol = dragOverColumnKey === col.key;
@@ -639,14 +639,14 @@ export function WorkBoardView({
                   onDragOver={(e) => handleDragOver(e, col.key)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, col.key)}
-                  className={`w-[260px] xl:w-auto shrink-0 xl:shrink rounded-xl p-2.5 border flex flex-col min-h-[450px] transition-all duration-200 ${
+                  className={`w-[260px] xl:w-auto shrink-0 xl:shrink rounded-xl p-2.5 border flex flex-col h-full min-h-[450px] transition-all duration-200 ${
                     isDragOverThisCol
                       ? "bg-blue-50/60 border-2 border-dashed border-blue-400 ring-2 ring-blue-400/20 shadow-xs"
                       : "bg-slate-100/70 border-slate-200/80"
                   }`}
                 >
                 {/* Column Header */}
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 shrink-0">
                   <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                     <span className="font-bold text-xs text-slate-800">{col.label}</span>
@@ -657,7 +657,7 @@ export function WorkBoardView({
                 </div>
 
                 {/* Task Cards Column */}
-                <div className="space-y-2.5 flex-1">
+                <div className="space-y-2.5 flex-1 flex flex-col">
                   {colTasks.map((task) => {
                     const isBlocked = task.status === "BLOCKED";
                     const isDone = task.status === "DONE";
@@ -669,11 +669,13 @@ export function WorkBoardView({
                         draggable={true}
                         onDragStart={(e) => handleDragStart(e, task)}
                         onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOver(e, col.key)}
+                        onDrop={(e) => handleDrop(e, col.key)}
                         onClick={() => {
                           if (draggedTaskId) return;
                           openEditTaskModal(task);
                         }}
-                        className={`bg-white rounded-xl p-4 border shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer select-none active:scale-[0.99] relative h-[200px] ${
+                        className={`bg-white rounded-xl p-4 border shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer select-none active:scale-[0.99] relative h-[200px] shrink-0 ${
                           isBeingDragged
                             ? "opacity-40 scale-[0.98] border-blue-400 ring-2 ring-blue-400 shadow-md cursor-grabbing"
                             : isBlocked
@@ -810,14 +812,14 @@ export function WorkBoardView({
                     <div
                       onDragOver={(e) => handleDragOver(e, col.key)}
                       onDrop={(e) => handleDrop(e, col.key)}
-                      className={`min-h-[140px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2.5 transition-all select-none ${
+                      className={`flex-1 min-h-[140px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2.5 transition-all select-none p-4 ${
                         isDragOverThisCol
                           ? "border-blue-500 bg-blue-50/90 text-blue-700 ring-2 ring-blue-400/20 shadow-xs animate-pulse"
                           : "border-slate-200/90 bg-slate-100/40 text-slate-400 hover:border-slate-300"
                       }`}
                     >
                       <div
-                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shrink-0 ${
                           isDragOverThisCol
                             ? "bg-blue-100 text-blue-600 shadow-2xs"
                             : "bg-slate-200/60 text-slate-400"
@@ -825,7 +827,7 @@ export function WorkBoardView({
                       >
                         <ArrowDownToLine className="w-4.5 h-4.5" />
                       </div>
-                      <span className="text-xs font-semibold">
+                      <span className="text-xs font-semibold text-center">
                         {isDragOverThisCol ? "Lepas tiket di sini" : "Pindahkan ke kolom ini"}
                       </span>
                     </div>

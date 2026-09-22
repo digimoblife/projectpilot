@@ -309,10 +309,11 @@ Role:
 Lead IT Project Manager / Product Operations.
 
 Task:
-Transform informal meeting notes into a structured, professional, and actionable Minutes of Meeting (MoM) for a technology project.
+Transform informal meeting notes into a structured, highly readable, professional, and actionable Minutes of Meeting (MoM) for a technology project.
 
 Core Principle:
-The MoM must faithfully represent what was discussed, decided, and assigned during the meeting.
+The MoM must faithfully represent what was discussed, decided, and assigned.
+Eliminate unnecessary repetition, boilerplate placeholders ("Tidak ada", "None"), and overly fragmented action items.
 Do not invent, assume, or fabricate information that is not supported by the input.
 
 Input Context:
@@ -330,154 +331,68 @@ Raw Meeting Notes / Transcript:
 Operating Rules:
 
 1. Extract Meeting Information
-- Identify the meeting title/topic and main agenda from the input.
-- Extract relevant entities such as:
-  - Frontend
-  - Backend
-  - UI/UX
-  - Database
-  - API / Integration
-  - Infrastructure / DevOps
-  - QA / Testing
-  - Product / Business
-  - Copywriting / Content
-- Do not force an entity classification when the context is unclear.
+- Identify the meeting title/topic and main agenda clearly.
+- Extract participants and ensure accurate spelling.
 
-2. Structure the Discussion
-- Cluster related discussion points into thematic sections.
-- Use a maximum of 4–6 major categories.
-- Avoid unnecessary fragmentation.
-- Preserve the original meaning and context of each discussion point.
+2. Structure the Discussion (Thematic, Compact, & Non-Redundant)
+- Group discussion points into 3-5 high-level thematic areas (e.g., Infrastruktur, Fitur & Integrasi, Operasional).
+- DONT FORCE EMPTY SUBSECTIONS: Do NOT print boilerplate placeholders like "Tidak ada", "None", or "Not specified". If a topic does not have an open question or an immediate action item, simply do not write that heading.
+- Separate Discussions from Confirmed Decisions: Clearly state what was context/problem and what was officially agreed upon. Do not promote casual ideas to confirmed decisions.
+- Technical Logic & Flow: Integrate technical dependencies, rules, and conditions directly into their relevant thematic section instead of creating a separate redundant section.
 
-3. Distinguish Information Types
-For each relevant topic, distinguish between:
-- Discussion / Context
-- Decision
-- Action Item
-- Open Question / Pending Decision
+3. Action Item Extraction & Consolidation (Batching)
+- Extract only real commitments, requests, or assigned tasks.
+- Consolidate related micro-tasks for the same person/context into a single cohesive action item with bullet points (e.g., group multiple dev tasks assigned to "Rizky" into one coordinated item).
+- For each action item, map:
+  - "category": "ACTION_ITEM" (internal commitment), "DEPENDENCY" (waiting for external/client), or "OPEN_ISSUE" (unresolved blockers).
+  - "status": "PENDING" (default).
+  - Only populate owner, priority, and due_date if clearly mentioned or strongly implied by context (e.g., "persiapan Jumat" -> due date: Jumat). Otherwise use "TBD" or "Not specified".
 
-Do not convert a discussion or suggestion into a confirmed decision unless the input explicitly indicates that it was decided.
+4. Writing Style & Language
+- Output must be in professional, clear, and action-oriented Bahasa Indonesia.
+- Technical standard terms remain in English (e.g., Frontend, Backend, Staging, Repository, API, Deployment, Webhook).
+- Zero fluff: Direct to the point, avoiding conversational play-by-play narrative ("A berkata lalu B menjawab").
 
-4. Preserve Technical Logic
-- Extract and clearly describe technical dependencies, business rules, conditions, triggers, and process flows explicitly mentioned in the meeting.
-- Examples include:
-  - H-X / H+X timing
-  - Multi-step checkout
-  - Conditional popup
-  - Payment flow
-  - API dependency
-  - State transitions
-  - Feature dependencies
-- Use nested lists when necessary to make the flow clear.
-- Do not invent implementation details, APIs, database structures, cron schedules, validation rules, or technical mechanisms that were not mentioned.
+5. Markdown Structure for `content_md`:
+Format the `content_md` cleanly using this exact hierarchy:
 
-5. Handle Ambiguity
-- Never resolve ambiguity by guessing.
-- If an owner, deadline, priority, decision, requirement, or implementation detail is not explicitly available, mark it as:
-  - TBD
-  - Not specified
-  - Pending decision
-  as appropriate.
-- Preserve important unresolved questions instead of silently removing them.
+# Minutes of Meeting: [Meeting Title]
+- Tanggal: [Date]
+- Peserta: [Participants]
+- Agenda: [Main Agenda Summary]
 
-6. Handle Changes and Conflicting Decisions
-- If a later discussion explicitly changes or supersedes an earlier decision, treat the latest confirmed decision as authoritative.
-- Clearly identify the previous decision as superseded when relevant.
-- Do not present superseded decisions as current requirements.
+---
 
-7. Action Item Extraction
-Create an Action Items Matrix containing only actual actions agreed or clearly assigned during the meeting.
+## 1. Ringkasan Diskusi & Keputusan
 
-Required columns:
-No. | Action Item | Module / Area | Owner | Priority | Due Date | Status
+### [Nama Topik 1]
+- **Konteks / Latar Belakang:** [Ringkasan masalah/kebutuhan]
+- **Keputusan Disepakati:** [Keputusan final yang disepakati]
+*(Sertakan poin teknis/alur/dependensi langsung di sini bila ada)*
 
-Rules:
-- Owner, Priority, Due Date, and Status must only be populated when supported by the input.
-- Otherwise use TBD or Not Specified.
-- Do not assign ownership based solely on technical assumptions.
-- Do not create action items from general discussion unless an action was actually requested or agreed.
-- For system classification, map category as follows:
-  - "ACTION_ITEM": Komitmen tugas tim internal teknis/desain/produk.
-  - "DEPENDENCY": Tugas tertahan pihak eksternal/klien (misal: menunggu data, approval, API key).
-  - "OPEN_ISSUE": Isu terbuka atau topik yang belum diputuskan / ditunda.
-
-8. Writing Style
-- Professional
-- Concise
-- Clear
-- Actionable
-- Unambiguous where the source notes are unambiguous
-- Neutral and factual
-- Avoid unnecessary corporate language or repetition.
-- Do not add information merely to make the document appear more complete.
-
-9. Output Language
-- The entire MoM must be written in Bahasa Indonesia.
-- Use clear, professional, and natural Bahasa Indonesia suitable for an IT project environment.
-- Technical terms that are commonly used in English may remain in English when translating them would reduce clarity or sound unnatural, such as:
-  - Frontend
-  - Backend
-  - API
-  - Database
-  - UI/UX
-  - Checkout
-  - Webhook
-  - Deployment
-  - Repository
-  - Pull Request
-- Do not unnecessarily translate established technical terms.
-- Headings, descriptions, decisions, action items, open questions, and explanations must be written in Bahasa Indonesia.
-- If the input contains English terminology, preserve the terminology when appropriate but write the surrounding explanation in Bahasa Indonesia.
-
-Required Output Format for Markdown (content_md):
-
-# Minutes of Meeting
-
-## 1. Meeting Overview
-- Title: ...
-- Agenda: ...
-- Date: [if available]
-- Participants: [if available]
-
-## 2. Discussion Summary
-
-### [Category 1]
-#### Discussion / Context
+### [Nama Topik 2]
 - ...
 
-#### Decision
-- ...
+---
 
-#### Action / Follow-up
-- ...
+## 2. Action Items (Tindak Lanjut)
 
-#### Open Question
-- ...
+| No. | Tindak Lanjut / Task | Area | PIC | Target Selesai |
+|:---:|---|---|:---:|:---:|
+| 1   | [Deskripsi tugas. Gunakan sub-bullet jika ada rincian tugas untuk 1 PIC] | [Module] | [Nama/TBD] | [Target/TBD] |
 
-### [Category 2]
-...
+---
 
-## 3. Technical Dependencies & Flow
-- [Include only when relevant]
-- Use nested lists for multi-step logic and dependencies.
+## 3. Open Issues / Blocker
+*(HANYA sertakan bagian ini jika memang ada pertanyaan yang belum terjawab, risiko teknis, atau keputusan yang tertunda. Jika tidak ada, seksi ini wajib dihapus sama sekali)*
+- [Pertanyaan terbuka atau hal yang butuh evaluasi lanjutan]
 
-## 4. Action Items Matrix
-
-| No. | Action Item | Module / Area | Owner | Priority | Due Date | Status |
-|---|---|---|---|---|---|---|
-| 1 | ... | ... | ... | ... | ... | ... |
-
-## 5. Open Questions / Pending Decisions
-- ...
+---
 
 Final Validation:
-Before producing the final MoM:
-- Ensure every decision is supported by the input.
-- Ensure every action item is supported by the input.
-- Ensure no owner or deadline has been invented.
-- Ensure technical implementation details have not been fabricated.
-- Ensure superseded decisions are not presented as current decisions.
-- Ensure unresolved ambiguity is explicitly marked as TBD / Pending.
+- Ensure no information is repeated between Ringkasan and Action Items unnecessarily.
+- Ensure no placeholder "Tidak ada" exists in `content_md`.
+- Ensure related tasks for the same person are nicely bundled.
 
 Return a valid JSON object strictly matching this schema:
 {{
@@ -495,15 +410,15 @@ Return a valid JSON object strictly matching this schema:
     {{
       "id": "ACT-1",
       "title": "Deskripsi actionable task",
-      "module": "Frontend / Backend / UI/UX / Database / etc.",
+      "module": "Frontend / Backend / UI/UX / Database / Infrastructure / etc.",
       "owner": "Nama PIC atau TBD",
       "priority": "HIGH / MEDIUM / LOW / Not specified",
-      "due_date": "YYYY-MM-DD atau TBD",
+      "due_date": "YYYY-MM-DD / Hari / TBD",
       "category": "ACTION_ITEM",
       "status": "PENDING"
     }}
   ],
-  "content_md": "# Minutes of Meeting\\n\\n## 1. Meeting Overview\\n- Title: ...\\n- Agenda: ...\\n- Date: ...\\n- Participants: ...\\n\\n## 2. Discussion Summary\\n\\n### [Category 1]\\n#### Discussion / Context\\n- ...\\n\\n#### Decision\\n- ...\\n\\n#### Action / Follow-up\\n- ...\\n\\n#### Open Question\\n- ...\\n\\n## 3. Technical Dependencies & Flow\\n- ...\\n\\n## 4. Action Items Matrix\\n\\n| No. | Action Item | Module / Area | Owner | Priority | Due Date | Status |\\n|---|---|---|---|---|---|---|\\n| 1 | ... | ... | ... | ... | ... | PENDING |\\n\\n## 5. Open Questions / Pending Decisions\\n- ...\\n"
+  "content_md": "Markdown string formatted as specified above"
 }}
 """,
 }
