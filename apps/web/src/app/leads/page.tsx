@@ -14,6 +14,7 @@ import {
   HelpCircle,
   Image as ImageIcon,
   Link2,
+  Loader2,
   Mail,
   Paperclip,
   Phone,
@@ -848,9 +849,16 @@ export default function LeadsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 active:scale-[0.98] transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] transition-all flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan Lead"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Lead</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -925,9 +933,16 @@ export default function LeadsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Update Status"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Update Status</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1022,10 +1037,19 @@ export default function LeadsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{isSubmitting ? "Mengonversi..." : "Konversi & Buka Workspace"}</span>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Mengonversi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Konversi & Buka Workspace</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

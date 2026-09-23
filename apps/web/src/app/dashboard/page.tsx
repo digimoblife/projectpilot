@@ -15,6 +15,7 @@ import {
   FolderKanban,
   Layers,
   ListTodo,
+  Loader2,
   RefreshCw,
   ShieldAlert,
   ShieldCheck,
@@ -277,10 +278,20 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={handleGenerateAIBriefing}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+            disabled={isAILoading}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-slate-300" />
-            <span>Morning Briefing</span>
+            {isAILoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-slate-300" />
+                <span>Membuat Briefing...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 text-slate-300" />
+                <span>Morning Briefing</span>
+              </>
+            )}
           </button>
         </div>
       </div>

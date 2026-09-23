@@ -12,6 +12,7 @@ import {
   Sparkles,
   X,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
@@ -488,10 +489,19 @@ export default function ProjectsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 flex items-center gap-1.5 transition-all active:scale-[0.98]"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5 transition-all active:scale-[0.98]"
                 >
-                  <Sparkles className="w-4 h-4 text-slate-300" />
-                  <span>{isSubmitting ? "Menyimpan..." : "Buat Proyek"}</span>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-300" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-slate-300" />
+                      <span>Buat Proyek</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

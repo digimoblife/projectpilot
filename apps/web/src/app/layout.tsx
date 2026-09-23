@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { RouteProgressBar } from "@/components/layout/route-progress-bar";
 import { AuthProvider } from "@/lib/auth-context";
 
 const inter = Inter({
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="id" data-theme="light" className={`light ${inter.variable}`}>
       <body className="min-h-screen bg-[var(--ph-bg-subtle)] text-[var(--ph-text)] antialiased font-sans">
+        <RouteProgressBar />
         <AuthProvider>
           <AppShell>
             {children}

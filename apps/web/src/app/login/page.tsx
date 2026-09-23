@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Compass, Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
+import { Compass, Lock, Mail, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
@@ -87,10 +87,19 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 bg-slate-900 hover:bg-black text-white font-semibold text-sm rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xs disabled:opacity-50 mt-2"
+            className="w-full py-2.5 px-4 bg-slate-900 hover:bg-black text-white font-semibold text-sm rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xs disabled:opacity-50 disabled:pointer-events-none mt-2"
           >
-            <span>{isSubmitting ? "Memproses..." : "Masuk"}</span>
-            <ArrowRight className="w-4 h-4" />
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Memproses...</span>
+              </>
+            ) : (
+              <>
+                <span>Masuk</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </form>
 

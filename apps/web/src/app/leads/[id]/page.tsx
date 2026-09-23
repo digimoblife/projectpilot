@@ -18,6 +18,7 @@ import {
   History,
   Image as ImageIcon,
   Link2,
+  Loader2,
   Mail,
   MapPin,
   MessageSquare,
@@ -1049,9 +1050,16 @@ export default function LeadDetailPage({
                   <button
                     type="submit"
                     disabled={!customNoteText.trim() || isSubmitting}
-                    className="px-3 py-1 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg"
+                    className="px-3 py-1 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:pointer-events-none text-white text-xs font-semibold rounded-lg flex items-center gap-1.5"
                   >
-                    {isSubmitting ? "Menyimpan..." : "Simpan Catatan"}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <span>Simpan Catatan</span>
+                    )}
                   </button>
                 </div>
               </form>
@@ -1830,9 +1838,16 @@ export default function LeadDetailPage({
                 <button
                   type="submit"
                   disabled={isSubmitting || !contactNotes.trim()}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-medium text-xs rounded-lg transition-colors"
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:pointer-events-none text-white font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan & Tandai Dihubungi"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan & Tandai Dihubungi</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1934,9 +1949,16 @@ export default function LeadDetailPage({
                 <button
                   type="submit"
                   disabled={isSubmitting || !briefDate || !briefLocation}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium text-xs rounded-lg transition-colors"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:pointer-events-none text-white font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan Jadwal Brief"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Jadwal Brief</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1998,9 +2020,16 @@ export default function LeadDetailPage({
                 <button
                   type="submit"
                   disabled={isSubmitting || !qualifySummary.trim()}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium text-xs rounded-lg transition-colors"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none text-white font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Tandai Terkualifikasi"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Tandai Terkualifikasi</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -2088,9 +2117,16 @@ export default function LeadDetailPage({
                 <button
                   type="submit"
                   disabled={isSubmitting || !projectCode || !projectName}
-                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-medium text-xs rounded-lg transition-colors"
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:pointer-events-none text-white font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Memproses..." : "Konversi & Buka Proyek"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Memproses...</span>
+                    </>
+                  ) : (
+                    <span>Konversi & Buka Proyek</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -2152,9 +2188,16 @@ export default function LeadDetailPage({
                 <button
                   type="submit"
                   disabled={isSubmitting || !lossReason.trim()}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-medium text-xs rounded-lg transition-colors"
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:pointer-events-none text-white font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Konfirmasi Batal"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Konfirmasi Batal</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -2318,9 +2361,16 @@ export default function LeadDetailPage({
                     !refTitle.trim() ||
                     (refType === "IMAGE" ? !refImagePreview : !refContent.trim())
                   }
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-medium text-xs rounded-lg transition-colors"
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:pointer-events-none text-white font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan Referensi"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Referensi</span>
+                  )}
                 </button>
               </div>
             </form>

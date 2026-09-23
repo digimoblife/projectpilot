@@ -22,6 +22,7 @@ import {
   Layers,
   LayoutList,
   Link2,
+  Loader2,
   MessageSquare,
   Milestone as MilestoneIcon,
   PauseCircle,
@@ -753,10 +754,14 @@ export default function ProjectWorkspaceLayout({
                 <button
                   type="submit"
                   disabled={!questionInput.trim() || isAsking}
-                  className="p-2 bg-slate-900 hover:bg-black text-white rounded-xl shadow-xs transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="p-2 bg-slate-900 hover:bg-black text-white rounded-xl shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
                   aria-label="Kirim"
                 >
-                  <Send className="w-4 h-4" />
+                  {isAsking ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </form>
