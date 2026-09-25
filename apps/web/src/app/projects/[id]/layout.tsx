@@ -611,8 +611,8 @@ export default function ProjectWorkspaceLayout({
       {/* 2-TIER CLEAN NAVIGATION CONTAINER                                       */}
       {/* ======================================================================= */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-        {/* Tier 1: Main Category Pillars (Scrollable on mobile, responsive grid on desktop) */}
-        <div className="flex items-center overflow-x-auto lg:grid lg:grid-cols-4 xl:grid-cols-8 border-b border-slate-100 bg-slate-50/50 p-1.5 gap-1 scrollbar-none">
+        {/* Tier 1: Main Category Pillars (Clean uniform flex layout) */}
+        <div className="flex items-center overflow-x-auto border-b border-slate-100 bg-slate-50/50 p-1.5 gap-1 sm:gap-1.5 scrollbar-none">
           {navigationPillars.map((pillar) => {
             const isPillarActive = activePillar?.id === pillar.id;
             const Icon = pillar.icon;
@@ -621,7 +621,7 @@ export default function ProjectWorkspaceLayout({
               <Link
                 key={pillar.id}
                 href={pillar.href}
-                className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 lg:shrink whitespace-nowrap active:scale-[0.98] ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 whitespace-nowrap active:scale-[0.98] ${
                   isPillarActive
                     ? "bg-white text-slate-900 shadow-xs border border-slate-300 font-bold"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
