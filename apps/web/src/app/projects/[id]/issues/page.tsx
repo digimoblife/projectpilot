@@ -21,6 +21,7 @@ import {
   Info,
   Key,
   Layers,
+  Loader2,
   Lock,
   Plus,
   RefreshCw,
@@ -167,6 +168,19 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
     blockerTitle: string;
     isTaskLinked: boolean;
   } | null>(null);
+
+  // Issue Resolution Modal States
+  const [isResolveIssueModalOpen, setIsResolveIssueModalOpen] = useState(false);
+  const [selectedIssueForResolve, setSelectedIssueForResolve] = useState<Issue | null>(null);
+  const [issueResolutionNotes, setIssueResolutionNotes] = useState("");
+  const [resolveIssueError, setResolveIssueError] = useState<string | null>(null);
+
+  // Issue Detail Modal States
+  const [isIssueDetailModalOpen, setIsIssueDetailModalOpen] = useState(false);
+  const [selectedIssueForDetail, setSelectedIssueForDetail] = useState<Issue | null>(null);
+  const [isEditingIssueSolution, setIsEditingIssueSolution] = useState(false);
+  const [editIssueResolutionNotes, setEditIssueResolutionNotes] = useState("");
+  const [editIssueDetailError, setEditIssueDetailError] = useState<string | null>(null);
 
   // Mark Client Dependency Provided Modal States
   const [isMarkProvidedModalOpen, setIsMarkProvidedModalOpen] = useState(false);
@@ -322,6 +336,103 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function openResolveIssueModal(issue: Issue) {
+    setSelectedIssueForResolve(issue);
+    setIssueResolutionNotes(issue.resolution_notes || "");
+    setResolveIssueError(null);
+    setIsResolveIssueModalOpen(true);
+  }
+
+  async function handleConfirmResolveIssue(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedIssueForResolve) return;
+    if (!issueResolutionNotes.trim()) {
+      setResolveIssueError("Langkah / cara penyelesaian issue wajib diisi.");
+      return;
+    }
+
+    setResolveIssueError(null);
+    setIsSubmitting(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      const res = await apiClient<Issue>(
+        `/projects/${projectId}/issues/${selectedIssueForResolve.id}/status`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            target_status: "RESOLVED",
+            resolution_notes: issueResolutionNotes.trim(),
+          }),
+        }
+      );
+
+      if (res.data) {
+        setIsResolveIssueModalOpen(false);
+        setSelectedIssueForResolve(null);
+        setIssueResolutionNotes("");
+        fetchIssuesRisksData();
+      } else {
+        setResolveIssueError(res.error || "Gagal menyelesaikan issue.");
+      }
+    } catch {
+      setResolveIssueError("Terjadi kesalahan jaringan.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function openIssueDetailModal(issue: Issue) {
+    setSelectedIssueForDetail(issue);
+    setEditIssueResolutionNotes(issue.resolution_notes || "");
+    setIsEditingIssueSolution(false);
+    setEditIssueDetailError(null);
+    setIsIssueDetailModalOpen(true);
+  }
+
+  async function handleSaveEditedResolutionNotes(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedIssueForDetail) return;
+
+    setIsSubmitting(true);
+    setEditIssueDetailError(null);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      const res = await apiClient<Issue>(
+        `/projects/${projectId}/issues/${selectedIssueForDetail.id}`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            resolution_notes: editIssueResolutionNotes.trim() || null,
+          }),
+        }
+      );
+
+      if (res.data) {
+        setSelectedIssueForDetail(res.data);
+        setIsEditingIssueSolution(false);
+        fetchIssuesRisksData();
+      } else {
+        setEditIssueDetailError(res.error || "Gagal memperbarui catatan solusi.");
+      }
+    } catch {
+      setEditIssueDetailError("Terjadi kesalahan jaringan.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handleSelectIssueStatus(issue: Issue, targetStatus: string) {
+    if (targetStatus === "RESOLVED") {
+      openResolveIssueModal(issue);
+      return;
+    }
+    handleUpdateIssueStatus(issue.id, targetStatus);
   }
 
   async function handleUpdateIssueStatus(issueId: string, targetStatus: string) {
@@ -594,8 +705,8 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                         </span>
                         <select
                           value={issue.status}
-                          onChange={(e) => handleUpdateIssueStatus(issue.id, e.target.value)}
-                          className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                          onChange={(e) => handleSelectIssueStatus(issue, e.target.value)}
+                          className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 text-slate-800 focus:bg-white cursor-pointer"
                         >
                           {Object.entries(issueStatusConfigs).map(([val, c]) => (
                             <option key={val} value={val}>
@@ -607,20 +718,47 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                     </div>
 
                     {issue.description && (
-                      <p className="text-xs text-slate-600">{issue.description}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed">{issue.description}</p>
                     )}
 
                     {issue.resolution_notes && (
-                      <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
-                        <strong>Catatan Solusi:</strong> {issue.resolution_notes}
+                      <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-900 space-y-1">
+                        <div className="flex items-center justify-between font-bold text-emerald-800 text-[11px]">
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            Cara Penyelesaian / Catatan Solusi:
+                          </span>
+                          {issue.resolved_at && (
+                            <span className="text-[10px] font-normal text-emerald-700 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {new Date(issue.resolved_at).toLocaleDateString("id-ID")}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-emerald-950 whitespace-pre-wrap leading-relaxed">{issue.resolution_notes}</p>
                       </div>
                     )}
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Dilaporkan: {new Date(issue.created_at).toLocaleDateString("id-ID")}</span>
-                      {issue.source_risk_id && (
-                        <span className="text-amber-700 font-semibold">Berasal dari Materialisasi Risiko</span>
-                      )}
+                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span>Dilaporkan: {new Date(issue.created_at).toLocaleDateString("id-ID")}</span>
+                        {issue.resolved_at && (
+                          <span className="text-emerald-700 font-medium">
+                            • Diselesaikan: {new Date(issue.resolved_at).toLocaleDateString("id-ID")}
+                          </span>
+                        )}
+                        {issue.source_risk_id && (
+                          <span className="text-amber-700 font-semibold">• Berasal dari Risiko</span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openIssueDetailModal(issue)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer shrink-0"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Lihat Detail</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -1065,6 +1203,253 @@ function ProjectIssuesContent({ projectId }: { projectId: string }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Resolve Issue Modal */}
+      {isResolveIssueModalOpen && selectedIssueForResolve && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Selesaikan Issue (Resolve Issue)</h3>
+                  <p className="text-[11px] text-slate-500">
+                    Dokumentasikan langkah atau tindakan teknis yang telah menyelesaikan kendala ini.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsResolveIssueModalOpen(false);
+                  setSelectedIssueForResolve(null);
+                  setIssueResolutionNotes("");
+                }}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {resolveIssueError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{resolveIssueError}</span>
+              </div>
+            )}
+
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold text-slate-700">{selectedIssueForResolve.key}</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${severityColors[selectedIssueForResolve.severity]}`}>
+                  {selectedIssueForResolve.severity}
+                </span>
+                <span className="font-semibold text-slate-900 truncate">{selectedIssueForResolve.title}</span>
+              </div>
+              {selectedIssueForResolve.description && (
+                <p className="text-slate-500 text-[11px] line-clamp-2">{selectedIssueForResolve.description}</p>
+              )}
+            </div>
+
+            <form onSubmit={handleConfirmResolveIssue} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Cara / Langkah Penyelesaian (Resolution Notes) *
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={issueResolutionNotes}
+                  onChange={(e) => setIssueResolutionNotes(e.target.value)}
+                  placeholder="Jelaskan akar penyebab masalah dan bagaimana issue ini diperbaiki (misal: Rollback dependensi, perbaikan bug query, update konfigurasi server)..."
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-800 leading-relaxed"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsResolveIssueModalOpen(false);
+                    setSelectedIssueForResolve(null);
+                    setIssueResolutionNotes("");
+                  }}
+                  className="px-3.5 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-all flex items-center gap-1.5 ${
+                    isSubmitting ? "opacity-60 cursor-not-allowed pointer-events-none" : "cursor-pointer"
+                  }`}
+                >
+                  {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{isSubmitting ? "Menyimpan Solusi..." : "Tandai Selesai (Resolve)"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Issue Modal */}
+      {isIssueDetailModalOpen && selectedIssueForDetail && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                  {selectedIssueForDetail.key}
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${severityColors[selectedIssueForDetail.severity]}`}>
+                  {selectedIssueForDetail.severity}
+                </span>
+                <span className={`inline-flex items-center whitespace-nowrap text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                  issueStatusConfigs[selectedIssueForDetail.status]?.color || "bg-slate-100 text-slate-600"
+                }`}>
+                  {issueStatusConfigs[selectedIssueForDetail.status]?.label || selectedIssueForDetail.status}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsIssueDetailModalOpen(false);
+                  setSelectedIssueForDetail(null);
+                  setIsEditingIssueSolution(false);
+                }}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {editIssueDetailError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{editIssueDetailError}</span>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">{selectedIssueForDetail.title}</h3>
+                {selectedIssueForDetail.description ? (
+                  <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap leading-relaxed">
+                    {selectedIssueForDetail.description}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-400 italic mt-1">Tidak ada deskripsi detail.</p>
+                )}
+              </div>
+
+              {/* Resolution Box */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-900 text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Cara & Catatan Penyelesaian</span>
+                  </div>
+                  {!isEditingIssueSolution && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditIssueResolutionNotes(selectedIssueForDetail.resolution_notes || "");
+                        setIsEditingIssueSolution(true);
+                      }}
+                      className="text-[11px] font-medium text-emerald-700 hover:text-emerald-900 flex items-center gap-1 hover:underline cursor-pointer"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>{selectedIssueForDetail.resolution_notes ? "Edit Solusi" : "Tulis Solusi"}</span>
+                    </button>
+                  )}
+                </div>
+
+                {isEditingIssueSolution ? (
+                  <form onSubmit={handleSaveEditedResolutionNotes} className="space-y-2 pt-1">
+                    <textarea
+                      rows={4}
+                      value={editIssueResolutionNotes}
+                      onChange={(e) => setEditIssueResolutionNotes(e.target.value)}
+                      placeholder="Tuliskan langkah penyelesaian masalah..."
+                      className="w-full px-3 py-2 text-xs border border-emerald-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-800"
+                    />
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingIssueSolution(false)}
+                        className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 rounded cursor-pointer"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded shadow-xs flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmitting && <Loader2 className="w-3 h-3 animate-spin" />}
+                        <span>Simpan</span>
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div>
+                    {selectedIssueForDetail.resolution_notes ? (
+                      <p className="text-emerald-950 whitespace-pre-wrap leading-relaxed">
+                        {selectedIssueForDetail.resolution_notes}
+                      </p>
+                    ) : (
+                      <p className="text-emerald-600/70 italic text-[11px]">
+                        Belum ada catatan solusi yang dituliskan.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {selectedIssueForDetail.resolved_at && (
+                  <div className="text-[10px] text-emerald-700/80 pt-1 border-t border-emerald-100 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>Diselesaikan pada: {new Date(selectedIssueForDetail.resolved_at).toLocaleString("id-ID")}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Metadata */}
+              <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl text-[11px] text-slate-500">
+                <div>
+                  <span className="block text-slate-400 text-[10px]">Waktu Dilaporkan</span>
+                  <span className="font-medium text-slate-700">
+                    {new Date(selectedIssueForDetail.created_at).toLocaleString("id-ID")}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-slate-400 text-[10px]">Sumber</span>
+                  <span className="font-medium text-slate-700">
+                    {selectedIssueForDetail.source_risk_id ? "Materialisasi Risiko" : "Laporan Manual PM"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsIssueDetailModalOpen(false);
+                  setSelectedIssueForDetail(null);
+                  setIsEditingIssueSolution(false);
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

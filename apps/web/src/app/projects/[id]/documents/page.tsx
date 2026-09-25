@@ -18,6 +18,7 @@ import {
   Filter,
   History,
   Layers,
+  Loader2,
   Lock,
   Plus,
   RefreshCw,
@@ -449,9 +450,10 @@ export default function ProjectDocumentsPage({
                           type="button"
                           disabled={isSaving}
                           onClick={handleSaveEdits}
-                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                         >
-                          {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                          {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                          <span>{isSaving ? "Menyimpan..." : "Simpan Perubahan"}</span>
                         </button>
                       ) : (
                         <button
@@ -623,9 +625,16 @@ export default function ProjectDocumentsPage({
                 <button
                   type="submit"
                   disabled={isGenerating}
-                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white font-semibold text-xs rounded-xl shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 >
-                  {isGenerating ? "Gemini sedang menyusun draft..." : "Generate Dokumen"}
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Gemini sedang menyusun draft...</span>
+                    </>
+                  ) : (
+                    <span>Generate Dokumen</span>
+                  )}
                 </button>
               </div>
             </form>

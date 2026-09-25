@@ -15,6 +15,7 @@ import {
   Check,
   Compass,
   FileCheck2,
+  FileSpreadsheet,
   FileText,
   Files,
   FolderTree,
@@ -286,10 +287,13 @@ export default function ProjectWorkspaceLayout({
     },
     {
       id: "prd",
-      name: "PRD",
+      name: "PRD & Dokumen",
       href: `/projects/${id}/prd`,
       icon: BookOpen,
-      subRoutes: [],
+      subRoutes: [
+        { name: "PRD", href: `/projects/${id}/prd`, sublabel: "Spesifikasi Produk", icon: BookOpen },
+        { name: "Dokumen & FSD", href: `/projects/${id}/documents`, sublabel: "FSD, Manual & Runbook", icon: FileSpreadsheet },
+      ],
     },
     {
       id: "work",
@@ -357,7 +361,10 @@ export default function ProjectWorkspaceLayout({
       );
     }
     if (pillar.id === "prd") {
-      return pathname.startsWith(`/projects/${id}/prd`);
+      return (
+        pathname.startsWith(`/projects/${id}/prd`) ||
+        pathname.startsWith(`/projects/${id}/documents`)
+      );
     }
     if (pillar.id === "work") {
       return (

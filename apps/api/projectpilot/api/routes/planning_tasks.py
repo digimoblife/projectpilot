@@ -364,6 +364,8 @@ async def reorder_tasks(
 
 
 @router.post("/tasks/{task_id}/archive", response_model=TaskResponse)
+@router.put("/tasks/{task_id}/archive", response_model=TaskResponse)
+@router.delete("/tasks/{task_id}/archive", response_model=TaskResponse)
 async def archive_task(
     project_id: uuid.UUID,
     task_id: uuid.UUID,
@@ -384,6 +386,7 @@ async def archive_task(
 
 
 @router.post("/tasks/{task_id}/restore", response_model=TaskResponse)
+@router.put("/tasks/{task_id}/restore", response_model=TaskResponse)
 async def restore_task(
     project_id: uuid.UUID,
     task_id: uuid.UUID,

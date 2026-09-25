@@ -303,7 +303,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
     try {
       const res = await apiClient(
         `/projects/${projectId}/resources/${resourceToArchive.id}/archive`,
-        { method: "PUT" }
+        { method: "POST" }
       );
       if (res.error) {
         setError(res.error);
@@ -325,7 +325,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
     try {
       const res = await apiClient(
         `/projects/${projectId}/resources/${resourceToRestore.id}/restore`,
-        { method: "PUT" }
+        { method: "POST" }
       );
       if (res.error) {
         setError(res.error);
@@ -1029,7 +1029,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
               <button
                 onClick={handleArchiveConfirm}
                 disabled={isProcessingAction}
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:pointer-events-none rounded-xl transition-colors shadow-xs cursor-pointer"
               >
                 {isProcessingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Ya, Arsipkan</span>
@@ -1063,7 +1063,7 @@ export function ResourcesTextView({ projectId }: ResourcesTextViewProps) {
               <button
                 onClick={handleRestoreConfirm}
                 disabled={isProcessingAction}
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none rounded-xl transition-colors shadow-xs cursor-pointer"
               >
                 {isProcessingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Ya, Pulihkan</span>

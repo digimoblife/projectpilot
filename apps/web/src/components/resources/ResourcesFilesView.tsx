@@ -194,8 +194,8 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
     setIsProcessingAction(true);
     try {
       const res = await apiClient<ProjectResource>(
-        `/projects/${projectId}/resources/${resourceToArchive.id}`,
-        { method: "DELETE" }
+        `/projects/${projectId}/resources/${resourceToArchive.id}/archive`,
+        { method: "POST" }
       );
       if (res.error) {
         alert(res.error);
@@ -799,7 +799,7 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
                 type="button"
                 onClick={handleConfirmArchive}
                 disabled={isProcessingAction}
-                className="inline-flex items-center gap-1 px-3.5 py-2 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1 px-3.5 py-2 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isProcessingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Ya, Arsipkan</span>
@@ -833,7 +833,7 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
                 type="button"
                 onClick={handleConfirmRestore}
                 disabled={isProcessingAction}
-                className="inline-flex items-center gap-1 px-3.5 py-2 bg-slate-900 text-white rounded-xl font-semibold hover:bg-black transition-all cursor-pointer"
+                className="inline-flex items-center gap-1 px-3.5 py-2 bg-slate-900 text-white rounded-xl font-semibold hover:bg-black transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isProcessingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Pulihkan Berkas</span>

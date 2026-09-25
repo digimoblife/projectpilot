@@ -654,6 +654,8 @@ async def update_project_resource(
 # 5. ARCHIVE RESOURCE
 # =========================================================================
 @router.post("/{resource_id}/archive", response_model=ProjectResourceResponse)
+@router.put("/{resource_id}/archive", response_model=ProjectResourceResponse)
+@router.delete("/{resource_id}/archive", response_model=ProjectResourceResponse)
 async def archive_project_resource(
     project_id: uuid.UUID,
     resource_id: uuid.UUID,
@@ -709,6 +711,7 @@ async def archive_project_resource(
 # 6. RESTORE RESOURCE
 # =========================================================================
 @router.post("/{resource_id}/restore", response_model=ProjectResourceResponse)
+@router.put("/{resource_id}/restore", response_model=ProjectResourceResponse)
 async def restore_project_resource(
     project_id: uuid.UUID,
     resource_id: uuid.UUID,
