@@ -104,26 +104,95 @@ class GeminiAdapter:
                     if "candidate_requirements" in parsed_json and "requirements" not in parsed_json:
                         parsed_json["requirements"] = parsed_json["candidate_requirements"]
 
-                    # Normalization for document generation (PRD, FSD, etc.)
+                    # Normalization for document and report generation
+                    report_and_doc_keys = [
+                        "prd_content",
+                        "fsd_content",
+                        "markdown_content",
+                        "document_content",
+                        "doc_content",
+                        "report_content",
+                        "report",
+                        "weekly_report",
+                        "monthly_report",
+                        "laporan",
+                        "laporan_mingguan",
+                        "laporan_bulanan",
+                        "laporan_proyek",
+                        "full_report",
+                        "body",
+                        "markdown",
+                        "text",
+                        "raw_content",
+                    ]
                     if "content" not in parsed_json:
-                        for candidate_key in ["prd_content", "fsd_content", "markdown_content", "document_content", "doc_content", "body", "markdown"]:
-                            if candidate_key in parsed_json and isinstance(parsed_json[candidate_key], str):
+                        for candidate_key in report_and_doc_keys:
+                            if candidate_key in parsed_json and isinstance(parsed_json[candidate_key], str) and parsed_json[candidate_key].strip():
                                 parsed_json["content"] = parsed_json[candidate_key]
                                 break
 
+                    # Handle top-level sections if content is still missing
+                    if "content" not in parsed_json and "sections" in parsed_json:
+                        doc_title = parsed_json.get("title") or "Laporan Proyek"
+                        sec_lines = [f"# {doc_title}\n"]
+                        if isinstance(parsed_json["sections"], dict):
+                            for s_name, s_val in parsed_json["sections"].items():
+                                s_title = s_name.replace("_", " ").title()
+                                sec_lines.append(f"## {s_title}\n{s_val}\n")
+                            parsed_json["content"] = "\n".join(sec_lines)
+                        elif isinstance(parsed_json["sections"], list):
+                            for item in parsed_json["sections"]:
+                                if isinstance(item, dict):
+                                    heading = item.get("heading") or item.get("title") or item.get("name") or "Bagian"
+                                    body = item.get("content") or item.get("body") or item.get("text") or item.get("description") or str(item)
+                                    sec_lines.append(f"## {heading}\n{body}\n")
+                                elif isinstance(item, str):
+                                    sec_lines.append(f"{item}\n")
+                            parsed_json["content"] = "\n".join(sec_lines)
+
                     if "content" not in parsed_json:
-                        for top_key in ["product_requirement_document", "prd", "fsd", "document", "documentation"]:
+                        top_containers = [
+                            "product_requirement_document",
+                            "prd",
+                            "fsd",
+                            "document",
+                            "documentation",
+                            "report",
+                            "weekly_report",
+                            "monthly_report",
+                            "laporan",
+                            "laporan_mingguan",
+                            "laporan_bulanan",
+                            "laporan_proyek",
+                            "project_report",
+                        ]
+                        for top_key in top_containers:
                             if top_key in parsed_json and isinstance(parsed_json[top_key], dict):
                                 nested = parsed_json[top_key]
-                                if "content" in nested and isinstance(nested["content"], str):
+                                if "content" in nested and isinstance(nested["content"], str) and nested["content"].strip():
                                     parsed_json["content"] = nested["content"]
-                                elif "sections" in nested and isinstance(nested["sections"], dict):
-                                    doc_title = nested.get("title") or parsed_json.get("title") or "Dokumen Kebutuhan Produk"
+                                else:
+                                    for ck in report_and_doc_keys:
+                                        if ck in nested and isinstance(nested[ck], str) and nested[ck].strip():
+                                            parsed_json["content"] = nested[ck]
+                                            break
+                                if "content" not in parsed_json and "sections" in nested:
+                                    doc_title = nested.get("title") or parsed_json.get("title") or "Laporan Proyek"
                                     sec_lines = [f"# {doc_title}\n"]
-                                    for s_name, s_val in nested["sections"].items():
-                                        s_title = s_name.replace("_", " ").title()
-                                        sec_lines.append(f"## {s_title}\n{s_val}\n")
-                                    parsed_json["content"] = "\n".join(sec_lines)
+                                    if isinstance(nested["sections"], dict):
+                                        for s_name, s_val in nested["sections"].items():
+                                            s_title = s_name.replace("_", " ").title()
+                                            sec_lines.append(f"## {s_title}\n{s_val}\n")
+                                        parsed_json["content"] = "\n".join(sec_lines)
+                                    elif isinstance(nested["sections"], list):
+                                        for item in nested["sections"]:
+                                            if isinstance(item, dict):
+                                                heading = item.get("heading") or item.get("title") or item.get("name") or "Bagian"
+                                                body = item.get("content") or item.get("body") or item.get("text") or item.get("description") or str(item)
+                                                sec_lines.append(f"## {heading}\n{body}\n")
+                                            elif isinstance(item, str):
+                                                sec_lines.append(f"{item}\n")
+                                        parsed_json["content"] = "\n".join(sec_lines)
                                 if "title" in nested and "title" not in parsed_json:
                                     parsed_json["title"] = nested["title"]
                                 if "summary" in nested and "summary" not in parsed_json:

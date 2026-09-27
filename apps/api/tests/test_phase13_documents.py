@@ -53,6 +53,14 @@ async def test_documentation_generation_workflow(client: AsyncClient):
         headers=headers,
     )
     assert req_res.status_code == 201
+    req_id = req_res.json()["id"]
+
+    confirm_res = await client.post(
+        f"/api/v1/projects/{project_id}/requirements/{req_id}/status",
+        json={"target_status": "CONFIRMED"},
+        headers=headers,
+    )
+    assert confirm_res.status_code == 200
 
     scope_res = await client.post(
         f"/api/v1/projects/{project_id}/scope-items",

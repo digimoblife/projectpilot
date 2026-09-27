@@ -25,6 +25,7 @@ class DocumentUpdateRequest(BaseModel):
     content: Optional[str] = None
     summary: Optional[str] = None
     status: Optional[DocumentStatus] = None
+    document_type: Optional[DocumentType] = None
 
 
 class DocumentResponse(BaseModel):

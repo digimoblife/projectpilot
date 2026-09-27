@@ -68,9 +68,34 @@ async def generate_report_draft(
     existing_count = len(count_res.scalars().all())
     report_key = f"REP-{(existing_count + 1):03d}"
 
-    title = ai_result.get("title", f"Laporan {req.report_type.value}: {project.name}")
-    content = ai_result.get("content", "# Laporan Proyek\n\nKonten sedang diproses.")
-    summary = ai_result.get("summary")
+    title = ai_result.get("title") or f"Laporan {req.report_type.value}: {project.name}"
+    content = (
+        ai_result.get("content")
+        or ai_result.get("report_content")
+        or ai_result.get("report")
+        or ai_result.get("weekly_report")
+        or ai_result.get("monthly_report")
+        or ai_result.get("laporan")
+        or ai_result.get("laporan_mingguan")
+        or ai_result.get("laporan_bulanan")
+        or ai_result.get("laporan_proyek")
+        or ai_result.get("markdown_content")
+        or ai_result.get("document_content")
+        or ai_result.get("doc_content")
+        or ai_result.get("markdown")
+        or ai_result.get("body")
+        or ai_result.get("text")
+    )
+    if not content:
+        fallback = gemini_adapter._generate_fallback_response(prompt=prompt, capability=capability)
+        content = fallback.get(
+            "content",
+            f"# Laporan {req.report_type.value}: {project.name}\n\nLaporan berhasil dibuat untuk periode {req.reporting_period_start} hingga {req.reporting_period_end}."
+        )
+        if not title:
+            title = fallback.get("title", f"Laporan {req.report_type.value}: {project.name}")
+
+    summary = ai_result.get("summary") or ai_result.get("ringkasan") or f"Laporan {req.report_type.value} disusun otomatis berdasarkan data aktivitas proyek."
 
     # 4. Save Report Entity
     report = Report(

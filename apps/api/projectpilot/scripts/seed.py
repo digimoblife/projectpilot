@@ -789,6 +789,10 @@ Platform mencakup aplikasi Point-of-Sale (POS) untuk terminal kasir toko fisik d
     from projectpilot.scripts.seed_discovery_project import seed_discovery_project
     await seed_discovery_project()
 
+    # Also seed Lapaq Multi-Store Commerce Platform (PRJ-005)
+    from projectpilot.scripts.seed_lapaq_commerce import seed_lapaq_commerce_project
+    await seed_lapaq_commerce_project()
+
 
 if __name__ == "__main__":
     asyncio.run(seed_data())

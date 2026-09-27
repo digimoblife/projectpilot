@@ -121,3 +121,54 @@ async def test_weekly_monthly_reporting_workflow(client: AsyncClient):
     global_res = await client.get("/api/v1/reports", headers=headers)
     assert global_res.status_code == 200
     assert len(global_res.json()) >= 2
+    assert "Konten sedang diproses" not in int_data["content"]
+    assert len(int_data["content"]) > 50
+    assert "Konten sedang diproses" not in client_data["content"]
+    assert len(client_data["content"]) > 50
+
+
+@pytest.mark.asyncio
+async def test_gemini_adapter_report_normalization():
+    from unittest.mock import AsyncMock, patch, MagicMock
+    from projectpilot.ai.gemini_adapter import GeminiAdapter
+
+    adapter = GeminiAdapter()
+    adapter.api_key = "test_key"
+
+    def make_mock_response(json_payload: str):
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status = MagicMock()
+        mock_resp.json.return_value = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [{"text": json_payload}]
+                    }
+                }
+            ]
+        }
+        return mock_resp
+
+    # Case 1: Gemini returns report key instead of content
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = make_mock_response('{"title": "Laporan Proyek", "report": "# Laporan Progres\\n\\nSemua selesai.", "summary": "Ringkasan"}')
+        result = await adapter.generate_structured(prompt="test", capability="REPORT_WEEKLY_INTERNAL")
+        assert result["content"] == "# Laporan Progres\n\nSemua selesai."
+        assert result["title"] == "Laporan Proyek"
+
+    # Case 2: Gemini returns sections dict
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = make_mock_response('{"title": "Laporan Proyek", "sections": {"ringkasan": "Aman", "kemajuan": "Selesai 100%"}, "summary": "Ringkasan"}')
+        result = await adapter.generate_structured(prompt="test", capability="REPORT_WEEKLY_INTERNAL")
+        assert "## Ringkasan\nAman" in result["content"]
+        assert "## Kemajuan\nSelesai 100%" in result["content"]
+
+    # Case 3: Gemini returns nested report object
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = make_mock_response('{"weekly_report": {"title": "Laporan Mingguan", "content": "# Mingguan\\n\\nBerjalan lancar.", "summary": "Semua on track."}}')
+        result = await adapter.generate_structured(prompt="test", capability="REPORT_WEEKLY_INTERNAL")
+        assert result["content"] == "# Mingguan\n\nBerjalan lancar."
+        assert result["title"] == "Laporan Mingguan"
+        assert result["summary"] == "Semua on track."
+
+

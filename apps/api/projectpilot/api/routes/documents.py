@@ -84,8 +84,14 @@ async def generate_document_draft(
         or ai_result.get("markdown")
     )
     if not content:
-        content = "# Dokumentasi Proyek\n\nKonten sedang diproses."
-    summary = ai_result.get("summary") or f"Dokumen {req.document_type.value} disusun otomatis berdasarkan bukti proyek."
+        fallback = gemini_adapter._generate_fallback_response(prompt=prompt, capability=capability)
+        content = fallback.get(
+            "content",
+            f"# Dokumen {req.document_type.value}: {project.name}\n\nDokumen berhasil dibuat berdasarkan bukti proyek."
+        )
+        if not title:
+            title = fallback.get("title", f"Dokumen {req.document_type.value}: {project.name}")
+    summary = ai_result.get("summary") or ai_result.get("ringkasan") or f"Dokumen {req.document_type.value} disusun otomatis berdasarkan bukti proyek."
 
 
     doc = GeneratedDocument(

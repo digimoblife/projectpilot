@@ -19,9 +19,17 @@ function buildUrl(path: string): string {
     return path;
   }
 
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  let normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   // Avoid double-prefixing callers that already pass /api/v1.
+  if (API_BASE_URL.endsWith("/api/v1")) {
+    if (normalizedPath === "/api/v1") {
+      normalizedPath = "";
+    } else if (normalizedPath.startsWith("/api/v1/")) {
+      normalizedPath = normalizedPath.slice("/api/v1".length);
+    }
+  }
+
   if (
     normalizedPath === API_BASE_URL ||
     normalizedPath.startsWith(`${API_BASE_URL}/`)

@@ -103,8 +103,14 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
     try {
       const res = await apiClient<GeneratedDocument[]>(`/projects/${projectId}/documents`, { headers });
       if (res.data) {
-        // Find PRD or fallback to FSD if historical
-        const found = res.data.find((d) => d.document_type === "PRD") || res.data.find((d) => d.document_type === "FSD");
+        // Find PRD strictly (with fallback only for legacy mislabeled PRD records with PRD title)
+        const found =
+          res.data.find((d) => d.document_type === "PRD") ||
+          res.data.find(
+            (d) =>
+              d.title.toLowerCase().startsWith("product requirement document") ||
+              d.title.toLowerCase().startsWith("prd:")
+          );
         if (found) {
           setPrdDoc(found);
           setPrdTitle(found.title);
@@ -174,6 +180,7 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
           title: prdTitle,
           content: prdContent,
           status: prdDoc.status,
+          document_type: "PRD",
         }),
       });
 
@@ -202,6 +209,7 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
           title: prdTitle,
           content: prdContent,
           status: targetStatus,
+          document_type: "PRD",
         }),
       });
       if (res.data) {

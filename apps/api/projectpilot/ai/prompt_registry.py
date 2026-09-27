@@ -159,6 +159,11 @@ Include the following Markdown sections:
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Laporan Mingguan Internal: {project_name}"
+- "summary": "Ringkasan eksekutif status kesehatan proyek dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Konten laporan lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "REPORT_WEEKLY_CLIENT": """
 Generate an executive, professional Weekly Client Progress Report in Markdown format based on the evidence below.
@@ -172,36 +177,194 @@ Include the following Markdown sections:
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Laporan Progres Mingguan: {project_name}"
+- "summary": "Ringkasan eksekutif progres mingguan untuk klien dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Konten laporan lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "REPORT_MONTHLY_INTERNAL": """
 Generate a Monthly Internal Governance Report in Markdown format based on the evidence below.
 Language: Professional Bahasa Indonesia.
 Include executive summary, monthly milestone achievement rate, operational risk analysis, and resource recommendations.
+Include the following Markdown sections:
+# Laporan Bulanan Tata Kelola Internal: {project_name}
+## 1. Ringkasan Eksekutif & Pencapaian Bulanan
+## 2. Analisis Ketercapaian Milestone & Deliverables
+## 3. Analisis Risiko Operasional & Eskalasi
+## 4. Rekomendasi Sumber Daya & Rencana Bulan Depan
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Laporan Bulanan Tata Kelola Internal: {project_name}"
+- "summary": "Ringkasan eksekutif tata kelola bulanan proyek dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Konten laporan lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "REPORT_MONTHLY_CLIENT": """
 Generate a Monthly Client Steering Committee Report in Markdown format based on the evidence below.
 Language: Professional Bahasa Indonesia.
 Include executive summary, key roadmap deliverables completed, upcoming milestones, and steering approvals needed.
+Include the following Markdown sections:
+# Laporan Bulanan Steering Committee: {project_name}
+## 1. Ringkasan Eksekutif & Status Roadmap
+## 2. Pencapaian Kunci Milestone & Deliverables
+## 3. Milestone Periode Berikutnya & Estimasi Waktu
+## 4. Kebutuhan Persetujuan / Keputusan Steering Committee
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Laporan Bulanan Steering Committee: {project_name}"
+- "summary": "Ringkasan eksekutif progres bulanan untuk steering committee dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Konten laporan lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "DOC_FSD": """
-Generate a comprehensive, formal Functional Specification Document (FSD) in Markdown format based on the project requirements and scope evidence below.
-Language: Professional Bahasa Indonesia.
-Include sections:
-# Functional Specification Document (FSD): {project_name}
-## 1. Pendahuluan & Gambaran Umum Sistem
-## 2. Batasan Ruang Lingkup (Scope Baseline)
-## 3. Spesifikasi Kebutuhan Fungsional & Kriteria Penerimaan
-## 4. Keputusan Arsitektur & Aturan Bisnis
-## 5. Matriks Ketertelusuran (Traceability Matrix)
+Role:
+You are a Lead Functional Analyst / Systems Analyst responsible for transforming approved functional evidence into a formal, rigorous Functional Specification Document (FSD).
 
-Evidence:
+Objective & Document Boundary:
+- The FSD defines HOW approved system functionality must behave at the system and functional level.
+- PRD defines WHAT and WHY (product vision, business goals, personas, KPIs) — DO NOT produce a PRD.
+- Technical Documentation defines implementation architecture (database schema, tables, ORM, API endpoints, infrastructure, deployment) — DO NOT produce Technical Documentation.
+- Grounding: Strictly base your specification on the provided project evidence. Do not hallucinate, invent, or assume behaviors, rules, or entities not supported by evidence.
+- Absence Handling: If evidence for any section, field, actor, workflow, or validation is missing, state explicitly: "Belum ditentukan dalam evidence proyek." or "Tidak tersedia dalam evidence proyek." Never fabricate content to appear complete. A concise, evidence-grounded FSD is far superior to a speculative one.
+
+Core Synthesis & Authority Rules:
+1. RULE A — SOURCE AUTHORITY & PRECEDENCE:
+   Order of authority:
+   (1) CONFIRMED / APPROVED Requirements (Highest)
+   (2) Features linked to Requirements
+   (3) Acceptance Criteria
+   (4) Accepted functional/business Decisions
+   (5) Confirmed / Implemented ScopeChanges
+   (6) DONE Feature-linked Tasks as Implementation Verification (Lowest)
+   A lower-level source MUST NEVER override or expand a higher-level requirement. If a DONE Task title suggests functionality beyond the approved Requirement, report the task as verification only and note any delta as a discrepancy for review — do NOT modify the functional baseline.
+
+2. RULE B — TASKS ARE IMPLEMENTATION VERIFICATION ONLY:
+   Tasks are generic work items. A Task NEVER becomes an independent functional requirement, feature, or business rule. Tasks appear solely in Section 11 (Verifikasi Implementasi) and Section 12 (Traceability) as verification proof of completed work.
+
+3. RULE C — UNMAPPED FEATURES:
+   If a Feature has no confirmed Requirement link, identify it explicitly as an "Unmapped Feature" (Fitur Belum Terpetakan). Never fabricate a non-existent Requirement or invent a fake REQ key.
+
+4. RULE D — IMPLEMENTATION DOES NOT EQUAL APPROVAL:
+   A completed (DONE) Task proves that implementation work occurred; it does NOT prove client approval, requirement sign-off, or baseline modification.
+
+5. RULE E — STRICT GROUNDING & NO ASSUMPTIONS:
+   Do NOT assume CRUD operations, field validation limits (e.g. max file size, character lengths), error handling behavior, or status workflows unless explicitly stated in the evidence.
+
+6. RULE F — NO PRD CONTENT DRIFT:
+   Strictly prohibited: product vision, market problem, business case, strategic objectives, persona research, KPI analysis, roadmap, product success narrative.
+
+7. RULE G — NO TECHNICAL DOCUMENTATION DRIFT:
+   Strictly prohibited: database schema, SQL/table design, ORM models, internal API code, framework setup, Docker/cloud infrastructure, CI/CD, deployment instructions.
+
+8. RULE H — DO NOT FORCE COMPLETENESS:
+   A shorter grounded FSD is preferable to a longer FSD containing assumptions. Do not force empty sections to look full with invented details.
+
+FSD Document Structure (Markdown format for "content"):
+Format the `content` field cleanly using this exact Markdown hierarchy:
+
+# Functional Specification Document (FSD): {project_name}
+
+## 1. Kontrol Dokumen & Konteks Sistem
+- Dokumen: Functional Specification Document (FSD)
+- Proyek: {project_name}
+- Status Baseline: Spesifikasi berbasis evidence kebutuhan fungsional yang telah disetujui (CONFIRMED/APPROVED).
+- Konteks Singkat: Ringkasan teknis operasional sistem yang dispesifikasikan (1 paragraf ringkas berbasis evidence, bukan narasi marketing/PRD).
+
+## 2. Batasan Ruang Lingkup Fungsional (Functional Scope)
+- Fitur & Kapabilitas Tercakup: Ringkasan modul dan kapabilitas fungsional yang dispesifikasikan dalam FSD ini berdasarkan kebutuhan resmi.
+- Batasan Ruang Lingkup (Scope Boundary):
+  * In-Scope: Daftar item fungsional yang masuk dalam cakupan rilis berdasarkan evidence scope baseline.
+  * Out-of-Scope: Daftar batasan item yang dikecualikan atau ditunda, beserta alasannya bila ada dalam evidence.
+
+## 3. Aktor & Peran Fungsional Sistem (Actors & Roles)
+- Identifikasi aktor atau sistem eksternal yang berinteraksi langsung dengan fungsi sistem HANYA jika didukung oleh evidence.
+- Jika data aktor/peran terstruktur tidak tersedia dalam evidence, tuliskan secara eksplisit:
+  "Data aktor/role fungsional terstruktur belum tersedia dalam evidence proyek."
+- DILARANG mengarang aktor umum (Admin, User, Manager) jika tidak ada dalam evidence.
+
+## 4. Spesifikasi Kebutuhan Fungsional (Functional Requirements)
+(Ini adalah seksi inti FSD. Susun berdasarkan hierarki: Requirement -> Feature -> Perilaku Fungsional.
+Untuk setiap Kebutuhan Fungsional yang terdaftar dalam evidence, sajikan rincian berikut:)
+
+### [REQ-ID] [Judul Kebutuhan]
+- **Kategori & Prioritas:** [Kategori] | [Prioritas] | Status: [Status]
+- **Deskripsi Kebutuhan:** [Deskripsi fungsional kebutuhan]
+- **Fitur Pelaksana:** [Key dan Judul Fitur terkait] (Modul: [Nama Modul/Epic])
+- **Prakondisi (Preconditions):** [Kondisi yang harus dipenuhi sebelum fungsi dijalankan, atau "Belum ditentukan dalam evidence proyek."]
+- **Pemicu (Trigger):** [Aksi atau event yang memicu fungsi, atau "Belum ditentukan dalam evidence proyek."]
+- **Alur Utama (Main Flow):** [Langkah-langkah operasional bagaimana sistem memproses fungsi, atau "Belum ditentukan dalam evidence proyek."]
+- **Input Data:** [Data yang dimasukkan/diterima, atau "Belum ditentukan dalam evidence proyek."]
+- **Aturan Pemrosesan & Aturan Bisnis:** [Logika pemrosesan yang wajib dijalankan sistem, atau "Belum ditentukan dalam evidence proyek."]
+- **Aturan Validasi (Validation Rules):** [Kriteria validasi data input, atau "Belum ditentukan dalam evidence proyek."]
+- **Output Data / Respon Sistem:** [Hasil, data keluaran, atau perubahan status yang dihasilkan sistem, atau "Belum ditentukan dalam evidence proyek."]
+- **Pascakondisi (Postconditions):** [Kondisi sistem setelah fungsi sukses dijalankan, atau "Belum ditentukan dalam evidence proyek."]
+- **Kriteria Penerimaan (Acceptance Criteria):** [Kriteria penerimaan spesifik untuk kebutuhan ini sesuai evidence]
+
+## 5. Alur Kerja Fungsional (Functional Workflows)
+- Untuk setiap Fitur yang didukung evidence, jabarkan alur kerja operasional dalam urutan bernomor:
+  Langkah X: [Aksi Aktor] -> [Respon/Pemrosesan Sistem] -> [Status/Output Berikutnya]
+- Jika alur kerja spesifik tidak ada dalam evidence, tuliskan:
+  "Workflow fungsional terstruktur belum tersedia dalam evidence proyek."
+- JANGAN mengarang tahapan workflow dari asumsi atau dari judul task semata.
+
+## 6. Spesifikasi Input, Output & Aturan Validasi
+- **Spesifikasi Input:** Rincian parameter/field input yang diketahui, tujuan, status (wajib/opsional), serta aturan validasi yang bersumber dari evidence.
+- **Spesifikasi Output:** Rincian data keluaran, format/media output yang terbukti dalam evidence, dan fungsi pemicunya.
+- Jika rincian field-level belum ada dalam evidence, nyatakan:
+  "Rincian spesifikasi field input/output detail belum ditentukan dalam evidence proyek."
+
+## 7. Aturan Bisnis & Batasan Fungsional
+- Dokumentasikan aturan bisnis yang disepakati dari Decision (ADR) berstatus ACCEPTED yang berdampak langsung pada logika fungsional aplikasi.
+- JANGAN menyertakan keputusan infrastruktur/database teknis murni di sini.
+- Jika tidak ada keputusan aturan bisnis:
+  "Tidak ada aturan bisnis atau batasan fungsional tambahan dari keputusan proyek."
+
+## 8. Perilaku Status & Transisi State (State & Status Behavior)
+- Dokumentasikan status entitas dan aturan transisi (State Machine) HANYA jika evidence mendokumentasikannya.
+- Jika detail transisi state tidak tersedia:
+  "Detail transisi state belum tersedia dalam evidence proyek."
+
+## 9. Penanganan Kesalahan & Pengecualian (Error & Exception Handling)
+- Dokumentasikan respon sistem saat kondisi gagal, tidak valid, atau pengecualian terjadi SESUAI evidence.
+- Jika perilaku error spesifik tidak tertulis dalam evidence:
+  "Perilaku penanganan exception spesifik belum ditentukan dalam evidence proyek."
+- DILARANG mengarang pesan error atau mekanisme retry tanpa dasar evidence.
+
+## 10. Kriteria Penerimaan Sistem (Acceptance Criteria Summary)
+- Sajikan daftar kriteria penerimaan terverifikasi dari seluruh Requirement resmi.
+- Normalisasikan teks acceptance criteria menjadi butir-butir terstruktur tanpa menambah atau mengubah syarat yang ada dalam evidence.
+
+## 11. Verifikasi Implementasi (Implementation Verification)
+- Seksi ini BUKAN sumber spesifikasi fungsional, melainkan bukti verifikasi bahwa fungsi telah diimplementasikan.
+- Sajikan daftar Task berstatus DONE yang terhubung ke Feature:
+  * Requirement: [REQ-ID] -> Fitur: [FEAT-ID]
+    - [TASK-ID]: [Judul Task] (Status: DONE) — *Task ini menjadi bukti verifikasi implementasi terhadap Feature terkait.*
+- Jika tidak ada task selesai yang terhubung:
+  "Belum ada task implementasi selesai (DONE) yang terhubung ke fitur pada saat dokumen ini dibuat."
+- Catat unlinked task (jika ada pada evidence) sebagai catatan pekerjaan implementasi di luar pemetaan fungsional.
+
+## 12. Matriks Ketertelusuran Fungsional (Functional Traceability Matrix)
+Sajikan tabel ketertelusuran lengkap hanya menggunakan ID dan relasi riil dari evidence:
+
+| ID Kebutuhan | Judul Kebutuhan | Fitur Pelaksana | Kriteria Penerimaan | Verifikasi Implementasi (DONE Tasks) |
+|---|---|---|---|---|
+| [REQ-KEY] | [Judul] | [FEAT-KEY atau "Tidak terpetakan"] | [Ringkasan AC] | [TASK-KEY atau "Belum ada verifikasi"] |
+
+Project Evidence:
 {evidence}
+
+Response Format:
+Return a valid JSON object strictly matching this schema:
+{{
+  "title": "Functional Specification Document (FSD): {project_name}",
+  "summary": "Ringkasan eksekutif dokumen FSD dalam 2-3 kalimat Bahasa Indonesia (merangkum area fungsional sistem yang dispesifikasikan, modul/fitur utama yang dicakup, dan status baseline verifikasi; BUKAN narasi strategi produk PRD).",
+  "content": "Dokumen FSD lengkap dalam format Markdown sesuai seluruh struktur 12 seksi di atas."
+}}
 """,
     "DOC_USER_GUIDE": """
 Generate an intuitive, user-friendly End-User Guide in Markdown format based on the features and requirements below.
@@ -214,6 +377,11 @@ Include sections:
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Panduan Pengguna (User Manual): {project_name}"
+- "summary": "Ringkasan panduan pengguna dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Dokumen Panduan Pengguna lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "DOC_ADMIN_GUIDE": """
 Generate an Administrator & Operations Guide in Markdown format based on the technical decisions and configurations below.
@@ -226,6 +394,11 @@ Include sections:
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Panduan Administrator & Operasional: {project_name}"
+- "summary": "Ringkasan panduan administrator dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Dokumen Panduan Administrator lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "DOC_TECHNICAL_DOCUMENTATION": """
 Generate an Architecture & Technical Implementation Runbook in Markdown format based on the architectural decisions, database models, and APIs below.
@@ -239,6 +412,11 @@ Include sections:
 
 Evidence:
 {evidence}
+
+Return a valid JSON object with the following fields:
+- "title": "Dokumentasi Teknis & Arsitektur: {project_name}"
+- "summary": "Ringkasan dokumentasi teknis dalam 2-3 kalimat Bahasa Indonesia"
+- "content": "Dokumen Teknis & Arsitektur lengkap dalam format Markdown sesuai seluruh seksi di atas"
 """,
     "DOC_PRD": """
 Generate a comprehensive Product Requirement Document (PRD) in Markdown format based on the project brief, client discovery answers, and approved requirements below.

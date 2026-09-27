@@ -45,7 +45,7 @@ interface GeneratedDocument {
   id: string;
   project_id: string;
   document_key: string;
-  document_type: "FSD" | "USER_GUIDE" | "ADMIN_GUIDE" | "TECHNICAL_DOCUMENTATION" | "USER_DOCUMENTATION" | "DESIGN_DOCUMENTATION";
+  document_type: "PRD" | "FSD" | "USER_GUIDE" | "ADMIN_GUIDE" | "TECHNICAL_DOCUMENTATION" | "USER_DOCUMENTATION" | "DESIGN_DOCUMENTATION";
   title: string;
   status: "DRAFT" | "UNDER_REVIEW" | "FINAL" | "SUPERSEDED";
   version: number;
@@ -61,12 +61,19 @@ interface GeneratedDocument {
 }
 
 const docTypeConfigs = {
+  PRD: { label: "PRD (Product Requirement)", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: BookOpen },
   FSD: { label: "FSD (Functional Spec)", color: "bg-blue-50 text-blue-700 border-blue-200", icon: FileSpreadsheet },
   USER_GUIDE: { label: "User Manual", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: BookOpen },
   ADMIN_GUIDE: { label: "Admin & Ops Guide", color: "bg-amber-50 text-amber-700 border-amber-200", icon: ShieldCheck },
   TECHNICAL_DOCUMENTATION: { label: "Technical Runbook", color: "bg-purple-50 text-purple-700 border-purple-200", icon: FileCode },
   USER_DOCUMENTATION: { label: "User Docs", color: "bg-teal-50 text-teal-700 border-teal-200", icon: FileText },
   DESIGN_DOCUMENTATION: { label: "Design Docs", color: "bg-rose-50 text-rose-700 border-rose-200", icon: Layers },
+};
+
+const defaultDocTypeConfig = {
+  label: "Dokumen",
+  color: "bg-slate-100 text-slate-700 border-slate-200",
+  icon: FileText,
 };
 
 function ShieldCheck(props: any) {
@@ -99,7 +106,7 @@ export default function ProjectDocumentsPage({
 
   // Generate Document Modal
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
-  const [docType, setDocType] = useState<"FSD" | "USER_GUIDE" | "ADMIN_GUIDE" | "TECHNICAL_DOCUMENTATION" | "DESIGN_DOCUMENTATION">("FSD");
+  const [docType, setDocType] = useState<"PRD" | "FSD" | "USER_GUIDE" | "ADMIN_GUIDE" | "TECHNICAL_DOCUMENTATION" | "DESIGN_DOCUMENTATION">("FSD");
   const [customInstructions, setCustomInstructions] = useState("");
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -341,7 +348,7 @@ export default function ProjectDocumentsPage({
           ) : (
             <div className="space-y-2.5 max-h-[650px] overflow-y-auto pr-1">
               {filteredDocs.map((d) => {
-                const typeCfg = docTypeConfigs[d.document_type] || docTypeConfigs.FSD;
+                const typeCfg = docTypeConfigs[d.document_type as keyof typeof docTypeConfigs] || defaultDocTypeConfig;
                 const statusCfg = docStatusConfigs[d.status] || docStatusConfigs.DRAFT;
                 const isSelected = selectedDoc?.id === d.id;
 
@@ -400,13 +407,18 @@ export default function ProjectDocumentsPage({
                       <span>{selectedDoc.document_key}</span>
                       <span className="text-slate-500 font-medium">v{selectedDoc.version}</span>
                     </span>
-                    <span
-                      className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                        docTypeConfigs[selectedDoc.document_type]?.color
-                      }`}
-                    >
-                      {docTypeConfigs[selectedDoc.document_type]?.label}
-                    </span>
+                    {(() => {
+                      const selTypeCfg = docTypeConfigs[selectedDoc.document_type as keyof typeof docTypeConfigs] || defaultDocTypeConfig;
+                      return (
+                        <span
+                          className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                            selTypeCfg.color
+                          }`}
+                        >
+                          {selTypeCfg.label}
+                        </span>
+                      );
+                    })()}
                     <span
                       className={`inline-flex items-center whitespace-nowrap shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
                         docStatusConfigs[selectedDoc.status]?.color
@@ -414,6 +426,15 @@ export default function ProjectDocumentsPage({
                     >
                       {docStatusConfigs[selectedDoc.status]?.label}
                     </span>
+                    {selectedDoc.document_type === "PRD" && (
+                      <a
+                        href={`/projects/${projectId}/prd`}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors ml-1"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>Buka di PRD Workspace</span>
+                      </a>
+                    )}
                   </div>
 
                   {isEditing ? (
@@ -594,6 +615,7 @@ export default function ProjectDocumentsPage({
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900"
                 >
                   <option value="FSD">FSD (Functional Specification Document)</option>
+                  <option value="PRD">PRD (Product Requirement Document)</option>
                   <option value="USER_GUIDE">Panduan Pengguna (User Manual)</option>
                   <option value="ADMIN_GUIDE">Panduan Administrator & Operasional</option>
                   <option value="TECHNICAL_DOCUMENTATION">Dokumentasi Teknis & Runbook Arsitektur</option>

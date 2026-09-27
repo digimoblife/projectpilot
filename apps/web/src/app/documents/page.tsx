@@ -31,7 +31,7 @@ interface PortfolioDocumentItem {
   project_name: string;
   project_code: string;
   document_key: string;
-  document_type: "FSD" | "USER_GUIDE" | "ADMIN_GUIDE" | "TECHNICAL_DOCUMENTATION" | "USER_DOCUMENTATION" | "DESIGN_DOCUMENTATION";
+  document_type: "PRD" | "FSD" | "USER_GUIDE" | "ADMIN_GUIDE" | "TECHNICAL_DOCUMENTATION" | "USER_DOCUMENTATION" | "DESIGN_DOCUMENTATION";
   title: string;
   status: "DRAFT" | "UNDER_REVIEW" | "FINAL" | "SUPERSEDED";
   version: number;
@@ -41,12 +41,18 @@ interface PortfolioDocumentItem {
 }
 
 const docTypeConfigs = {
-  FSD: { label: "FSD (Functional Spec)", color: "bg-slate-900 text-white border-slate-900 font-medium" },
-  USER_GUIDE: { label: "User Manual", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
-  ADMIN_GUIDE: { label: "Admin & Ops Guide", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
-  TECHNICAL_DOCUMENTATION: { label: "Technical Runbook", color: "bg-slate-900 text-white border-slate-900 font-medium" },
-  USER_DOCUMENTATION: { label: "User Docs", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
-  DESIGN_DOCUMENTATION: { label: "Design Docs", color: "bg-slate-100 text-slate-800 border-slate-300 font-medium" },
+  PRD: { label: "PRD (Product Requirement)", color: "bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold" },
+  FSD: { label: "FSD (Functional Spec)", color: "bg-blue-50 text-blue-700 border-blue-200 font-semibold" },
+  USER_GUIDE: { label: "User Manual", color: "bg-emerald-50 text-emerald-700 border-emerald-200 font-medium" },
+  ADMIN_GUIDE: { label: "Admin & Ops Guide", color: "bg-amber-50 text-amber-700 border-amber-200 font-medium" },
+  TECHNICAL_DOCUMENTATION: { label: "Technical Runbook", color: "bg-purple-50 text-purple-700 border-purple-200 font-semibold" },
+  USER_DOCUMENTATION: { label: "User Docs", color: "bg-teal-50 text-teal-700 border-teal-200 font-medium" },
+  DESIGN_DOCUMENTATION: { label: "Design Docs", color: "bg-rose-50 text-rose-700 border-rose-200 font-medium" },
+};
+
+const defaultDocTypeConfig = {
+  label: "Dokumen",
+  color: "bg-slate-100 text-slate-700 border-slate-200 font-medium",
 };
 
 const docStatusConfigs = {
@@ -183,7 +189,7 @@ export default function DocumentsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 font-sans">
                 {filteredDocs.map((d) => {
-                  const typeCfg = docTypeConfigs[d.document_type] || docTypeConfigs.FSD;
+                  const typeCfg = docTypeConfigs[d.document_type as keyof typeof docTypeConfigs] || defaultDocTypeConfig;
                   const statusCfg = docStatusConfigs[d.status] || docStatusConfigs.DRAFT;
 
                   return (
@@ -216,7 +222,7 @@ export default function DocumentsPage() {
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         <Link
-                          href={`/projects/${d.project_id}/documents`}
+                          href={d.document_type === "PRD" ? `/projects/${d.project_id}/prd` : `/projects/${d.project_id}/documents`}
                           className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
                         >
                           <span>Buka</span>
