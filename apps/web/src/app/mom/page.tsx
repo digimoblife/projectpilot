@@ -42,6 +42,7 @@ import { useAuth } from "@/lib/auth-context";
 import { SkeletonCardGrid, SkeletonTable } from "@/components/ui/skeleton-loader";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MarkdownViewer } from "@/components/ui/markdown-viewer";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 interface ProjectOption {
   id: string;
@@ -481,24 +482,35 @@ export default function MoMGeneratorPage() {
     }
   }
 
-  async function handleDeleteMoM(momId: string) {
-    if (!confirm("Apakah Anda yakin ingin menghapus dokumen MoM ini dari riwayat?")) return;
+  const [momToDelete, setMomToDelete] = useState<{ id: string; title?: string } | null>(null);
+  const [isDeletingMoM, setIsDeletingMoM] = useState(false);
+
+  function handleDeleteMoM(momId: string, title?: string) {
+    setMomToDelete({ id: momId, title });
+  }
+
+  async function handleConfirmDeleteMoM() {
+    if (!momToDelete) return;
+    setIsDeletingMoM(true);
     try {
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      await apiClient(`/mom/${momId}`, {
+      await apiClient(`/mom/${momToDelete.id}`, {
         method: "DELETE",
         headers,
       });
 
-      if (currentMoM?.id === momId) {
+      if (currentMoM?.id === momToDelete.id) {
         setCurrentMoM(null);
       }
-      if (selectedHistoryMoM?.id === momId) {
+      if (selectedHistoryMoM?.id === momToDelete.id) {
         setSelectedHistoryMoM(null);
       }
       fetchHistory();
+      setMomToDelete(null);
     } catch {
       // Handled silently
+    } finally {
+      setIsDeletingMoM(false);
     }
   }
 
@@ -846,6 +858,16 @@ export default function MoMGeneratorPage() {
                           <span>Salin .md</span>
                         </>
                       )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMoM(currentMoM.id, currentMoM.title)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                      title="Hapus Dokumen MoM"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Hapus</span>
                     </button>
                   </div>
                 </div>
@@ -1358,7 +1380,7 @@ export default function MoMGeneratorPage() {
 
                             <button
                               type="button"
-                              onClick={() => handleDeleteMoM(item.id)}
+                              onClick={() => handleDeleteMoM(item.id, item.title)}
                               className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                               title="Hapus MoM"
                             >
@@ -1530,7 +1552,7 @@ export default function MoMGeneratorPage() {
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
               <button
                 type="button"
-                onClick={() => handleDeleteMoM(selectedHistoryMoM.id)}
+                onClick={() => handleDeleteMoM(selectedHistoryMoM.id, selectedHistoryMoM.title)}
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -1785,6 +1807,26 @@ export default function MoMGeneratorPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus MoM */}
+      <ConfirmDeleteModal
+        isOpen={!!momToDelete}
+        title="Hapus Dokumen MoM?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus dokumen MoM{" "}
+            {momToDelete?.title ? (
+              <strong className="text-slate-900">&quot;{momToDelete.title}&quot;</strong>
+            ) : (
+              "ini"
+            )}{" "}
+            dari riwayat? Tindakan ini tidak dapat dibatalkan.
+          </>
+        }
+        isLoading={isDeletingMoM}
+        onConfirm={handleConfirmDeleteMoM}
+        onClose={() => !isDeletingMoM && setMomToDelete(null)}
+      />
     </div>
   );
 }

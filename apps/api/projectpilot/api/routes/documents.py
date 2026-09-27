@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -307,6 +307,44 @@ async def create_document_version(
     )
     res_new = await db.execute(query_new)
     return res_new.scalar_one()
+
+
+# =========================================================================
+# 5b. DELETE DOCUMENT
+# =========================================================================
+@router.delete(
+    "/projects/{project_id}/documents/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@router.delete(
+    "/documents/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_document(
+    document_id: uuid.UUID,
+    project_id: Optional[uuid.UUID] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(GeneratedDocument).where(GeneratedDocument.id == document_id)
+    if project_id:
+        query = query.where(GeneratedDocument.project_id == project_id)
+    res = await db.execute(query)
+    doc = res.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan.")
+
+    activity = ActivityEvent(
+        project_id=doc.project_id,
+        actor_id=current_user.id,
+        event_type="DOCUMENT_DELETED",
+        description=f"Dokumen '{doc.title}' ({doc.document_key}) telah dihapus.",
+    )
+    db.add(activity)
+
+    await db.delete(doc)
+    await db.commit()
+    return None
 
 
 # =========================================================================

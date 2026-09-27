@@ -15,11 +15,13 @@ import {
   RefreshCw,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { SkeletonTable } from "@/components/ui/skeleton-loader";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 interface PortfolioReportItem {
   id: string;
@@ -59,6 +61,8 @@ export default function ReportsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+  const [reportToDelete, setReportToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchPortfolioReports();
@@ -77,6 +81,28 @@ export default function ReportsPage() {
       // Handled
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  function handleDeleteReport(reportId: string, title: string) {
+    setReportToDelete({ id: reportId, title });
+  }
+
+  async function handleConfirmDeleteReport() {
+    if (!reportToDelete) return;
+    setIsDeleting(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      await apiClient(`/reports/${reportToDelete.id}`, {
+        method: "DELETE",
+        headers,
+      });
+      setReports((prev) => prev.filter((r) => r.id !== reportToDelete.id));
+      setReportToDelete(null);
+    } catch {
+      alert("Gagal menghapus laporan. Silakan coba lagi.");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -211,13 +237,23 @@ export default function ReportsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <Link
-                          href={`/projects/${r.project_id}/reports`}
-                          className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
-                        >
-                          <span>Buka</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/projects/${r.project_id}/reports`}
+                            className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
+                          >
+                            <span>Buka</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteReport(r.id, r.title)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                            title="Hapus Laporan"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -227,6 +263,22 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus Laporan */}
+      <ConfirmDeleteModal
+        isOpen={!!reportToDelete}
+        title="Hapus Laporan Status?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus laporan{" "}
+            <strong className="text-slate-900">&quot;{reportToDelete?.title}&quot;</strong>? Tindakan
+            ini tidak dapat dibatalkan.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteReport}
+        onClose={() => !isDeleting && setReportToDelete(null)}
+      />
     </div>
   );
 }

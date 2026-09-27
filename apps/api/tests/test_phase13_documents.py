@@ -147,3 +147,17 @@ async def test_documentation_generation_workflow(client: AsyncClient):
     global_res = await client.get("/api/v1/documents", headers=headers)
     assert global_res.status_code == 200
     assert len(global_res.json()) >= 2
+
+    # 9. Delete Document
+    del_res = await client.delete(
+        f"/api/v1/projects/{project_id}/documents/{doc_id}",
+        headers=headers,
+    )
+    assert del_res.status_code == 204
+
+    # Verify not found
+    get_del = await client.get(
+        f"/api/v1/projects/{project_id}/documents/{doc_id}",
+        headers=headers,
+    )
+    assert get_del.status_code == 404

@@ -157,6 +157,18 @@ Include the following Markdown sections:
 ## 3. Kendala, Blocker & Eskalasi Teknis
 ## 4. Status Milestone & Rencana Kerja Minggu Depan
 
+CRITICAL GUIDELINES FOR ACCURACY & STATUS INTEGRITY:
+- Section 3 (Kendala, Blocker & Eskalasi Teknis):
+  * Strictly preserve the status of blockers and issues provided in the evidence.
+  * Separate clearly into two distinct subsections or paragraphs:
+    a) Blocker Aktif & Isu Terbuka (Active Blockers & Open/In-Investigation Issues): list only items with active status that currently require technical attention or escalation. If there are 0 active blockers, state explicitly "Nol Blocker Aktif (Zero Active Blockers)".
+    b) Blocker & Isu yang Berhasil Diselesaikan (Resolved Blockers & Resolved/Closed Issues): highlight items marked as RESOLVED or CLOSED, including the resolution notes/solution applied.
+  * NEVER classify or describe an issue or blocker marked as RESOLVED or CLOSED as "unresolved", "open", or "active blocker".
+- Section 2 (Kemajuan Deliverable):
+  * Base completed deliverables strictly on DONE tasks and achieved milestones in the evidence.
+- Section 4 (Status Milestone & Rencana Kerja):
+  * Detail planned and upcoming milestones, and clear next steps.
+
 Evidence:
 {evidence}
 
@@ -174,6 +186,13 @@ Include the following Markdown sections:
 ## 2. Status Milestone & Deliverables
 ## 3. Kebutuhan Masukan / Aksi dari Pihak Klien
 ## 4. Rencana Kerja Periode Berikutnya
+
+CRITICAL GUIDELINES FOR ACCURACY & STATUS INTEGRITY:
+- Section 3 (Kebutuhan Masukan / Aksi dari Pihak Klien):
+  * Only list items that are actively pending client action (status REQUESTED / IN_PROGRESS / OVERDUE).
+  * Acknowledge dependencies that the client has already fulfilled/provided as completed deliverables or accepted handovers.
+  * If there are no pending client actions, state clearly that all client dependencies are currently fulfilled and no urgent action is needed.
+- Do not expose internal technical blockers or unresolved internal bug tickets to the client unless framed constructively as collaborative dependencies.
 
 Evidence:
 {evidence}
@@ -194,6 +213,11 @@ Include the following Markdown sections:
 ## 3. Analisis Risiko Operasional & Eskalasi
 ## 4. Rekomendasi Sumber Daya & Rencana Bulan Depan
 
+CRITICAL GUIDELINES FOR ACCURACY & STATUS INTEGRITY:
+- Section 3 (Analisis Risiko Operasional & Eskalasi):
+  * Differentiate strictly between active/monitored risks vs mitigated/closed risks.
+  * Differentiate active blockers and open issues from resolved ones; never label resolved issues as unresolved.
+
 Evidence:
 {evidence}
 
@@ -212,6 +236,11 @@ Include the following Markdown sections:
 ## 2. Pencapaian Kunci Milestone & Deliverables
 ## 3. Milestone Periode Berikutnya & Estimasi Waktu
 ## 4. Kebutuhan Persetujuan / Keputusan Steering Committee
+
+CRITICAL GUIDELINES FOR ACCURACY & STATUS INTEGRITY:
+- Section 4 (Kebutuhan Persetujuan / Keputusan Steering Committee):
+  * Only request decisions or approvals for items that are currently pending.
+  * Highlight confirmed decisions and completed deliverables as established milestones.
 
 Evidence:
 {evidence}

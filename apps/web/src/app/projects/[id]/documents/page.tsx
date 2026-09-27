@@ -25,6 +25,7 @@ import {
   Search,
   Sparkles,
   Tag,
+  Trash2,
   User,
   Users,
   X,
@@ -32,6 +33,7 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { MarkdownViewer } from "@/components/ui/markdown-viewer";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 interface DocumentEvidence {
   id: string;
@@ -116,6 +118,7 @@ export default function ProjectDocumentsPage({
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
@@ -261,6 +264,51 @@ export default function ProjectDocumentsPage({
     URL.revokeObjectURL(url);
   }
 
+  const [documentToDelete, setDocumentToDelete] = useState<GeneratedDocument | null>(null);
+
+  function handleDeleteDocument(docId?: string) {
+    const targetId = docId || selectedDoc?.id;
+    if (!targetId) return;
+    const targetDoc = documents.find((d) => d.id === targetId) || selectedDoc;
+    if (targetDoc) {
+      setDocumentToDelete(targetDoc);
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!documentToDelete) return;
+    const targetId = documentToDelete.id;
+
+    setIsDeleting(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      await apiClient(`/projects/${projectId}/documents/${targetId}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const remaining = documents.filter((d) => d.id !== targetId);
+      setDocuments(remaining);
+      if (selectedDoc?.id === targetId) {
+        if (remaining.length > 0) {
+          setSelectedDoc(remaining[0]);
+          setEditedTitle(remaining[0].title);
+          setEditedContent(remaining[0].content);
+        } else {
+          setSelectedDoc(null);
+          setEditedTitle("");
+          setEditedContent("");
+        }
+      }
+      setDocumentToDelete(null);
+    } catch {
+      alert("Gagal menghapus dokumen. Silakan coba lagi.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   const filteredDocs = documents.filter((d) => {
     const matchesSearch =
       d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -384,9 +432,22 @@ export default function ProjectDocumentsPage({
 
                     <h4 className="text-xs font-bold text-slate-900 line-clamp-1">{d.title}</h4>
 
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-2">
-                      <CheckCircle2 className="w-3 h-3 text-slate-400" />
-                      <span>{d.evidences.length} Sumber Bukti Terpetakan</span>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-2">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3 h-3 text-slate-400" />
+                        <span>{d.evidences.length} Sumber Bukti</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDocument(d.id);
+                        }}
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                        title="Hapus Dokumen"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 );
@@ -508,6 +569,17 @@ export default function ProjectDocumentsPage({
                       <span>Buat Versi Revisi</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => handleDeleteDocument(selectedDoc.id)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                    title="Hapus Dokumen Ini"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Hapus</span>
+                  </button>
                 </div>
               </div>
 
@@ -663,6 +735,22 @@ export default function ProjectDocumentsPage({
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus Dokumen */}
+      <ConfirmDeleteModal
+        isOpen={!!documentToDelete}
+        title="Hapus Dokumen?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus dokumen{" "}
+            <strong className="text-slate-900">&quot;{documentToDelete?.title}&quot;</strong>? Tindakan
+            ini tidak dapat dibatalkan.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => !isDeleting && setDocumentToDelete(null)}
+      />
     </div>
   );
 }

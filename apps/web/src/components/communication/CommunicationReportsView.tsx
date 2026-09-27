@@ -26,6 +26,7 @@ import {
   Shield,
   Sparkles,
   Tag,
+  Trash2,
   User,
   Users,
   X,
@@ -33,6 +34,7 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { MarkdownViewer } from "@/components/ui/markdown-viewer";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 interface ReportEvidence {
   id: string;
@@ -111,6 +113,7 @@ export function CommunicationReportsView({
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchReports();
@@ -281,6 +284,51 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
     link.download = `${r.report_key}_${r.title.replace(/[^a-zA-Z0-9_-]/g, "_")}.md`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
+
+  function handleDeleteReport(reportId?: string) {
+    const targetId = reportId || selectedReport?.id;
+    if (!targetId) return;
+    const targetRep = reports.find((r) => r.id === targetId) || selectedReport;
+    if (targetRep) {
+      setReportToDelete(targetRep);
+    }
+  }
+
+  async function handleConfirmDeleteReport() {
+    if (!reportToDelete) return;
+    const targetId = reportToDelete.id;
+
+    setIsDeleting(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      await apiClient(`/projects/${projectId}/reports/${targetId}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const remaining = reports.filter((r) => r.id !== targetId);
+      setReports(remaining);
+      if (selectedReport?.id === targetId) {
+        if (remaining.length > 0) {
+          setSelectedReport(remaining[0]);
+          setEditedTitle(remaining[0].title);
+          setEditedContent(remaining[0].content);
+        } else {
+          setSelectedReport(null);
+          setEditedTitle("");
+          setEditedContent("");
+        }
+      }
+      setReportToDelete(null);
+    } catch {
+      alert("Gagal menghapus laporan. Silakan coba lagi.");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   function setPresetPeriod(preset: "THIS_WEEK" | "LAST_WEEK" | "THIS_MONTH") {
@@ -455,11 +503,24 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
 
                     <h4 className="text-xs font-bold text-slate-900 line-clamp-1">{r.title}</h4>
 
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-2">
-                      <Calendar className="w-3 h-3 text-slate-400" />
-                      <span>
-                        {new Date(r.reporting_period_start).toLocaleDateString("id-ID")} - {new Date(r.reporting_period_end).toLocaleDateString("id-ID")}
-                      </span>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-2">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3 text-slate-400" />
+                        <span>
+                          {new Date(r.reporting_period_start).toLocaleDateString("id-ID")} - {new Date(r.reporting_period_end).toLocaleDateString("id-ID")}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteReport(r.id);
+                        }}
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                        title="Hapus Laporan"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 );
@@ -566,6 +627,17 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
                       <span>Buat Versi Revisi</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => handleDeleteReport(selectedReport.id)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                    title="Hapus Laporan Ini"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Hapus</span>
+                  </button>
                 </div>
               </div>
 
@@ -775,6 +847,22 @@ ${r.evidences && r.evidences.length > 0 ? `\n## Bukti Faktual (Evidence Snapshot
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus Laporan */}
+      <ConfirmDeleteModal
+        isOpen={!!reportToDelete}
+        title="Hapus Laporan Status?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus laporan{" "}
+            <strong className="text-slate-900">&quot;{reportToDelete?.title}&quot;</strong>? Tindakan
+            ini tidak dapat dibatalkan.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteReport}
+        onClose={() => !isDeleting && setReportToDelete(null)}
+      />
     </div>
   );
 }

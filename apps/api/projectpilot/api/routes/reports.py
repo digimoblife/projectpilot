@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -320,6 +320,44 @@ async def create_report_version(
     )
     res_new = await db.execute(query_new)
     return res_new.scalar_one()
+
+
+# =========================================================================
+# 5b. DELETE REPORT
+# =========================================================================
+@router.delete(
+    "/projects/{project_id}/reports/{report_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@router.delete(
+    "/reports/{report_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_report(
+    report_id: uuid.UUID,
+    project_id: Optional[uuid.UUID] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(Report).where(Report.id == report_id)
+    if project_id:
+        query = query.where(Report.project_id == project_id)
+    res = await db.execute(query)
+    report = res.scalar_one_or_none()
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan.")
+
+    activity = ActivityEvent(
+        project_id=report.project_id,
+        actor_id=current_user.id,
+        event_type="REPORT_DELETED",
+        description=f"Laporan '{report.title}' ({report.report_key}) telah dihapus.",
+    )
+    db.add(activity)
+
+    await db.delete(report)
+    await db.commit()
+    return None
 
 
 # =========================================================================

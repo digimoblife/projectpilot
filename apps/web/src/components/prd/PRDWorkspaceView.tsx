@@ -25,12 +25,14 @@ import {
   ShieldCheck,
   Sparkles,
   Tag,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { MarkdownViewer } from "@/components/ui/markdown-viewer";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 interface DocumentEvidence {
   id: string;
@@ -82,6 +84,7 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -302,6 +305,38 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
     URL.revokeObjectURL(url);
   }
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  function handleDeletePRD() {
+    if (!prdDoc) return;
+    setIsDeleteModalOpen(true);
+  }
+
+  async function handleConfirmDeletePRD() {
+    if (!prdDoc) return;
+
+    setIsDeleting(true);
+    setError(null);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      await apiClient(`/projects/${projectId}/documents/${prdDoc.id}`, {
+        method: "DELETE",
+        headers,
+      });
+      setPrdDoc(null);
+      setPrdTitle("");
+      setPrdContent("");
+      setIsDeleteModalOpen(false);
+      setSuccessMessage("Dokumen PRD berhasil dihapus.");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch {
+      setError("Gagal menghapus dokumen PRD.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   const isFinal = prdDoc?.status === "FINAL";
   const statusConfig = prdDoc ? (docStatusConfigs[prdDoc.status] || docStatusConfigs.DRAFT) : docStatusConfigs.DRAFT;
   const evidences = prdDoc?.evidences || [];
@@ -482,6 +517,18 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
                   <span>Buat Revisi Baru (v{prdDoc.version + 1})</span>
                 </button>
               )}
+
+              {/* Delete PRD Button */}
+              <button
+                type="button"
+                onClick={handleDeletePRD}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-xl shadow-2xs active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer"
+                title="Hapus Dokumen PRD"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus</span>
+              </button>
             </div>
           </div>
         )}
@@ -724,6 +771,22 @@ export function PRDWorkspaceView({ projectId }: PRDWorkspaceViewProps) {
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus PRD */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        title="Hapus Dokumen PRD?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus PRD{" "}
+            <strong className="text-slate-900">&quot;{prdTitle || prdDoc?.title}&quot;</strong>? Tindakan
+            ini tidak dapat dibatalkan.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeletePRD}
+        onClose={() => !isDeleting && setIsDeleteModalOpen(false)}
+      />
     </div>
   );
 }

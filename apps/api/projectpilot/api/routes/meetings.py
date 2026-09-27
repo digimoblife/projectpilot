@@ -333,6 +333,32 @@ async def finalize_meeting(
     return meeting
 
 
+@router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_meeting(
+    project_id: uuid.UUID,
+    meeting_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_pm),
+):
+    query = select(Meeting).where(Meeting.id == meeting_id, Meeting.project_id == project_id)
+    res = await db.execute(query)
+    meeting = res.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting tidak ditemukan.")
+
+    activity = ActivityEvent(
+        project_id=project_id,
+        actor_id=current_user.id,
+        event_type="MEETING_DELETED",
+        description=f"Notulen rapat '{meeting.title}' ({meeting.meeting_key}) telah dihapus.",
+    )
+    db.add(activity)
+
+    await db.delete(meeting)
+    await db.commit()
+    return None
+
+
 # =========================================================================
 # 2. AI MEETING ANALYSIS
 # =========================================================================

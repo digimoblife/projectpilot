@@ -186,3 +186,17 @@ async def test_meeting_management_ai_analysis_and_action_item_conversion(client:
     assert "OPEN" in [a["status"] for a in ai_mtg_data["action_items"]]
     assert ai_mtg_data["notes"] is not None
     assert ai_mtg_data["summary"] is not None
+
+    # 10. Delete Meeting
+    del_res = await client.delete(
+        f"/api/v1/projects/{project_id}/meetings/{meeting_id}",
+        headers=headers,
+    )
+    assert del_res.status_code == 204
+
+    # Verify not found
+    get_del = await client.get(
+        f"/api/v1/projects/{project_id}/meetings/{meeting_id}",
+        headers=headers,
+    )
+    assert get_del.status_code == 404

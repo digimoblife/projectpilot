@@ -20,6 +20,7 @@ import {
   Search,
   Sparkles,
   Tag,
+  Trash2,
   User,
   Users,
   X,
@@ -29,6 +30,7 @@ import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { AISuggestionReviewModal, AISuggestionItem } from "@/components/ai/AISuggestionReviewModal";
 import { MarkdownViewer } from "@/components/ui/markdown-viewer";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 interface MeetingParticipant {
   id: string;
@@ -122,6 +124,7 @@ export function CommunicationMeetingsView({
   >([{ participant_type: "INTERNAL", display_name_snapshot: "PM Lead", role_snapshot: "Project Manager" }]);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Action Item Creation Modal
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -373,6 +376,47 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
     link.download = `${m.meeting_key}_${m.title.replace(/[^a-zA-Z0-9_-]/g, "_")}.md`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  const [meetingToDelete, setMeetingToDelete] = useState<Meeting | null>(null);
+
+  function handleDeleteMeeting(meetingId?: string) {
+    const targetId = meetingId || selectedMeeting?.id;
+    if (!targetId) return;
+    const targetMtg = meetings.find((m) => m.id === targetId) || selectedMeeting;
+    if (targetMtg) {
+      setMeetingToDelete(targetMtg);
+    }
+  }
+
+  async function handleConfirmDeleteMeeting() {
+    if (!meetingToDelete) return;
+    const targetId = meetingToDelete.id;
+
+    setIsDeleting(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      await apiClient(`/projects/${projectId}/meetings/${targetId}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const remaining = meetings.filter((m) => m.id !== targetId);
+      setMeetings(remaining);
+      if (selectedMeeting?.id === targetId) {
+        if (remaining.length > 0) {
+          setSelectedMeeting(remaining[0]);
+        } else {
+          setSelectedMeeting(null);
+        }
+      }
+      setMeetingToDelete(null);
+    } catch {
+      alert("Gagal menghapus notulen rapat. Silakan coba lagi.");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   async function handleConvertActionItem(e: React.FormEvent) {
@@ -638,19 +682,32 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
 
                   <h3 className="font-bold text-slate-900 text-xs line-clamp-1">{m.title}</h3>
 
-                  <div className="flex items-center gap-4 text-[11px] text-slate-500 mt-2">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{new Date(m.occurred_at).toLocaleDateString("id-ID")}</span>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{new Date(m.occurred_at).toLocaleDateString("id-ID")}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{m.participants.length}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{m.action_items.length}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{m.participants.length} Peserta</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{m.action_items.length} Action Items</span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteMeeting(m.id);
+                      }}
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                      title="Hapus Notulen Rapat"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               );
@@ -713,6 +770,17 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
                       Finalisasi
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => handleDeleteMeeting(selectedMeeting.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50 whitespace-nowrap shrink-0 cursor-pointer"
+                    title="Hapus Rapat"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Hapus</span>
+                  </button>
                 </div>
               </div>
 
@@ -1391,6 +1459,22 @@ ${m.transcript ? `\n---\n\n## 🎙️ Transkrip Rapat\n${m.transcript}\n` : ""}
         onClose={() => setIsAIModalOpen(false)}
         suggestion={selectedSuggestion}
         onReviewed={fetchData}
+      />
+
+      {/* Modal Konfirmasi Hapus Rapat */}
+      <ConfirmDeleteModal
+        isOpen={!!meetingToDelete}
+        title="Hapus Notulen Rapat?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus notulen rapat{" "}
+            <strong className="text-slate-900">&quot;{meetingToDelete?.title}&quot;</strong>? Tindakan
+            ini tidak dapat dibatalkan.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteMeeting}
+        onClose={() => !isDeleting && setMeetingToDelete(null)}
       />
     </div>
   );

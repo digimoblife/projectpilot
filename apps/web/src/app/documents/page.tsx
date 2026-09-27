@@ -19,11 +19,13 @@ import {
   RefreshCw,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { SkeletonTable } from "@/components/ui/skeleton-loader";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 interface PortfolioDocumentItem {
   id: string;
@@ -69,6 +71,8 @@ export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+  const [documentToDelete, setDocumentToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchPortfolioDocuments();
@@ -87,6 +91,28 @@ export default function DocumentsPage() {
       // Handled
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  function handleDeleteDocument(docId: string, title: string) {
+    setDocumentToDelete({ id: docId, title });
+  }
+
+  async function handleConfirmDelete() {
+    if (!documentToDelete) return;
+    setIsDeleting(true);
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      await apiClient(`/documents/${documentToDelete.id}`, {
+        method: "DELETE",
+        headers,
+      });
+      setDocuments((prev) => prev.filter((d) => d.id !== documentToDelete.id));
+      setDocumentToDelete(null);
+    } catch {
+      alert("Gagal menghapus dokumen. Silakan coba lagi.");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -221,13 +247,23 @@ export default function DocumentsPage() {
                         {new Date(d.created_at).toLocaleDateString("id-ID")}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <Link
-                          href={d.document_type === "PRD" ? `/projects/${d.project_id}/prd` : `/projects/${d.project_id}/documents`}
-                          className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
-                        >
-                          <span>Buka</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={d.document_type === "PRD" ? `/projects/${d.project_id}/prd` : `/projects/${d.project_id}/documents`}
+                            className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-xs font-semibold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 active:scale-[0.98] transition-all"
+                          >
+                            <span>Buka</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDocument(d.id, d.title)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                            title="Hapus Dokumen"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -237,6 +273,22 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus Dokumen */}
+      <ConfirmDeleteModal
+        isOpen={!!documentToDelete}
+        title="Hapus Dokumen?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus dokumen{" "}
+            <strong className="text-slate-900">&quot;{documentToDelete?.title}&quot;</strong>? Tindakan
+            ini tidak dapat dibatalkan.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => !isDeleting && setDocumentToDelete(null)}
+      />
     </div>
   );
 }
