@@ -41,6 +41,7 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "ARCHIVED">("ACTIVE");
 
   // Modal states
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -304,6 +305,9 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
 
       if (isTextDoc) return false;
 
+      if (statusFilter === "ACTIVE" && item.status !== "ACTIVE") return false;
+      if (statusFilter === "ARCHIVED" && item.status !== "ARCHIVED") return false;
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = item.name.toLowerCase().includes(q);
@@ -426,6 +430,30 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
         </div>
       </div>
 
+      {/* Status Filter Pills (Consistent with File Teks) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {(
+          [
+            { id: "ALL", label: "Semua" },
+            { id: "ACTIVE", label: "Aktif" },
+            { id: "ARCHIVED", label: "Diarsipkan" },
+          ] as const
+        ).map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setStatusFilter(opt.id)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              statusFilter === opt.id
+                ? "bg-slate-900 text-white shadow-xs"
+                : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Loading state */}
       {isLoading && (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
@@ -467,16 +495,20 @@ export function ResourcesFilesView({ projectId }: ResourcesFilesViewProps) {
               <h3 className="text-base font-bold text-slate-900">
                 {searchQuery
                   ? "Tidak Ada Berkas yang Cocok"
+                  : statusFilter === "ARCHIVED"
+                  ? "Belum Ada Berkas yang Diarsipkan"
                   : "Berkas Proyek Belum Memiliki Berkas"}
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
                 {searchQuery
                   ? `Pencarian untuk "${searchQuery}" tidak menemukan berkas apapun.`
+                  : statusFilter === "ARCHIVED"
+                  ? "Berkas yang diarsipkan akan dipindahkan ke sini dan tetap dapat dipratinjau, diunduh, atau dipulihkan."
                   : "Unggah berkas atau dokumen pendukung untuk mulai mengisi repositori berkas proyek ini."}
               </p>
             </div>
 
-            {!searchQuery && (
+            {!searchQuery && statusFilter !== "ARCHIVED" && (
               <div className="pt-2">
                 <button
                   type="button"

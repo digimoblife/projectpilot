@@ -51,6 +51,7 @@ export function ResourcesLinksView({ projectId }: ResourcesLinksViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "ARCHIVED">("ACTIVE");
 
   // Modal states
   const [showAddEditModal, setShowAddEditModal] = useState(false);
@@ -315,6 +316,8 @@ export function ResourcesLinksView({ projectId }: ResourcesLinksViewProps) {
       // Strict domain boundary: only LINK resources in Tautan Referensi
       if (item.resource_type !== "LINK") return false;
       if (selectedCategory !== "ALL" && item.link_category !== selectedCategory) return false;
+      if (statusFilter === "ACTIVE" && item.status !== "ACTIVE") return false;
+      if (statusFilter === "ARCHIVED" && item.status !== "ARCHIVED") return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = item.name.toLowerCase().includes(q);
@@ -454,8 +457,31 @@ export function ResourcesLinksView({ projectId }: ResourcesLinksViewProps) {
         </div>
       </div>
 
-      {/* Category Filter Pills */}
+      {/* Status Filter Pills (Consistent with File Teks) + Category Filter Pills */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {(
+          [
+            { id: "ALL", label: "Semua" },
+            { id: "ACTIVE", label: "Aktif" },
+            { id: "ARCHIVED", label: "Diarsipkan" },
+          ] as const
+        ).map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setStatusFilter(opt.id)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              statusFilter === opt.id
+                ? "bg-slate-900 text-white shadow-xs"
+                : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+
+        <span className="w-px h-5 bg-slate-200 mx-1 shrink-0" aria-hidden="true" />
+
         {linkCategories.map((cat) => {
           const isSelected = selectedCategory === cat.id;
           return (
@@ -516,6 +542,8 @@ export function ResourcesLinksView({ projectId }: ResourcesLinksViewProps) {
               <h3 className="text-base font-bold text-slate-900">
                 {searchQuery
                   ? "Tidak Ada Tautan yang Cocok"
+                  : statusFilter === "ARCHIVED"
+                  ? "Belum Ada Tautan yang Diarsipkan"
                   : selectedCategory !== "ALL"
                   ? "Belum Ada Tautan di Kategori Ini"
                   : "Belum Ada Tautan Referensi"}
@@ -523,11 +551,13 @@ export function ResourcesLinksView({ projectId }: ResourcesLinksViewProps) {
               <p className="text-xs text-slate-500 leading-relaxed">
                 {searchQuery
                   ? `Pencarian untuk "${searchQuery}" tidak menemukan tautan apapun.`
+                  : statusFilter === "ARCHIVED"
+                  ? "Tautan yang diarsipkan akan dipindahkan ke sini dan tetap dapat dibuka atau dipulihkan."
                   : "Simpan tautan ke papan desain Figma, repository GitHub, lingkungan Staging/Produksi, atau portal dokumentasi eksternal agar seluruh tim dan pemangku kepentingan dapat mengaksesnya dengan mudah."}
               </p>
             </div>
 
-            {!searchQuery && (
+            {!searchQuery && statusFilter !== "ARCHIVED" && (
               <div className="pt-2">
                 <button
                   type="button"
