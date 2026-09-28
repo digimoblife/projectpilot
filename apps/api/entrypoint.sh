@@ -79,6 +79,14 @@ echo "[ProjectPilot API] Running database migrations (alembic upgrade head)..."
 alembic upgrade head
 echo "[ProjectPilot API] Migrations applied successfully."
 
+echo "[ProjectPilot API] Verifying persistent storage directory..."
+STORAGE_DIR="${STORAGE_LOCAL_PATH:-data/storage}"
+if [[ "$STORAGE_DIR" != /* ]]; then
+  STORAGE_DIR="/app/$STORAGE_DIR"
+fi
+mkdir -p "$STORAGE_DIR"
+echo "[ProjectPilot API] Storage directory ready at: $STORAGE_DIR"
+
 echo "[ProjectPilot API] Starting API application with multi-worker ASGI server..."
 
 exec uvicorn projectpilot.main:app \

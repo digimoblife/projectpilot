@@ -1,9 +1,13 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+
 from projectpilot.api.router import api_router
 from projectpilot.core.config import get_settings
 from projectpilot.core.logging import RequestLoggingMiddleware, logger
+from projectpilot.services.storage import validate_storage_preflight
 
 settings = get_settings()
 
@@ -11,6 +15,7 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.PROJECT_NAME} in [{settings.ENVIRONMENT}] mode...")
+    validate_storage_preflight()
     yield
     logger.info(f"Shutting down {settings.PROJECT_NAME}...")
 
@@ -38,9 +43,6 @@ if settings.CORS_ORIGINS:
 
 # Include API Router
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-
-from fastapi.responses import RedirectResponse
 
 
 @app.get("/docs", include_in_schema=False)

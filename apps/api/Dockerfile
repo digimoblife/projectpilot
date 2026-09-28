@@ -16,6 +16,9 @@ RUN pip install --no-cache-dir -e .
 
 COPY . .
 
+# Ensure persistent storage mount point exists with standard permissions
+RUN mkdir -p /app/data/storage && chmod 755 /app/data/storage
+
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000

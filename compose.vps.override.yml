@@ -1,0 +1,17 @@
+# =============================================================================
+# ProjectPilot Production VPS Deployment Override
+# Usage:
+#   docker compose -p projecthub --env-file /opt/projecthub/env/production.env -f compose.prod.yml -f /opt/projecthub/compose.vps.override.yml up -d
+# =============================================================================
+
+services:
+  api:
+    environment:
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_LOCAL_PATH: ${STORAGE_LOCAL_PATH:-/app/data/storage}
+    volumes:
+      - projectpilot_prod_storage:/app/data/storage
+
+volumes:
+  projectpilot_prod_storage:
+    driver: local

@@ -42,6 +42,10 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY must be configured for AI features}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://projectpilot.id,http://localhost}
       LOG_LEVEL: INFO
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_LOCAL_PATH: ${STORAGE_LOCAL_PATH:-/app/data/storage}
+    volumes:
+      - projectpilot_prod_storage:/app/data/storage
     networks:
       - internal_backend
       - ingress_network
@@ -119,4 +123,6 @@ networks:
 
 volumes:
   postgres_prod_data:
+    driver: local
+  projectpilot_prod_storage:
     driver: local

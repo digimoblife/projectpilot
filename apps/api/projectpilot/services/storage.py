@@ -1,12 +1,16 @@
+import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 from projectpilot.core.config import get_settings
+from projectpilot.core.logging import logger
 
 
 class StorageProvider(ABC):
     @abstractmethod
-    async def store(self, key: str, data: bytes, content_type: str = "application/octet-stream") -> str:
+    async def store(
+        self, key: str, data: bytes, content_type: str = "application/octet-stream"
+    ) -> str:
         """Store raw binary data under key. Returns key/URI."""
 
     @abstractmethod
@@ -25,8 +29,32 @@ class StorageProvider(ABC):
 class LocalStorageProvider(StorageProvider):
     def __init__(self, base_dir: Path | str | None = None):
         settings = get_settings()
-        self.base_dir = Path(base_dir or settings.STORAGE_LOCAL_PATH).resolve()
-        self.base_dir.mkdir(parents=True, exist_ok=True)
+        raw_path = base_dir if base_dir is not None else settings.STORAGE_LOCAL_PATH
+        self.base_dir = Path(raw_path).resolve()
+        self._validate_storage_directory()
+        logger.info("LocalStorageProvider initialized at path: %s", self.base_dir)
+
+    def _validate_storage_directory(self) -> None:
+        """Ensure storage directory exists and is writable by the process."""
+        try:
+            self.base_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logger.error(
+                "Failed to create storage directory at %s: %s", self.base_dir, exc
+            )
+            raise RuntimeError(
+                f"Storage directory '{self.base_dir}' cannot be created: {exc}"
+            ) from exc
+
+        probe_file = self.base_dir / f".probe_write_{uuid.uuid4().hex}"
+        try:
+            probe_file.write_bytes(b"probe")
+            probe_file.unlink()
+        except OSError as exc:
+            logger.error("Storage directory %s is not writable: %s", self.base_dir, exc)
+            raise RuntimeError(
+                f"Storage directory '{self.base_dir}' is not writable: {exc}"
+            ) from exc
 
     def _resolve_path(self, key: str) -> Path:
         normalized_key = key.lstrip("/\\")
@@ -37,7 +65,9 @@ class LocalStorageProvider(StorageProvider):
             raise ValueError(f"Storage path traversal detected for key '{key}'")
         return target_path
 
-    async def store(self, key: str, data: bytes, content_type: str = "application/octet-stream") -> str:
+    async def store(
+        self, key: str, data: bytes, content_type: str = "application/octet-stream"
+    ) -> str:
         target_path = self._resolve_path(key)
         target_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -55,7 +85,11 @@ class LocalStorageProvider(StorageProvider):
 
         data = target_path.read_bytes()
         meta_path = target_path.with_suffix(target_path.suffix + ".meta")
-        content_type = meta_path.read_text(encoding="utf-8") if meta_path.is_file() else "application/octet-stream"
+        content_type = (
+            meta_path.read_text(encoding="utf-8")
+            if meta_path.is_file()
+            else "application/octet-stream"
+        )
         return data, content_type
 
     async def delete(self, key: str) -> bool:
@@ -79,7 +113,9 @@ class InMemoryStorageProvider(StorageProvider):
         self._storage: dict[str, tuple[bytes, str]] = {}
         self.simulate_failure: bool = False
 
-    async def store(self, key: str, data: bytes, content_type: str = "application/octet-stream") -> str:
+    async def store(
+        self, key: str, data: bytes, content_type: str = "application/octet-stream"
+    ) -> str:
         if self.simulate_failure:
             raise OSError("Simulated storage backend failure during store operation.")
         self._storage[key] = (data, content_type)
@@ -118,3 +154,34 @@ def set_storage_provider(provider: StorageProvider | None) -> None:
     """Helper to set or override the storage provider instance (e.g. during testing)."""
     global _storage_singleton
     _storage_singleton = provider
+
+
+def validate_storage_preflight() -> dict[str, str]:
+    """
+    Validate storage configuration and directory readiness at startup.
+    Ensures storage path exists and is writable without logging secrets.
+    """
+    settings = get_settings()
+    provider = get_storage_provider()
+
+    if isinstance(provider, LocalStorageProvider):
+        provider._validate_storage_directory()
+        logger.info(
+            "Storage preflight check passed: provider=%s, path=%s",
+            settings.STORAGE_PROVIDER,
+            str(provider.base_dir),
+        )
+        return {
+            "status": "ready",
+            "provider": settings.STORAGE_PROVIDER,
+            "path": str(provider.base_dir),
+        }
+
+    logger.info(
+        "Storage preflight check passed: provider=%s",
+        settings.STORAGE_PROVIDER,
+    )
+    return {
+        "status": "ready",
+        "provider": settings.STORAGE_PROVIDER,
+    }

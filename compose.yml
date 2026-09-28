@@ -33,6 +33,10 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       SECRET_KEY: ${SECRET_KEY:-development_secret_key_12345}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_LOCAL_PATH: ${STORAGE_LOCAL_PATH:-data/storage}
+    volumes:
+      - projectpilot_dev_storage:/app/data/storage
     ports:
       - "${API_PORT:-8000}:8000"
 
@@ -51,4 +55,6 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  projectpilot_dev_storage:
     driver: local
