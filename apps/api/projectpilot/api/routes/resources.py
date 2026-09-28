@@ -1,5 +1,7 @@
 import hashlib
+import unicodedata
 import uuid
+from urllib.parse import quote
 
 from fastapi import (
     APIRouter,
@@ -543,6 +545,27 @@ async def get_project_resource(
 # =========================================================================
 # 3B. DOWNLOAD RESOURCE FILE
 # =========================================================================
+def _build_content_disposition(filename: str) -> str:
+    """
+    Build an RFC 6266 Content-Disposition header that survives non-Latin-1
+    filenames (e.g. em dashes). HTTP header values are latin-1 encoded, so the
+    plain `filename` gets an ASCII fallback and the real name goes in the
+    RFC 5987 `filename*` parameter.
+    """
+    ascii_name = (
+        unicodedata.normalize("NFKD", filename)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .replace('"', "")
+        .replace("\\", "")
+        .strip()
+    ) or "download"
+    return (
+        f'attachment; filename="{ascii_name}"; '
+        f"filename*=UTF-8''{quote(filename, safe='')}"
+    )
+
+
 @router.get("/{resource_id}/download")
 async def download_project_resource_file(
     project_id: uuid.UUID,
@@ -580,13 +603,14 @@ async def download_project_resource_file(
         )
 
     media_type = resource.mime_type or content_type or "application/octet-stream"
-    safe_filename = resource.file_name or "download"
 
     return Response(
         content=data,
         media_type=media_type,
         headers={
-            "Content-Disposition": f'attachment; filename="{safe_filename}"',
+            "Content-Disposition": _build_content_disposition(
+                resource.file_name or "download"
+            ),
             "Content-Length": str(len(data)),
         },
     )

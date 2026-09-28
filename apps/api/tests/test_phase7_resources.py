@@ -567,6 +567,24 @@ async def test_resources_file_upload_download_and_validation(client: AsyncClient
     assert "architecture_v1.pdf" in download_res.headers.get("content-disposition", "")
     assert download_res.headers.get("content-length") == str(len(pdf_bytes))
 
+    # 4b. Non-Latin-1 filename (em dash) must not break the Content-Disposition header
+    unicode_name = "LAPAQ.ID — Masterplan Produk.pdf"
+    unicode_upload = await client.post(
+        f"/api/v1/projects/{project_id}/resources/upload",
+        files={"file": (unicode_name, pdf_bytes, "application/pdf")},
+        data={"name": "Unicode Filename"},
+        headers=headers_pm,
+    )
+    assert unicode_upload.status_code == 201
+    unicode_download = await client.get(
+        f"/api/v1/projects/{project_id}/resources/{unicode_upload.json()['id']}/download",
+        headers=headers_pm,
+    )
+    assert unicode_download.status_code == 200
+    assert unicode_download.content == pdf_bytes
+    disposition = unicode_download.headers.get("content-disposition", "")
+    assert "filename*=UTF-8''LAPAQ.ID%20%E2%80%94%20Masterplan%20Produk.pdf" in disposition
+
     # 5. Unauthorized User Download -> Expect 403 Forbidden
     unauth_download = await client.get(
         f"/api/v1/projects/{project_id}/resources/{resource_id}/download",
