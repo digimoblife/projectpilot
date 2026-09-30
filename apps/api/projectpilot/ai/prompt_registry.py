@@ -628,6 +628,30 @@ Return a valid JSON object strictly matching this schema:
   "content_md": "Markdown string formatted as specified above"
 }}
 """,
+    "SCRUM_WEEKLY_REPORT": """
+Tugas Anda adalah membuat Laporan Scrum Mingguan (Weekly Report) berdasarkan log harian tim.
+
+PROYEK: {project_name} ({project_code})
+PERIODE: {start_date} hingga {end_date} (Minggu ke-{week_number}, {week_year})
+
+DATA SCRUM HARIAN (LOG):
+{scrum_data}
+
+Instruksi:
+1. Buat "executive_summary" (Ringkasan Eksekutif) yang mencakup progres keseluruhan tim minggu ini.
+2. Buat daftar "key_achievements" (Pencapaian Utama) berupa task/fitur penting yang diselesaikan.
+3. Buat daftar "recurring_issues" (Issue & Kendala) jika ada masalah yang sering muncul.
+4. Buat "next_week_outlook" (Outlook Minggu Depan) yang berisi fokus dan langkah selanjutnya.
+5. Gunakan Bahasa Indonesia yang profesional.
+
+Format JSON yang harus dikembalikan:
+{{
+  "executive_summary": "string",
+  "key_achievements": ["string", "string"],
+  "recurring_issues": ["string"],
+  "next_week_outlook": "string"
+}}
+""",
 }
 
 

@@ -616,10 +616,10 @@ Sistem berbasis FastAPI dengan asynchronous PostgreSQL, didukung worker backgrou
 
         if cap == "SCRUM_WEEKLY_REPORT":
             return {
-                "executive_summary": "Tim berhasil menyelesaikan pekerjaan teknis sesuai target sprint minggu ini. Beberapa kendala teknis sempat dilaporkan namun telah ditangani. Rencana kerja minggu depan telah ditetapkan untuk memastikan kelanjutan progres.",
-                "key_achievements": ["Penyelesaian task-task utama sesuai jadwal", "Koordinasi tim berjalan dengan baik"],
+                "executive_summary": None,
+                "key_achievements": [],
                 "recurring_issues": [],
-                "next_week_outlook": "Tim siap melanjutkan pengerjaan sesuai roadmap yang telah direncanakan pada sesi Scrum minggu depan.",
+                "next_week_outlook": None,
             }
 
         return {

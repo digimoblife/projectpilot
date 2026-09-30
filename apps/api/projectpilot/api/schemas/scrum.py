@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 # --- Scrum Entry Schemas ---
@@ -79,13 +79,14 @@ class ScrumWeeklyReportResponse(ScrumWeeklyReportBase):
     id: uuid.UUID
     project_id: uuid.UUID
     generated_by_id: Optional[uuid.UUID] = None
-    generated_at: datetime = None
+    generated_at: Optional[datetime] = None
     created_at: datetime
 
-    def __init__(self, **data):
-        if "generated_at" not in data and "created_at" in data:
-            data["generated_at"] = data["created_at"]
-        super().__init__(**data)
+    @model_validator(mode="after")
+    def set_generated_at(self):
+        if self.generated_at is None:
+            self.generated_at = self.created_at
+        return self
 
 
 # --- Helper Schemas ---

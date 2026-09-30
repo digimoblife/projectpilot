@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import {
+  AlertTriangle,
   AlertCircle,
   Calendar,
   ChevronDown,
@@ -272,6 +273,15 @@ function ReportView({
           Print / Export PDF
         </button>
       </div>
+      {!report.ai_summary && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-bold">Ringkasan AI tidak tersedia. Silakan generate ulang.</p>
+            <p className="opacity-90 mt-0.5">Pembuatan ringkasan gagal karena kendala teknis (fallback aktif), namun log data mentah tetap disimpan.</p>
+          </div>
+        </div>
+      )}
       <div
         id="scrum-report-print"
         className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs"

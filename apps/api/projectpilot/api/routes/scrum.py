@@ -437,12 +437,7 @@ async def generate_scrum_weekly_report(
     start_str = st.strftime("%d %b %Y")
     end_str = ed.strftime("%d %b %Y")
     
-    key_achievements = "\n".join([f"- {a}" for a in ai_result.get("key_achievements", [])])
-    recurring_issues_list = ai_result.get("recurring_issues", [])
-    if recurring_issues_list:
-        recurring_issues = "\n".join([f"- {i}" for i in recurring_issues_list])
-    else:
-        recurring_issues = "- Tidak ada issue berulang minggu ini."
+    ai_summary = ai_result.get('executive_summary')
 
     md_content = f"""# Laporan Scrum Mingguan
 **Proyek:** {proj.name} ({proj.code})  
@@ -451,8 +446,18 @@ async def generate_scrum_weekly_report(
 
 ---
 
-## 🎯 Ringkasan Eksekutif
-{ai_result.get('executive_summary', '')}
+"""
+
+    if ai_summary:
+        key_achievements = "\n".join([f"- {a}" for a in ai_result.get("key_achievements", [])])
+        recurring_issues_list = ai_result.get("recurring_issues", [])
+        if recurring_issues_list:
+            recurring_issues = "\n".join([f"- {i}" for i in recurring_issues_list])
+        else:
+            recurring_issues = "- Tidak ada issue berulang minggu ini."
+
+        md_content += f"""## 🎯 Ringkasan Eksekutif
+{ai_summary}
 
 ## ✅ Pencapaian Utama
 {key_achievements}
@@ -465,8 +470,8 @@ async def generate_scrum_weekly_report(
 
 ---
 
-## 📋 Log Harian
 """
+    md_content += "## 📋 Log Harian\n"
 
     for s in sessions:
         day_en = s.session_date.strftime("%A")
@@ -491,7 +496,7 @@ async def generate_scrum_weekly_report(
 
     if report:
         report.session_count = len(sessions)
-        report.ai_summary = ai_result.get('executive_summary', '')
+        report.ai_summary = ai_summary
         report.report_markdown = md_content
         report.generated_by_id = current_user.id
     else:
@@ -500,7 +505,7 @@ async def generate_scrum_weekly_report(
             week_number=week_number,
             week_year=week_year,
             session_count=len(sessions),
-            ai_summary=ai_result.get('executive_summary', ''),
+            ai_summary=ai_summary,
             report_markdown=md_content,
             generated_by_id=current_user.id,
         )
