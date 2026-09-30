@@ -13,6 +13,7 @@ import {
   Building2,
   Calendar,
   Check,
+  ClipboardList,
   Compass,
   FileCheck2,
   FileSpreadsheet,
@@ -36,6 +37,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 
@@ -132,6 +134,8 @@ function Tier2SubTabsContent({
               }
             } else if (activePillar.id === "issues") {
               isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "issues";
+            } else if (activePillar.id === "scrum") {
+              isSubActive = currentTab ? currentTab === sub.tabKey : sub.tabKey === "daily";
             } else {
               isSubActive = currentTab === sub.tabKey;
             }
@@ -308,6 +312,16 @@ export default function ProjectWorkspaceLayout({
       ],
     },
     {
+      id: "scrum",
+      name: "Scrum",
+      href: `/projects/${id}/scrum`,
+      icon: ClipboardList,
+      subRoutes: [
+        { name: "Daily Log", href: `/projects/${id}/scrum?tab=daily`, sublabel: "Catatan Harian", icon: ClipboardList, tabKey: "daily" },
+        { name: "Weekly Report", href: `/projects/${id}/scrum?tab=weekly`, sublabel: "Laporan Mingguan AI", icon: FileCheck2, tabKey: "weekly" },
+      ],
+    },
+    {
       id: "issues",
       name: "Issues",
       href: `/projects/${id}/issues`,
@@ -373,6 +387,9 @@ export default function ProjectWorkspaceLayout({
         pathname.startsWith(`/projects/${id}/timeline`) ||
         pathname.startsWith(`/projects/${id}/planning`)
       );
+    }
+    if (pillar.id === "scrum") {
+      return pathname.startsWith(`/projects/${id}/scrum`);
     }
     if (pillar.id === "issues") {
       return pathname.startsWith(`/projects/${id}/issues`);

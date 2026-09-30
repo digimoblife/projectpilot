@@ -1,3 +1,8 @@
+from projectpilot.persistence.models.scrum import (
+    ScrumSession,
+    ScrumEntry,
+    ScrumWeeklyReport,
+)
 from projectpilot.persistence.models.activity import ActivityEvent
 from projectpilot.persistence.models.ai import (
     AIJob,
@@ -163,4 +168,7 @@ __all__ = [
     "ResourceType",
     "ResourceStatus",
     "DeliverableStatus",
+    "ScrumSession",
+    "ScrumEntry",
+    "ScrumWeeklyReport",
 ]
