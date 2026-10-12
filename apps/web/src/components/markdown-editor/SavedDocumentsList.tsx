@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { SavedMarkdownDoc } from "./types";
+import { downloadMarkdownFile } from "./export-utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
@@ -39,14 +40,7 @@ export function SavedDocumentsList({
 
   const handleDownloadMd = (doc: SavedMarkdownDoc, e: React.MouseEvent) => {
     e.stopPropagation();
-    const cleanFileName = (doc.title.trim() || "dokumen-markdown").replace(/[^a-zA-Z0-9_-]/g, "_");
-    const blob = new Blob([doc.content], { type: "text/markdown;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${cleanFileName}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadMarkdownFile(doc.title, doc.content);
   };
 
   const handleConfirmDelete = () => {

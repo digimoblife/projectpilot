@@ -523,3 +523,17 @@ code, kbd, samp, pre {
 .ph-table td, .ph-card {
   overflow-wrap: anywhere;
 }
+
+@media print {
+  aside,
+  nav,
+  header,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}

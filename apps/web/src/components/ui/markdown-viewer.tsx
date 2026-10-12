@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Check, Copy, Printer } from "lucide-react";
 
-interface MarkdownViewerProps {
+export interface MarkdownViewerProps {
   content: string;
   className?: string;
   title?: string;
@@ -13,15 +13,29 @@ interface MarkdownViewerProps {
   showCopyButton?: boolean;
 }
 
-export function MarkdownViewer({
-  content,
-  className = "",
-  title,
-  showPrintButton = true,
-  showCopyButton = true,
-}: MarkdownViewerProps) {
-  const [copied, setCopied] = useState(false);
-  const printableRef = React.useRef<HTMLDivElement>(null);
+export interface MarkdownViewerHandle {
+  print: () => void;
+  copy: () => void;
+}
+
+export const MarkdownViewer = React.forwardRef<MarkdownViewerHandle, MarkdownViewerProps>(
+  function MarkdownViewer(
+    {
+      content,
+      className = "",
+      title,
+      showPrintButton = true,
+      showCopyButton = true,
+    },
+    ref
+  ) {
+    const [copied, setCopied] = useState(false);
+    const printableRef = React.useRef<HTMLDivElement>(null);
+
+    React.useImperativeHandle(ref, () => ({
+      print: handlePrint,
+      copy: handleCopy,
+    }));
 
   function handleCopy() {
     if (!content) return;
@@ -127,8 +141,18 @@ export function MarkdownViewer({
       margin-bottom: 3pt;
       color: #334155;
     }
+    div {
+      overflow: visible !important;
+    }
+    .overflow-x-auto {
+      overflow: visible !important;
+      width: 100% !important;
+      box-shadow: none !important;
+      border-color: #cbd5e1 !important;
+    }
     table {
-      width: 100%;
+      width: 100% !important;
+      min-width: 0 !important;
       border-collapse: collapse;
       margin-top: 8pt;
       margin-bottom: 12pt;
@@ -149,8 +173,18 @@ export function MarkdownViewer({
       border: 1px solid #cbd5e1;
       color: #334155;
     }
+    tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
     tr:nth-child(even) td {
       background-color: #f8fafc;
+    }
+    img {
+      max-width: 100% !important;
+      height: auto !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     blockquote {
       margin: 8pt 0;
@@ -176,12 +210,12 @@ export function MarkdownViewer({
       padding: 10pt;
       border-radius: 6px;
       font-size: 8.5pt;
-      overflow: hidden;
-      white-space: pre-wrap;
-      word-break: break-all;
+      overflow: visible !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      overflow-wrap: break-word !important;
       page-break-inside: avoid;
       break-inside: avoid;
-      margin: 8pt 0;
     }
     pre code {
       background: transparent !important;
@@ -392,4 +426,6 @@ export function MarkdownViewer({
       </div>
     </div>
   );
-}
+});
+
+MarkdownViewer.displayName = "MarkdownViewer";

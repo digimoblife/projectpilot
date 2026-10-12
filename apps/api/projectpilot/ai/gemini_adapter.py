@@ -85,6 +85,8 @@ class GeminiAdapter:
                         return {"questions": parsed_json}
                     elif cap_upper == "TASK_BREAKDOWN_GEN":
                         return {"tasks": parsed_json}
+                    elif cap_upper == "PROJECT_QA":
+                        return {"answer": "\n".join(str(x) for x in parsed_json if str(x).strip())}
                     elif cap_upper.startswith("DOC_") or cap_upper.startswith("REPORT_"):
                         return {"title": "Dokumen", "content": "\n".join(str(x) for x in parsed_json), "summary": ""}
 
@@ -104,11 +106,16 @@ class GeminiAdapter:
                     if "candidate_requirements" in parsed_json and "requirements" not in parsed_json:
                         parsed_json["requirements"] = parsed_json["candidate_requirements"]
 
-                    # Normalization for Q&A answer keys
-                    if "answer" not in parsed_json:
+                    # Normalization for Q&A answer keys (including fallback when answer is None/empty)
+                    answer_val = parsed_json.get("answer")
+                    if not isinstance(answer_val, str) or not answer_val.strip():
                         for candidate_key in ["jawaban", "response", "penjelasan", "reply", "message", "text", "content", "hasil"]:
-                            if candidate_key in parsed_json and isinstance(parsed_json[candidate_key], str) and parsed_json[candidate_key].strip():
-                                parsed_json["answer"] = parsed_json[candidate_key]
+                            cand_val = parsed_json.get(candidate_key)
+                            if isinstance(cand_val, str) and cand_val.strip():
+                                parsed_json["answer"] = cand_val
+                                break
+                            elif isinstance(cand_val, list) and cand_val:
+                                parsed_json["answer"] = "\n".join(str(x) for x in cand_val if str(x).strip())
                                 break
 
                     # Normalization for document and report generation

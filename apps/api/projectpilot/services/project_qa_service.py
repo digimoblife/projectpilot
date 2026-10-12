@@ -101,7 +101,7 @@ Evidence Context:
         capability="PROJECT_QA",
     )
 
-    answer_text = (
+    answer_raw = (
         ai_res.get("answer")
         or ai_res.get("jawaban")
         or ai_res.get("response")
@@ -111,7 +111,16 @@ Evidence Context:
         or ai_res.get("text")
     )
 
-    if not answer_text or not str(answer_text).strip():
+    if isinstance(answer_raw, str):
+        answer_text = answer_raw.strip()
+    elif isinstance(answer_raw, list):
+        answer_text = "\n".join(str(x) for x in answer_raw if str(x).strip()).strip()
+    elif isinstance(answer_raw, dict):
+        answer_text = str(answer_raw.get("answer") or answer_raw.get("text") or answer_raw.get("content") or "").strip()
+    else:
+        answer_text = ""
+
+    if not answer_text:
         answer_text = (
             f"Berdasarkan data proyek {project.name}, tidak ditemukan informasi spesifik terkait pertanyaan Anda pada requirements, decisions, tasks, blockers, maupun catatan meeting yang terdaftar."
         )

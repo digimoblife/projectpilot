@@ -5,7 +5,6 @@ import {
   Columns2,
   Download,
   Eye,
-  FileDown,
   FilePlus,
   FileText,
   FolderOpen,
@@ -16,12 +15,17 @@ import {
 } from "lucide-react";
 import { EditorToolbar } from "./EditorToolbar";
 import { SavedMarkdownDoc, ViewMode } from "./types";
-import { countWords, SAMPLE_MARKDOWN } from "./storage";
-import { MarkdownViewer } from "@/components/ui/markdown-viewer";
+import { countWords, SAMPLE_MARKDOWN, StorageResult } from "./storage";
+import { downloadMarkdownFile } from "./export-utils";
+import { MarkdownViewer, MarkdownViewerHandle } from "@/components/ui/markdown-viewer";
 
 interface MarkdownEditorWorkspaceProps {
   currentDoc: SavedMarkdownDoc;
-  onSaveCurrentDoc: (doc: { id: string; title: string; content: string }) => void;
+  onSaveCurrentDoc: (doc: {
+    id: string;
+    title: string;
+    content: string;
+  }) => StorageResult<SavedMarkdownDoc> | boolean;
   onCreateNewDoc: () => void;
   onOpenSavedList: () => void;
   savedCount: number;
@@ -37,32 +41,56 @@ export function MarkdownEditorWorkspace({
   const [title, setTitle] = useState(currentDoc.title);
   const [content, setContent] = useState(currentDoc.content);
   const [viewMode, setViewMode] = useState<ViewMode>("split");
-  const [saveStatus, setSaveStatus] = useState<"SAVED" | "SAVING">("SAVED");
+  const [saveStatus, setSaveStatus] = useState<"SAVED" | "SAVING" | "ERROR">("SAVED");
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const viewerRef = useRef<MarkdownViewerHandle>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync internal state when currentDoc changes externally (e.g. from switching doc)
+  // Sync internal state when currentDoc changes externally
   useEffect(() => {
     setTitle(currentDoc.title);
     setContent(currentDoc.content);
     setSaveStatus("SAVED");
+    setSaveErrorMessage(null);
   }, [currentDoc.id]);
 
   // Debounced auto-save
   const triggerAutoSave = (newTitle: string, newContent: string) => {
     setSaveStatus("SAVING");
+    setSaveErrorMessage(null);
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     saveTimeoutRef.current = setTimeout(() => {
-      onSaveCurrentDoc({
-        id: currentDoc.id,
-        title: newTitle,
-        content: newContent,
-      });
-      setSaveStatus("SAVED");
+      try {
+        const res = onSaveCurrentDoc({
+          id: currentDoc.id,
+          title: newTitle,
+          content: newContent,
+        });
+
+        if (typeof res === "object" && res !== null && "success" in res) {
+          if (res.success) {
+            setSaveStatus("SAVED");
+            setSaveErrorMessage(null);
+          } else {
+            setSaveStatus("ERROR");
+            setSaveErrorMessage(res.errorMessage || "Gagal menyimpan dokumen ke penyimpanan browser.");
+          }
+        } else if (res === false) {
+          setSaveStatus("ERROR");
+          setSaveErrorMessage("Gagal menyimpan dokumen.");
+        } else {
+          setSaveStatus("SAVED");
+          setSaveErrorMessage(null);
+        }
+      } catch (err: any) {
+        setSaveStatus("ERROR");
+        setSaveErrorMessage(err?.message || "Terjadi kesalahan saat menyimpan dokumen.");
+      }
     }, 500);
   };
 
@@ -106,14 +134,14 @@ export function MarkdownEditorWorkspace({
 
   // Download .md file
   const handleDownloadMarkdown = () => {
-    const cleanFileName = (title.trim() || "dokumen-markdown").replace(/[^a-zA-Z0-9_-]/g, "_");
-    const blob = new Blob([content], { type: "text/markdown;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${cleanFileName}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadMarkdownFile(title, content);
+  };
+
+  // Trigger PDF printing
+  const handlePrintDocument = () => {
+    if (viewerRef.current) {
+      viewerRef.current.print();
+    }
   };
 
   // Import .md file
@@ -128,16 +156,21 @@ export function MarkdownEditorWorkspace({
         const fileTitle = file.name.replace(/\.md$/i, "");
         setTitle(fileTitle);
         setContent(text);
-        onSaveCurrentDoc({
+        const res = onSaveCurrentDoc({
           id: currentDoc.id,
           title: fileTitle,
           content: text,
         });
-        setSaveStatus("SAVED");
+        if (typeof res === "object" && res !== null && !res.success) {
+          setSaveStatus("ERROR");
+          setSaveErrorMessage(res.errorMessage || "Gagal menyimpan file yang diimpor.");
+        } else {
+          setSaveStatus("SAVED");
+          setSaveErrorMessage(null);
+        }
       }
     };
     reader.readAsText(file);
-    // Reset input
     e.target.value = "";
   };
 
@@ -150,12 +183,18 @@ export function MarkdownEditorWorkspace({
     }
     setTitle("Dokumen Spesifikasi Proyek");
     setContent(SAMPLE_MARKDOWN);
-    onSaveCurrentDoc({
+    const res = onSaveCurrentDoc({
       id: currentDoc.id,
       title: "Dokumen Spesifikasi Proyek",
       content: SAMPLE_MARKDOWN,
     });
-    setSaveStatus("SAVED");
+    if (typeof res === "object" && res !== null && !res.success) {
+      setSaveStatus("ERROR");
+      setSaveErrorMessage(res.errorMessage || "Gagal menyimpan template contoh.");
+    } else {
+      setSaveStatus("SAVED");
+      setSaveErrorMessage(null);
+    }
   };
 
   const wordCount = countWords(content);
@@ -184,9 +223,21 @@ export function MarkdownEditorWorkspace({
                 .md
               </span>
               <span>•</span>
-              <span className={saveStatus === "SAVING" ? "text-amber-600 font-medium" : "text-emerald-600 font-medium"}>
-                {saveStatus === "SAVING" ? "Menyimpan otomatis..." : "Tersimpan di browser"}
-              </span>
+              {saveStatus === "SAVING" ? (
+                <span className="text-amber-600 font-medium">Menyimpan otomatis...</span>
+              ) : saveStatus === "ERROR" ? (
+                <span
+                  className="text-rose-600 font-semibold flex items-center gap-1"
+                  title={saveErrorMessage || "Gagal menyimpan"}
+                >
+                  <span>⚠️ Gagal menyimpan</span>
+                  {saveErrorMessage && (
+                    <span className="text-[10px] text-rose-500 font-normal">({saveErrorMessage})</span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-emerald-600 font-medium">Tersimpan di browser</span>
+              )}
             </div>
           </div>
         </div>
@@ -198,7 +249,7 @@ export function MarkdownEditorWorkspace({
             <button
               type="button"
               onClick={() => setViewMode("split")}
-              className={`p-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`p-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 viewMode === "split"
                   ? "bg-white text-slate-900 shadow-2xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -210,7 +261,7 @@ export function MarkdownEditorWorkspace({
             <button
               type="button"
               onClick={() => setViewMode("editor")}
-              className={`p-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`p-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 viewMode === "editor"
                   ? "bg-white text-slate-900 shadow-2xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -222,7 +273,7 @@ export function MarkdownEditorWorkspace({
             <button
               type="button"
               onClick={() => setViewMode("preview")}
-              className={`p-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`p-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 viewMode === "preview"
                   ? "bg-white text-slate-900 shadow-2xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
@@ -273,6 +324,17 @@ export function MarkdownEditorWorkspace({
             <span>Impor</span>
           </button>
 
+          {/* Print / PDF Button */}
+          <button
+            type="button"
+            onClick={handlePrintDocument}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-800 hover:text-black bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+            title="Cetak atau simpan sebagai dokumen PDF A4"
+          >
+            <Printer className="w-3.5 h-3.5 text-slate-600" />
+            <span>Cetak / PDF</span>
+          </button>
+
           {/* Download .md */}
           <button
             type="button"
@@ -289,62 +351,59 @@ export function MarkdownEditorWorkspace({
       {/* Editor & Preview Workspace Container */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch min-h-[640px]">
         {/* Left Panel: Markdown Editor */}
-        {(viewMode === "split" || viewMode === "editor") && (
-          <div
-            className={`flex flex-col bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden ${
-              viewMode === "editor" ? "lg:col-span-12" : "lg:col-span-6"
-            }`}
-          >
-            {/* Quick Insert Toolbar */}
-            <EditorToolbar onInsert={handleInsertTag} />
+        <div
+          className={`flex flex-col bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden ${
+            viewMode === "preview" ? "hidden" : viewMode === "editor" ? "lg:col-span-12" : "lg:col-span-6"
+          }`}
+        >
+          {/* Quick Insert Toolbar */}
+          <EditorToolbar onInsert={handleInsertTag} />
 
-            {/* Textarea Area */}
-            <div className="relative flex-1 flex flex-col p-3">
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={handleContentChange}
-                placeholder="Mulai ketik dokumen Markdown di sini..."
-                className="w-full flex-1 p-2 text-xs sm:text-sm font-mono leading-relaxed bg-transparent border-0 resize-none focus:outline-none focus:ring-0 text-slate-900 placeholder:text-slate-400 min-h-[500px]"
-                spellCheck={false}
-              />
-            </div>
-
-            {/* Editor Footer Status Bar */}
-            <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500">
-              <div className="flex items-center gap-3">
-                <span>{wordCount} kata</span>
-                <span>•</span>
-                <span>{charCount} karakter</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleLoadSample}
-                className="inline-flex items-center gap-1 text-[11px] text-purple-600 hover:text-purple-700 hover:underline font-medium cursor-pointer"
-              >
-                <Sparkles className="w-3 h-3" />
-                <span>Muat Contoh Format</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Right Panel: Live Preview & PDF Printing */}
-        {(viewMode === "split" || viewMode === "preview") && (
-          <div
-            className={`flex flex-col bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden p-5 ${
-              viewMode === "preview" ? "lg:col-span-12" : "lg:col-span-6"
-            }`}
-          >
-            <MarkdownViewer
-              content={content || "*Dokumen kosong. Mulai ketik di editor sebelah kiri.*"}
-              title={title}
-              showPrintButton={true}
-              showCopyButton={true}
-              className="flex-1"
+          {/* Textarea Area */}
+          <div className="relative flex-1 flex flex-col p-3">
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={handleContentChange}
+              placeholder="Mulai ketik dokumen Markdown di sini..."
+              className="w-full flex-1 p-2 text-xs sm:text-sm font-mono leading-relaxed bg-transparent border-0 resize-none focus:outline-none focus:ring-0 text-slate-900 placeholder:text-slate-400 min-h-[500px]"
+              spellCheck={false}
             />
           </div>
-        )}
+
+          {/* Editor Footer Status Bar */}
+          <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500">
+            <div className="flex items-center gap-3">
+              <span>{wordCount} kata</span>
+              <span>•</span>
+              <span>{charCount} karakter</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleLoadSample}
+              className="inline-flex items-center gap-1 text-[11px] text-purple-600 hover:text-purple-700 hover:underline font-medium cursor-pointer"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Muat Contoh Format</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Right Panel: Live Preview & PDF Printing (Always kept mounted for print handle) */}
+        <div
+          className={`flex flex-col bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden p-5 ${
+            viewMode === "editor" ? "hidden" : viewMode === "preview" ? "lg:col-span-12" : "lg:col-span-6"
+          }`}
+        >
+          <MarkdownViewer
+            ref={viewerRef}
+            content={content || "*Dokumen kosong. Mulai ketik di editor sebelah kiri.*"}
+            title={title}
+            showPrintButton={true}
+            showCopyButton={true}
+            className="flex-1"
+          />
+        </div>
       </div>
     </div>
   );

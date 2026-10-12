@@ -31,21 +31,28 @@ export default function MarkdownEditorPage() {
   }, []);
 
   const handleSaveDoc = (data: { id: string; title: string; content: string }) => {
-    const updated = saveDocument(data);
-    const refreshed = getAllDocuments();
-    setDocuments(refreshed);
-    setActiveDoc(updated);
+    const result = saveDocument(data);
+    if (result.success && result.data) {
+      const refreshed = getAllDocuments();
+      setDocuments(refreshed);
+      setActiveDoc(result.data);
+    }
+    return result;
   };
 
   const handleCreateNewDoc = () => {
-    const newDoc = saveDocument({
+    const res = saveDocument({
       title: "Dokumen Baru",
       content: "# Dokumen Baru\n\nMulai tulis catatan Anda di sini...\n",
     });
-    const refreshed = getAllDocuments();
-    setDocuments(refreshed);
-    setActiveDoc(newDoc);
-    setActiveTab("EDITOR");
+    if (res.success && res.data) {
+      const refreshed = getAllDocuments();
+      setDocuments(refreshed);
+      setActiveDoc(res.data);
+      setActiveTab("EDITOR");
+    } else {
+      alert(res.errorMessage || "Gagal membuat dokumen baru di penyimpanan lokal.");
+    }
   };
 
   const handleSelectDoc = (doc: SavedMarkdownDoc) => {
@@ -55,7 +62,11 @@ export default function MarkdownEditorPage() {
   };
 
   const handleDeleteDoc = (id: string) => {
-    deleteDocument(id);
+    const res = deleteDocument(id);
+    if (!res.success) {
+      alert(res.errorMessage || "Gagal menghapus dokumen dari penyimpanan lokal.");
+      return;
+    }
     const refreshed = getAllDocuments();
     setDocuments(refreshed);
     if (activeDoc?.id === id) {
