@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   Sparkles,
+  SquarePen,
   Users,
   X,
 } from "lucide-react";
@@ -39,6 +40,12 @@ export function MobileNav() {
       icon: Sparkles,
     },
     {
+      name: "Markdown Editor",
+      desc: "Tulis, simpan & ekspor dokumen ke .md atau PDF",
+      href: "/markdown-editor",
+      icon: SquarePen,
+    },
+    {
       name: "Laporan Portfolio",
       desc: "Arsip laporan mingguan & bulanan",
       href: "/reports",
@@ -52,7 +59,7 @@ export function MobileNav() {
     },
   ];
 
-  const isMoreActive = pathname.startsWith("/mom") || pathname.startsWith("/reports") || pathname.startsWith("/documents");
+  const isMoreActive = pathname.startsWith("/mom") || pathname.startsWith("/markdown-editor") || pathname.startsWith("/reports") || pathname.startsWith("/documents");
 
   function handleLogout() {
     setIsDrawerOpen(false);

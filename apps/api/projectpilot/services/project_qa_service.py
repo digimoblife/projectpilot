@@ -53,6 +53,7 @@ async def answer_project_question(
     # 3. Assemble Structured Evidence
     evidence_text = f"""=== PROJECT DATA CONTEXT ({project.name} - {project.code}) ===
 Status: {project.lifecycle_stage.value} | Health: {project.health.value}
+Deskripsi Proyek: {project.description or 'Tidak ada deskripsi tambahan.'}
 
 1. Requirements ({len(requirements)}):
 {chr(10).join([f"- [{r.key}] {r.title} ({r.category.value if hasattr(r.category, 'value') else r.category}) - AC: {r.acceptance_criteria or 'N/A'}" for r in requirements]) or 'None'}
@@ -69,14 +70,23 @@ Status: {project.lifecycle_stage.value} | Health: {project.health.value}
 5. Active Blockers & Dependencies:
 {chr(10).join([f"- [Blocker {b.key}] {b.title} ({b.status.value})" for b in blockers if b.status != BlockerStatus.RESOLVED]) or 'No active blockers'}
 {chr(10).join([f"- [Dependency {dep.key}] {dep.title} ({dep.status.value})" for dep in dependencies]) or 'No client dependencies'}
+
+6. Meetings & Notes ({len(meetings)}):
+{chr(10).join([f"- [{getattr(m, 'meeting_key', 'MTG')}] {m.title} ({m.meeting_type.value if hasattr(m.meeting_type, 'value') else m.meeting_type}) -> Summary: {m.summary or 'N/A'}" + (f" | Notes: {m.notes[:200]}" if m.notes else "") for m in meetings]) or 'None'}
 """
 
     # 4. Invoke Gemini Project Q&A
     prompt = f"""You are the ProjectPilot AI Assistant answering a project inquiry.
 Strict Rule: Answer ONLY based on the project evidence provided below. Do not assume or hallucinate outside features.
-Whenever citing a requirement, decision, task, or blocker, include its exact key in brackets like [REQ-001] or [ADR-001].
-If the requested information is not present in the evidence, clearly state that it is not documented yet.
-Language: Professional Bahasa Indonesia.
+Whenever citing a requirement, decision, task, blocker, or meeting, include its exact key in brackets like [REQ-001], [ADR-001], [TSK-001], [BLK-001], or [MTG-001].
+If the requested information is not present in the evidence, clearly and politely state in Bahasa Indonesia that it is not documented yet in the project data.
+If the user is sending a greeting (e.g., 'halo', 'hai', 'pagi'), respond warmly and invite them to ask questions about the project's requirements, tasks, decisions, or progress.
+
+Return a valid JSON object strictly matching this schema:
+{{
+  "answer": "Jawaban terperinci, ramah, dan profesional dalam Bahasa Indonesia berdasarkan bukti proyek...",
+  "unknowns": []
+}}
 
 User Question:
 {question}
@@ -91,9 +101,20 @@ Evidence Context:
         capability="PROJECT_QA",
     )
 
-    answer_text = ai_res.get("answer") or ai_res.get("message") or (
-        f"Berdasarkan data proyek {project.name}, status saat ini berada pada tahap {project.lifecycle_stage.value} dengan {len(tasks)} tugas terdaftar dan {len(requirements)} kebutuhan fungsional."
+    answer_text = (
+        ai_res.get("answer")
+        or ai_res.get("jawaban")
+        or ai_res.get("response")
+        or ai_res.get("penjelasan")
+        or ai_res.get("message")
+        or ai_res.get("content")
+        or ai_res.get("text")
     )
+
+    if not answer_text or not str(answer_text).strip():
+        answer_text = (
+            f"Berdasarkan data proyek {project.name}, tidak ditemukan informasi spesifik terkait pertanyaan Anda pada requirements, decisions, tasks, blockers, maupun catatan meeting yang terdaftar."
+        )
 
     # 5. Extract Citations
     citations: List[Dict[str, Any]] = []
@@ -107,15 +128,19 @@ Evidence Context:
             citations.append({"key": d.key, "type": "DECISION", "title": d.title, "route": f"/projects/{project_id}/requirements"})
     for t in tasks:
         if t.key in found_keys or t.key in question:
-            citations.append({"key": t.key, "type": "TASK", "title": t.title, "route": f"/projects/{project_id}/tasks"})
+            citations.append({"key": t.key, "type": "TASK", "title": t.title, "route": f"/projects/{project_id}/work?tab=board"})
     for b in blockers:
         if b.key in found_keys or b.key in question:
-            citations.append({"key": b.key, "type": "BLOCKER", "title": b.title, "route": f"/projects/{project_id}/issues"})
+            citations.append({"key": b.key, "type": "BLOCKER", "title": b.title, "route": f"/projects/{project_id}/issues?tab=blockers"})
+    for m in meetings:
+        m_key = getattr(m, "meeting_key", None)
+        if m_key and (m_key in found_keys or m_key in question):
+            citations.append({"key": m_key, "type": "MEETING", "title": m.title, "route": f"/projects/{project_id}/communication?tab=meetings"})
 
     return {
         "project_id": project_id,
         "question": question,
         "answer": answer_text,
         "citations": citations,
-        "evidence_count": len(requirements) + len(decisions) + len(tasks) + len(blockers),
+        "evidence_count": len(requirements) + len(decisions) + len(tasks) + len(blockers) + len(meetings),
     }

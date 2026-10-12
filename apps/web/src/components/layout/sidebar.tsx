@@ -12,6 +12,7 @@ import {
   FolderKanban,
   LayoutDashboard,
   Sparkles,
+  SquarePen,
   Users,
 } from "lucide-react";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -22,6 +23,7 @@ const navigationItems = [
   { name: "Projects", href: "/projects", icon: FolderKanban, label: "Buka Daftar Proyek" },
   { name: "My Work", href: "/my-work", icon: CheckSquare, label: "Buka Task Saya" },
   { name: "MoM Generator", href: "/mom", icon: Sparkles, label: "Buka MoM Generator" },
+  { name: "Markdown Editor", href: "/markdown-editor", icon: SquarePen, label: "Buka Markdown Editor & Dokumen" },
   { name: "Reports", href: "/reports", icon: FileText, label: "Buka Repositori Laporan" },
   { name: "Documents", href: "/documents", icon: Files, label: "Buka Repositori Dokumen" },
 ];

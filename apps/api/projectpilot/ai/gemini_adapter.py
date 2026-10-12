@@ -104,6 +104,13 @@ class GeminiAdapter:
                     if "candidate_requirements" in parsed_json and "requirements" not in parsed_json:
                         parsed_json["requirements"] = parsed_json["candidate_requirements"]
 
+                    # Normalization for Q&A answer keys
+                    if "answer" not in parsed_json:
+                        for candidate_key in ["jawaban", "response", "penjelasan", "reply", "message", "text", "content", "hasil"]:
+                            if candidate_key in parsed_json and isinstance(parsed_json[candidate_key], str) and parsed_json[candidate_key].strip():
+                                parsed_json["answer"] = parsed_json[candidate_key]
+                                break
+
                     # Normalization for document and report generation
                     report_and_doc_keys = [
                         "prd_content",
